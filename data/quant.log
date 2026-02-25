@@ -1,0 +1,428 @@
+2026-02-24 22:25:13 [INFO] quant: Starting stock list update process.
+2026-02-24 22:25:16 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-02-24 22:25:24 [INFO] quant: Total entries from baostock: 7122
+2026-02-24 22:25:24 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 6347
+2026-02-24 22:25:24 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-02-24 22:25:47 [INFO] quant: Filtered 1124 micro-cap stocks (< 15.0 亿).
+2026-02-24 22:25:47 [INFO] quant: Filtered 24 zombie stocks (< 1000.0 万).
+2026-02-24 22:25:47 [INFO] quant: Filtered 80 potential manipulated stocks (turnover > 20.0%).
+2026-02-24 22:25:47 [INFO] quant: Filtered 279 highly inactive stocks (turnover < 0.5%).
+2026-02-24 22:25:47 [INFO] quant: Final high-value stock count: 4840
+2026-02-24 22:25:47 [INFO] quant: Saved high-value stock list to data\stock-list.csv
+2026-02-24 22:36:00 [INFO] quant: Starting stock list update process.
+2026-02-24 22:36:00 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-02-24 22:36:12 [INFO] quant: Total entries from baostock: 7122
+2026-02-24 22:36:12 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 6347
+2026-02-24 22:36:12 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-02-24 22:36:33 [INFO] quant: Filtered 2943 micro-cap stocks (< 50.0 亿).
+2026-02-24 22:36:33 [INFO] quant: Filtered 499 zombie stocks (< 10000.0 万).
+2026-02-24 22:36:33 [INFO] quant: Filtered 61 potential manipulated stocks (turnover > 20.0%).
+2026-02-24 22:36:33 [INFO] quant: Filtered 1275 highly inactive stocks (turnover < 2.0%).
+2026-02-24 22:36:33 [INFO] quant: Final high-value stock count: 1569
+2026-02-24 22:36:33 [INFO] quant: Saved high-value stock list to data\stock-list.csv
+2026-02-24 22:39:25 [INFO] quant: Starting stock list update process.
+2026-02-24 22:39:25 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-02-24 22:39:43 [INFO] quant: Total entries from baostock: 7122
+2026-02-24 22:39:43 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 6347
+2026-02-24 22:39:43 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-02-24 22:40:04 [INFO] quant: Filtered 2943 micro-cap stocks (< 50.0 亿).
+2026-02-24 22:40:04 [INFO] quant: Filtered 499 zombie stocks (< 10000.0 万).
+2026-02-24 22:40:04 [INFO] quant: Filtered 61 potential manipulated stocks (turnover > 20.0%).
+2026-02-24 22:40:04 [INFO] quant: Filtered 1275 highly inactive stocks (turnover < 2.0%).
+2026-02-24 22:40:04 [INFO] quant: Final high-value stock count: 1569
+2026-02-24 22:40:04 [INFO] quant: Saved high-value stock list to data\stock-list.csv
+2026-02-24 22:40:58 [INFO] quant: Loaded 1569 stocks to update historical data.
+2026-02-24 23:28:53 [INFO] quant: Update summary: 1564 new files created, 0 files incrementally updated, 0 API requests returned no new data.
+2026-02-24 23:31:00 [ERROR] quant: 启动 Web UI 失败: No module named 'pandas_ta'
+2026-02-24 23:32:57 [ERROR] quant: 启动 Web UI 失败: Numba needs NumPy 2.2 or less. Got NumPy 2.4.
+2026-02-24 23:35:49 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-24 23:36:00 [INFO] quant: 开始对 1649 支股票执行多因子综合分析...
+2026-02-24 23:36:20 [INFO] quant: 分析完成。共有 0 支股票满足评分阈值。
+2026-02-24 23:36:20 [INFO] quant: 今日没有匹配到强势标的，建议空仓观望。
+2026-02-24 23:38:19 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-24 23:41:56 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-24 23:42:18 [WARNING] quant: 数据量过少，无法完整回测: sh.513910
+2026-02-24 23:45:17 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-24 23:47:34 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-24 23:47:40 [INFO] quant: 开始对 1649 支股票执行多因子综合分析...
+2026-02-24 23:47:55 [INFO] quant: 分析完成。共有 1345 支股票满足评分阈值。
+2026-02-24 23:47:55 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260224.csv
+2026-02-24 23:49:38 [INFO] quant: 开始对 1649 支股票执行多因子综合分析...
+2026-02-24 23:49:56 [INFO] quant: 分析完成。共有 1345 支股票满足评分阈值。
+2026-02-24 23:49:56 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260224.csv
+2026-02-24 23:53:09 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-24 23:58:14 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 09:35:01 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 13:02:16 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 13:02:35 [INFO] quant: Loaded 1569 stocks to update historical data.
+2026-02-25 13:05:10 [INFO] quant: Update summary: 0 new files created, 0 files incrementally updated, 1569 API requests returned no new data.
+2026-02-25 13:05:22 [INFO] quant: 开始对 1649 支股票执行多因子综合分析...
+2026-02-25 13:05:46 [INFO] quant: 分析完成。共有 1345 支股票满足评分阈值。
+2026-02-25 13:05:46 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260225.csv
+2026-02-25 13:15:21 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 13:25:16 [INFO] quant: Process interrupted by user.
+2026-02-25 13:25:24 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 14:02:58 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 14:38:13 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 14:39:29 [INFO] quant: 开始对 1649 支股票执行多因子综合分析...
+2026-02-25 14:39:49 [INFO] quant: 分析完成。共有 1345 支股票满足评分阈值。
+2026-02-25 14:39:49 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260225.csv
+2026-02-25 14:57:42 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 14:57:42 [ERROR] quant: 启动 Web UI 失败: Cannot find empty port in range: 7860-7860. You can specify a different port by setting the GRADIO_SERVER_PORT environment variable or passing the `server_port` parameter to `launch()`.
+2026-02-25 14:58:11 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 14:58:17 [INFO] quant: Scanning progress: 0/1345 (sz.002919)
+2026-02-25 14:58:19 [INFO] quant: Scanning progress: 100/1345 (sz.399621)
+2026-02-25 14:58:20 [INFO] quant: Scanning progress: 200/1345 (sh.600522)
+2026-02-25 14:58:21 [INFO] quant: Scanning progress: 300/1345 (sz.300217)
+2026-02-25 14:58:22 [INFO] quant: Scanning progress: 400/1345 (sh.600734)
+2026-02-25 14:58:24 [INFO] quant: Scanning progress: 500/1345 (sz.301248)
+2026-02-25 14:58:25 [INFO] quant: Scanning progress: 600/1345 (sh.000050)
+2026-02-25 14:58:26 [INFO] quant: Scanning progress: 700/1345 (sz.002378)
+2026-02-25 14:58:28 [INFO] quant: Scanning progress: 800/1345 (sh.600251)
+2026-02-25 14:58:29 [INFO] quant: Scanning progress: 900/1345 (sh.601606)
+2026-02-25 14:58:30 [INFO] quant: Scanning progress: 1000/1345 (sh.600120)
+2026-02-25 14:58:31 [INFO] quant: Scanning progress: 1100/1345 (sz.300048)
+2026-02-25 14:58:32 [INFO] quant: Scanning progress: 1200/1345 (sh.600497)
+2026-02-25 14:58:33 [INFO] quant: Scanning progress: 1300/1345 (sh.000987)
+2026-02-25 15:17:43 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 15:25:07 [WARNING] quant: 数据量过少，无法完整回测: sz.159852
+2026-02-25 15:25:07 [WARNING] quant: 数据量过少，无法完整回测: sh.563220
+2026-02-25 15:25:08 [WARNING] quant: 数据量过少，无法完整回测: sh.588750
+2026-02-25 15:25:08 [WARNING] quant: 数据量过少，无法完整回测: sz.159545
+2026-02-25 15:25:08 [WARNING] quant: 数据量过少，无法完整回测: sh.517520
+2026-02-25 15:25:08 [WARNING] quant: 数据量过少，无法完整回测: sz.159995
+2026-02-25 15:25:08 [WARNING] quant: 数据量过少，无法完整回测: sh.513770
+2026-02-25 15:25:09 [WARNING] quant: 数据量过少，无法完整回测: sh.518660
+2026-02-25 15:25:09 [WARNING] quant: 数据量过少，无法完整回测: sh.515050
+2026-02-25 15:25:09 [WARNING] quant: 数据量过少，无法完整回测: sz.159399
+2026-02-25 15:25:10 [WARNING] quant: 数据量过少，无法完整回测: sh.511990
+2026-02-25 15:25:10 [WARNING] quant: 数据量过少，无法完整回测: sh.513260
+2026-02-25 15:25:10 [WARNING] quant: 数据量过少，无法完整回测: sz.159608
+2026-02-25 15:25:10 [WARNING] quant: 数据量过少，无法完整回测: sh.588170
+2026-02-25 15:25:11 [WARNING] quant: 数据量过少，无法完整回测: sh.513090
+2026-02-25 15:26:25 [WARNING] quant: 数据量过少，无法完整回测: sz.159852
+2026-02-25 15:26:25 [WARNING] quant: 数据量过少，无法完整回测: sh.563220
+2026-02-25 15:26:26 [WARNING] quant: 数据量过少，无法完整回测: sh.588750
+2026-02-25 15:26:27 [WARNING] quant: 数据量过少，无法完整回测: sz.159545
+2026-02-25 15:26:27 [WARNING] quant: 数据量过少，无法完整回测: sh.517520
+2026-02-25 15:26:27 [WARNING] quant: 数据量过少，无法完整回测: sz.159995
+2026-02-25 15:26:27 [WARNING] quant: 数据量过少，无法完整回测: sh.513770
+2026-02-25 15:26:27 [WARNING] quant: 数据量过少，无法完整回测: sh.518660
+2026-02-25 15:26:28 [WARNING] quant: 数据量过少，无法完整回测: sh.515050
+2026-02-25 15:26:28 [WARNING] quant: 数据量过少，无法完整回测: sz.159399
+2026-02-25 15:26:28 [WARNING] quant: 数据量过少，无法完整回测: sh.511990
+2026-02-25 15:26:28 [WARNING] quant: 数据量过少，无法完整回测: sh.513260
+2026-02-25 15:26:29 [WARNING] quant: 数据量过少，无法完整回测: sz.159608
+2026-02-25 15:26:29 [WARNING] quant: 数据量过少，无法完整回测: sh.588170
+2026-02-25 15:26:30 [WARNING] quant: 数据量过少，无法完整回测: sh.513090
+2026-02-25 15:30:48 [WARNING] quant: 数据量过少，无法完整回测: sh.511030
+2026-02-25 15:30:48 [WARNING] quant: 数据量过少，无法完整回测: sh.563220
+2026-02-25 15:30:48 [WARNING] quant: 数据量过少，无法完整回测: sz.159545
+2026-02-25 15:30:48 [WARNING] quant: 数据量过少，无法完整回测: sh.510900
+2026-02-25 15:30:48 [WARNING] quant: 数据量过少，无法完整回测: sh.563300
+2026-02-25 15:30:48 [WARNING] quant: 数据量过少，无法完整回测: sh.513910
+2026-02-25 15:30:49 [WARNING] quant: 数据量过少，无法完整回测: sh.588750
+2026-02-25 15:30:50 [WARNING] quant: 数据量过少，无法完整回测: sz.159570
+2026-02-25 15:30:50 [WARNING] quant: 数据量过少，无法完整回测: sh.520990
+2026-02-25 15:30:50 [WARNING] quant: 数据量过少，无法完整回测: sh.515170
+2026-02-25 15:30:53 [WARNING] quant: 数据量过少，无法完整回测: sh.560010
+2026-02-25 15:30:53 [WARNING] quant: 数据量过少，无法完整回测: sz.159608
+2026-02-25 15:30:54 [WARNING] quant: 数据量过少，无法完整回测: sz.159980
+2026-02-25 15:30:54 [WARNING] quant: 数据量过少，无法完整回测: sh.515220
+2026-02-25 15:30:54 [WARNING] quant: 数据量过少，无法完整回测: sz.159361
+2026-02-25 15:30:55 [WARNING] quant: 数据量过少，无法完整回测: sh.588000
+2026-02-25 15:30:55 [WARNING] quant: 数据量过少，无法完整回测: sz.159869
+2026-02-25 15:30:55 [WARNING] quant: 数据量过少，无法完整回测: sz.159652
+2026-02-25 15:30:57 [WARNING] quant: 数据量过少，无法完整回测: sz.159361
+2026-02-25 15:30:59 [WARNING] quant: 数据量过少，无法完整回测: sh.551000
+2026-02-25 15:30:59 [WARNING] quant: 数据量过少，无法完整回测: sh.563360
+2026-02-25 15:30:59 [WARNING] quant: 数据量过少，无法完整回测: sh.516160
+2026-02-25 15:31:00 [WARNING] quant: 数据量过少，无法完整回测: sz.159516
+2026-02-25 15:31:00 [WARNING] quant: 数据量过少，无法完整回测: sz.159992
+2026-02-25 15:32:50 [WARNING] quant: 数据量过少，无法完整回测: sh.511030
+2026-02-25 15:32:50 [WARNING] quant: 数据量过少，无法完整回测: sh.563220
+2026-02-25 15:32:50 [WARNING] quant: 数据量过少，无法完整回测: sz.159545
+2026-02-25 15:32:50 [WARNING] quant: 数据量过少，无法完整回测: sh.510900
+2026-02-25 15:32:51 [WARNING] quant: 数据量过少，无法完整回测: sh.563300
+2026-02-25 15:32:51 [WARNING] quant: 数据量过少，无法完整回测: sh.513910
+2026-02-25 15:32:51 [WARNING] quant: 数据量过少，无法完整回测: sh.588750
+2026-02-25 15:32:52 [WARNING] quant: 数据量过少，无法完整回测: sz.159570
+2026-02-25 15:32:53 [WARNING] quant: 数据量过少，无法完整回测: sh.520990
+2026-02-25 15:32:53 [WARNING] quant: 数据量过少，无法完整回测: sh.515170
+2026-02-25 15:32:55 [WARNING] quant: 数据量过少，无法完整回测: sh.560010
+2026-02-25 15:32:56 [WARNING] quant: 数据量过少，无法完整回测: sz.159608
+2026-02-25 15:32:56 [WARNING] quant: 数据量过少，无法完整回测: sz.159980
+2026-02-25 15:32:56 [WARNING] quant: 数据量过少，无法完整回测: sh.515220
+2026-02-25 15:32:56 [WARNING] quant: 数据量过少，无法完整回测: sz.159361
+2026-02-25 15:32:57 [WARNING] quant: 数据量过少，无法完整回测: sh.588000
+2026-02-25 15:32:57 [WARNING] quant: 数据量过少，无法完整回测: sz.159869
+2026-02-25 15:32:58 [WARNING] quant: 数据量过少，无法完整回测: sz.159652
+2026-02-25 15:33:00 [WARNING] quant: 数据量过少，无法完整回测: sz.159361
+2026-02-25 15:33:01 [WARNING] quant: 数据量过少，无法完整回测: sh.551000
+2026-02-25 15:33:01 [WARNING] quant: 数据量过少，无法完整回测: sh.563360
+2026-02-25 15:33:01 [WARNING] quant: 数据量过少，无法完整回测: sh.516160
+2026-02-25 15:33:02 [WARNING] quant: 数据量过少，无法完整回测: sz.159516
+2026-02-25 15:33:02 [WARNING] quant: 数据量过少，无法完整回测: sz.159992
+2026-02-25 15:35:18 [WARNING] quant: 数据量过少，无法完整回测: sh.511030
+2026-02-25 15:35:18 [WARNING] quant: 数据量过少，无法完整回测: sh.563220
+2026-02-25 15:35:18 [WARNING] quant: 数据量过少，无法完整回测: sz.159545
+2026-02-25 15:35:19 [WARNING] quant: 数据量过少，无法完整回测: sh.510900
+2026-02-25 15:35:19 [WARNING] quant: 数据量过少，无法完整回测: sh.563300
+2026-02-25 15:35:19 [WARNING] quant: 数据量过少，无法完整回测: sh.513910
+2026-02-25 15:35:19 [WARNING] quant: 数据量过少，无法完整回测: sh.588750
+2026-02-25 15:35:20 [WARNING] quant: 数据量过少，无法完整回测: sz.159570
+2026-02-25 15:35:21 [WARNING] quant: 数据量过少，无法完整回测: sh.520990
+2026-02-25 15:35:21 [WARNING] quant: 数据量过少，无法完整回测: sh.515170
+2026-02-25 15:35:24 [WARNING] quant: 数据量过少，无法完整回测: sh.560010
+2026-02-25 15:35:25 [WARNING] quant: 数据量过少，无法完整回测: sz.159608
+2026-02-25 15:35:25 [WARNING] quant: 数据量过少，无法完整回测: sz.159980
+2026-02-25 15:35:25 [WARNING] quant: 数据量过少，无法完整回测: sh.515220
+2026-02-25 15:35:25 [WARNING] quant: 数据量过少，无法完整回测: sz.159361
+2026-02-25 15:35:26 [WARNING] quant: 数据量过少，无法完整回测: sh.588000
+2026-02-25 15:35:26 [WARNING] quant: 数据量过少，无法完整回测: sz.159869
+2026-02-25 15:35:27 [WARNING] quant: 数据量过少，无法完整回测: sz.159652
+2026-02-25 15:35:29 [WARNING] quant: 数据量过少，无法完整回测: sz.159361
+2026-02-25 15:35:30 [WARNING] quant: 数据量过少，无法完整回测: sh.551000
+2026-02-25 15:35:30 [WARNING] quant: 数据量过少，无法完整回测: sh.563360
+2026-02-25 15:35:30 [WARNING] quant: 数据量过少，无法完整回测: sh.516160
+2026-02-25 15:35:31 [WARNING] quant: 数据量过少，无法完整回测: sz.159516
+2026-02-25 15:35:31 [WARNING] quant: 数据量过少，无法完整回测: sz.159992
+2026-02-25 15:36:57 [WARNING] quant: 数据量过少，无法完整回测: sh.511030
+2026-02-25 15:36:57 [WARNING] quant: 数据量过少，无法完整回测: sh.563220
+2026-02-25 15:36:57 [WARNING] quant: 数据量过少，无法完整回测: sz.159545
+2026-02-25 15:36:57 [WARNING] quant: 数据量过少，无法完整回测: sh.510900
+2026-02-25 15:36:57 [WARNING] quant: 数据量过少，无法完整回测: sh.563300
+2026-02-25 15:36:58 [WARNING] quant: 数据量过少，无法完整回测: sh.513910
+2026-02-25 15:36:58 [WARNING] quant: 数据量过少，无法完整回测: sh.588750
+2026-02-25 15:36:59 [WARNING] quant: 数据量过少，无法完整回测: sz.159570
+2026-02-25 15:36:59 [WARNING] quant: 数据量过少，无法完整回测: sh.520990
+2026-02-25 15:37:00 [WARNING] quant: 数据量过少，无法完整回测: sh.515170
+2026-02-25 15:37:02 [WARNING] quant: 数据量过少，无法完整回测: sh.560010
+2026-02-25 15:37:02 [WARNING] quant: 数据量过少，无法完整回测: sz.159608
+2026-02-25 15:37:03 [WARNING] quant: 数据量过少，无法完整回测: sz.159980
+2026-02-25 15:37:03 [WARNING] quant: 数据量过少，无法完整回测: sh.515220
+2026-02-25 15:37:03 [WARNING] quant: 数据量过少，无法完整回测: sz.159361
+2026-02-25 15:37:04 [WARNING] quant: 数据量过少，无法完整回测: sh.588000
+2026-02-25 15:37:04 [WARNING] quant: 数据量过少，无法完整回测: sz.159869
+2026-02-25 15:37:05 [WARNING] quant: 数据量过少，无法完整回测: sz.159652
+2026-02-25 15:37:07 [WARNING] quant: 数据量过少，无法完整回测: sz.159361
+2026-02-25 15:37:08 [WARNING] quant: 数据量过少，无法完整回测: sh.551000
+2026-02-25 15:37:08 [WARNING] quant: 数据量过少，无法完整回测: sh.563360
+2026-02-25 15:37:09 [WARNING] quant: 数据量过少，无法完整回测: sh.516160
+2026-02-25 15:37:09 [WARNING] quant: 数据量过少，无法完整回测: sz.159516
+2026-02-25 15:37:09 [WARNING] quant: 数据量过少，无法完整回测: sz.159992
+2026-02-25 15:39:27 [INFO] quant: Starting stock list update process.
+2026-02-25 15:39:27 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-02-25 15:39:27 [INFO] quant: Total entries from baostock: 0
+2026-02-25 15:39:27 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 0
+2026-02-25 15:39:27 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-02-25 15:39:27 [INFO] quant: Filtered 0 micro-cap stocks (< 50.0 亿).
+2026-02-25 15:39:27 [INFO] quant: Filtered 0 zombie stocks (< 10000.0 万).
+2026-02-25 15:39:27 [INFO] quant: Filtered 0 potential manipulated stocks (turnover > 20.0%).
+2026-02-25 15:39:27 [INFO] quant: Filtered 0 highly inactive stocks (turnover < 2.0%).
+2026-02-25 15:39:27 [INFO] quant: Final high-value stock count: 0
+2026-02-25 15:39:27 [WARNING] quant: No stocks passed the filters! Check your config threshold.
+2026-02-25 15:39:38 [INFO] quant: Loaded 1569 stocks to update historical data.
+2026-02-25 15:43:40 [INFO] quant: Update summary: 0 new files created, 0 files incrementally updated, 1569 API requests returned no new data.
+2026-02-25 15:51:29 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 15:51:36 [INFO] quant: Scanning progress: 0/1345 (sz.002919)
+2026-02-25 15:51:38 [INFO] quant: Scanning progress: 100/1345 (sz.399621)
+2026-02-25 15:51:39 [INFO] quant: Scanning progress: 200/1345 (sh.600522)
+2026-02-25 15:51:41 [INFO] quant: Scanning progress: 300/1345 (sz.300217)
+2026-02-25 15:51:42 [INFO] quant: Scanning progress: 400/1345 (sh.600734)
+2026-02-25 15:51:43 [INFO] quant: Scanning progress: 500/1345 (sz.301248)
+2026-02-25 15:51:45 [INFO] quant: Scanning progress: 600/1345 (sh.000050)
+2026-02-25 15:51:46 [INFO] quant: Scanning progress: 700/1345 (sz.002378)
+2026-02-25 15:51:47 [INFO] quant: Scanning progress: 800/1345 (sh.600251)
+2026-02-25 15:51:48 [INFO] quant: Scanning progress: 900/1345 (sh.601606)
+2026-02-25 15:51:49 [INFO] quant: Scanning progress: 1000/1345 (sh.600120)
+2026-02-25 15:51:51 [INFO] quant: Scanning progress: 1100/1345 (sz.300048)
+2026-02-25 15:51:52 [INFO] quant: Scanning progress: 1200/1345 (sh.600497)
+2026-02-25 15:51:53 [INFO] quant: Scanning progress: 1300/1345 (sh.000987)
+2026-02-25 16:53:54 [INFO] quant: 批量回测: 5 只股票 (seed=42)
+2026-02-25 16:53:54 [INFO] quant: 无有效回测结果。
+2026-02-25 16:56:26 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 17:04:31 [INFO] quant: === 策略优化引擎启动 ===
+2026-02-25 17:04:31 [INFO] quant: 目标函数: sharpe_adj | 最大轮数: 5 | 每轮采样: 200
+2026-02-25 17:04:31 [INFO] quant: [Round 0] 评估基线策略...
+2026-02-25 17:04:43 [INFO] quant: [Round 0] 基线得分: -999.000000
+2026-02-25 17:04:43 [INFO] quant: [Round 1/5] 生成邻域参数并评估...
+2026-02-25 17:04:43 [INFO] quant:   邻域 1/8 评估中...
+2026-02-25 17:04:48 [INFO] quant:   邻域 1 得分: -999.000000
+2026-02-25 17:04:48 [INFO] quant:   邻域 2/8 评估中...
+2026-02-25 17:05:00 [INFO] quant:   邻域 2 得分: -0.000000
+2026-02-25 17:05:00 [INFO] quant:   邻域 3/8 评估中...
+2026-02-25 17:05:12 [INFO] quant:   邻域 3 得分: -0.000000
+2026-02-25 17:05:12 [INFO] quant:   邻域 4/8 评估中...
+2026-02-25 17:05:24 [INFO] quant:   邻域 4 得分: -0.000000
+2026-02-25 17:05:24 [INFO] quant:   邻域 5/8 评估中...
+2026-02-25 17:05:35 [INFO] quant:   邻域 5 得分: -0.000000
+2026-02-25 17:05:35 [INFO] quant:   邻域 6/8 评估中...
+2026-02-25 17:05:46 [INFO] quant:   邻域 6 得分: -0.000000
+2026-02-25 17:05:46 [INFO] quant:   邻域 7/8 评估中...
+2026-02-25 17:05:58 [INFO] quant:   邻域 7 得分: -999.000000
+2026-02-25 17:05:58 [INFO] quant:   邻域 8/8 评估中...
+2026-02-25 17:06:09 [INFO] quant:   邻域 8 得分: -999.000000
+2026-02-25 17:06:09 [INFO] quant: [Round 1] ✅ 改进! 新最优: -0.000000 (+999.000000)
+2026-02-25 17:06:09 [INFO] quant: [Round 2/5] 生成邻域参数并评估...
+2026-02-25 17:06:09 [INFO] quant:   邻域 1/8 评估中...
+2026-02-25 17:06:21 [INFO] quant:   邻域 1 得分: -0.044479
+2026-02-25 17:06:21 [INFO] quant:   邻域 2/8 评估中...
+2026-02-25 17:06:33 [INFO] quant:   邻域 2 得分: 0.645069
+2026-02-25 17:06:33 [INFO] quant:   邻域 3/8 评估中...
+2026-02-25 17:06:44 [INFO] quant:   邻域 3 得分: -999.000000
+2026-02-25 17:06:44 [INFO] quant:   邻域 4/8 评估中...
+2026-02-25 17:06:56 [INFO] quant:   邻域 4 得分: -999.000000
+2026-02-25 17:06:56 [INFO] quant:   邻域 5/8 评估中...
+2026-02-25 17:07:12 [INFO] quant:   邻域 5 得分: -999.000000
+2026-02-25 17:07:12 [INFO] quant:   邻域 6/8 评估中...
+2026-02-25 17:07:28 [INFO] quant:   邻域 6 得分: 0.312934
+2026-02-25 17:07:28 [INFO] quant:   邻域 7/8 评估中...
+2026-02-25 17:07:41 [INFO] quant:   邻域 7 得分: -999.000000
+2026-02-25 17:07:41 [INFO] quant:   邻域 8/8 评估中...
+2026-02-25 17:07:54 [INFO] quant:   邻域 8 得分: -999.000000
+2026-02-25 17:07:54 [INFO] quant: [Round 2] ✅ 改进! 新最优: 0.645069 (+0.645069)
+2026-02-25 17:07:54 [INFO] quant: [Round 3/5] 生成邻域参数并评估...
+2026-02-25 17:07:54 [INFO] quant:   邻域 1/8 评估中...
+2026-02-25 17:08:00 [INFO] quant:   邻域 1 得分: -999.000000
+2026-02-25 17:08:00 [INFO] quant:   邻域 2/8 评估中...
+2026-02-25 17:08:05 [INFO] quant:   邻域 2 得分: -999.000000
+2026-02-25 17:08:05 [INFO] quant:   邻域 3/8 评估中...
+2026-02-25 17:08:18 [INFO] quant:   邻域 3 得分: 0.254158
+2026-02-25 17:08:18 [INFO] quant:   邻域 4/8 评估中...
+2026-02-25 17:08:30 [INFO] quant:   邻域 4 得分: 0.502009
+2026-02-25 17:08:30 [INFO] quant:   邻域 5/8 评估中...
+2026-02-25 17:08:43 [INFO] quant:   邻域 5 得分: 0.555161
+2026-02-25 17:08:43 [INFO] quant:   邻域 6/8 评估中...
+2026-02-25 17:08:48 [INFO] quant:   邻域 6 得分: -999.000000
+2026-02-25 17:08:48 [INFO] quant:   邻域 7/8 评估中...
+2026-02-25 17:09:02 [INFO] quant:   邻域 7 得分: 0.555161
+2026-02-25 17:09:02 [INFO] quant:   邻域 8/8 评估中...
+2026-02-25 17:09:15 [INFO] quant:   邻域 8 得分: 0.715833
+2026-02-25 17:09:15 [INFO] quant: [Round 3] ✅ 改进! 新最优: 0.715833 (+0.070765)
+2026-02-25 17:09:15 [INFO] quant: [Round 4/5] 生成邻域参数并评估...
+2026-02-25 17:09:15 [INFO] quant:   邻域 1/8 评估中...
+2026-02-25 17:09:29 [INFO] quant:   邻域 1 得分: -0.275935
+2026-02-25 17:09:29 [INFO] quant:   邻域 2/8 评估中...
+2026-02-25 17:09:34 [INFO] quant:   邻域 2 得分: -999.000000
+2026-02-25 17:09:34 [INFO] quant:   邻域 3/8 评估中...
+2026-02-25 17:09:48 [INFO] quant:   邻域 3 得分: 0.686682
+2026-02-25 17:09:48 [INFO] quant:   邻域 4/8 评估中...
+2026-02-25 17:10:02 [INFO] quant:   邻域 4 得分: 0.160042
+2026-02-25 17:10:02 [INFO] quant:   邻域 5/8 评估中...
+2026-02-25 17:10:17 [INFO] quant:   邻域 5 得分: 0.152424
+2026-02-25 17:10:17 [INFO] quant:   邻域 6/8 评估中...
+2026-02-25 17:10:34 [INFO] quant:   邻域 6 得分: 0.168647
+2026-02-25 17:10:34 [INFO] quant:   邻域 7/8 评估中...
+2026-02-25 17:10:52 [INFO] quant:   邻域 7 得分: 0.760688
+2026-02-25 17:10:52 [INFO] quant:   邻域 8/8 评估中...
+2026-02-25 17:11:00 [INFO] quant:   邻域 8 得分: -999.000000
+2026-02-25 17:11:00 [INFO] quant: [Round 4] ✅ 改进! 新最优: 0.760688 (+0.044854)
+2026-02-25 17:11:00 [INFO] quant: [Round 5/5] 生成邻域参数并评估...
+2026-02-25 17:11:00 [INFO] quant:   邻域 1/8 评估中...
+2026-02-25 17:11:18 [INFO] quant:   邻域 1 得分: 0.309520
+2026-02-25 17:11:18 [INFO] quant:   邻域 2/8 评估中...
+2026-02-25 17:11:38 [INFO] quant:   邻域 2 得分: 0.255776
+2026-02-25 17:11:38 [INFO] quant:   邻域 3/8 评估中...
+2026-02-25 17:11:54 [INFO] quant:   邻域 3 得分: 0.272766
+2026-02-25 17:11:54 [INFO] quant:   邻域 4/8 评估中...
+2026-02-25 17:12:06 [INFO] quant:   邻域 4 得分: 0.364715
+2026-02-25 17:12:06 [INFO] quant:   邻域 5/8 评估中...
+2026-02-25 17:12:17 [INFO] quant:   邻域 5 得分: 0.198274
+2026-02-25 17:12:17 [INFO] quant:   邻域 6/8 评估中...
+2026-02-25 17:12:22 [INFO] quant:   邻域 6 得分: -999.000000
+2026-02-25 17:12:22 [INFO] quant:   邻域 7/8 评估中...
+2026-02-25 17:12:34 [INFO] quant:   邻域 7 得分: 0.319373
+2026-02-25 17:12:34 [INFO] quant:   邻域 8/8 评估中...
+2026-02-25 17:12:46 [INFO] quant:   邻域 8 得分: 0.199676
+2026-02-25 17:12:46 [INFO] quant: [Round 5] ❌ 未改进, 当前最优保持: 0.760688
+2026-02-25 17:12:46 [INFO] quant: === 优化完成 === 最终得分: 0.760688
+2026-02-25 17:12:46 [INFO] quant: 优化结果已保存: data/optimize_results\20260225_171246
+2026-02-25 17:12:46 [INFO] quant: 优化结果已保存: data/optimize_results\20260225_171246
+2026-02-25 17:16:50 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 17:17:08 [INFO] quant: === 策略优化引擎启动 ===
+2026-02-25 17:17:08 [INFO] quant: 目标函数: sharpe_adj | 最大轮数: 10 | 每轮采样: 400
+2026-02-25 17:17:08 [INFO] quant: [Round 0] 评估基线策略...
+2026-02-25 17:17:27 [INFO] quant: [Round 0] 基线得分: -999.000000
+2026-02-25 17:17:27 [INFO] quant: [Round 1/10] 生成邻域参数并评估...
+2026-02-25 17:17:27 [INFO] quant:   邻域 1/8 评估中...
+2026-02-25 17:17:43 [INFO] quant:   邻域 1 得分: -999.000000
+2026-02-25 17:17:43 [INFO] quant:   邻域 2/8 评估中...
+2026-02-25 17:18:00 [INFO] quant:   邻域 2 得分: -999.000000
+2026-02-25 17:18:00 [INFO] quant:   邻域 3/8 评估中...
+2026-02-25 17:18:19 [INFO] quant:   邻域 3 得分: -999.000000
+2026-02-25 17:18:19 [INFO] quant:   邻域 4/8 评估中...
+2026-02-25 17:18:27 [INFO] quant:   邻域 4 得分: -999.000000
+2026-02-25 17:18:27 [INFO] quant:   邻域 5/8 评估中...
+2026-02-25 17:18:45 [INFO] quant:   邻域 5 得分: -999.000000
+2026-02-25 17:18:45 [INFO] quant:   邻域 6/8 评估中...
+2026-02-25 17:19:04 [INFO] quant:   邻域 6 得分: -999.000000
+2026-02-25 17:19:04 [INFO] quant:   邻域 7/8 评估中...
+2026-02-25 17:19:22 [INFO] quant:   邻域 7 得分: -999.000000
+2026-02-25 17:19:22 [INFO] quant:   邻域 8/8 评估中...
+2026-02-25 17:19:55 [INFO] quant:   邻域 8 得分: -999.000000
+2026-02-25 17:19:55 [INFO] quant: [Round 1] ❌ 未改进, 当前最优保持: -999.000000
+2026-02-25 17:19:55 [INFO] quant: [Round 2/10] 生成邻域参数并评估...
+2026-02-25 17:19:55 [INFO] quant:   邻域 1/8 评估中...
+2026-02-25 17:20:12 [INFO] quant:   邻域 1 得分: -999.000000
+2026-02-25 17:20:12 [INFO] quant:   邻域 2/8 评估中...
+2026-02-25 17:20:45 [INFO] quant:   邻域 2 得分: -999.000000
+2026-02-25 17:20:45 [INFO] quant:   邻域 3/8 评估中...
+2026-02-25 17:21:25 [INFO] quant:   邻域 3 得分: -999.000000
+2026-02-25 17:21:25 [INFO] quant:   邻域 4/8 评估中...
+2026-02-25 17:21:38 [INFO] quant:   邻域 4 得分: -999.000000
+2026-02-25 17:21:38 [INFO] quant:   邻域 5/8 评估中...
+2026-02-25 17:22:09 [INFO] quant:   邻域 5 得分: 0.379219
+2026-02-25 17:22:09 [INFO] quant:   邻域 6/8 评估中...
+2026-02-25 17:22:42 [INFO] quant:   邻域 6 得分: -999.000000
+2026-02-25 17:22:42 [INFO] quant:   邻域 7/8 评估中...
+2026-02-25 17:23:05 [INFO] quant:   邻域 7 得分: -999.000000
+2026-02-25 17:23:05 [INFO] quant:   邻域 8/8 评估中...
+2026-02-25 17:23:29 [INFO] quant:   邻域 8 得分: -999.000000
+2026-02-25 17:23:29 [INFO] quant: [Round 2] ✅ 改进! 新最优: 0.379219 (+999.379219)
+2026-02-25 17:23:29 [INFO] quant: [Round 3/10] 生成邻域参数并评估...
+2026-02-25 17:23:29 [INFO] quant:   邻域 1/8 评估中...
+2026-02-25 17:23:49 [INFO] quant:   邻域 1 得分: 0.322662
+2026-02-25 17:23:49 [INFO] quant:   邻域 2/8 评估中...
+2026-02-25 17:23:57 [INFO] quant:   邻域 2 得分: -999.000000
+2026-02-25 17:23:57 [INFO] quant:   邻域 3/8 评估中...
+2026-02-25 17:24:17 [INFO] quant:   邻域 3 得分: 0.255598
+2026-02-25 17:24:17 [INFO] quant:   邻域 4/8 评估中...
+2026-02-25 17:24:36 [INFO] quant:   邻域 4 得分: 0.220093
+2026-02-25 17:24:36 [INFO] quant:   邻域 5/8 评估中...
+2026-02-25 17:24:56 [INFO] quant:   邻域 5 得分: 0.300584
+2026-02-25 17:24:56 [INFO] quant:   邻域 6/8 评估中...
+2026-02-25 17:25:15 [INFO] quant:   邻域 6 得分: 0.241977
+2026-02-25 17:25:15 [INFO] quant:   邻域 7/8 评估中...
+2026-02-25 17:25:34 [INFO] quant:   邻域 7 得分: 0.275136
+2026-02-25 17:25:34 [INFO] quant:   邻域 8/8 评估中...
+2026-02-25 17:25:43 [INFO] quant:   邻域 8 得分: -999.000000
+2026-02-25 17:25:43 [INFO] quant: [Round 3] ❌ 未改进, 当前最优保持: 0.379219
+2026-02-25 17:25:43 [INFO] quant: [Round 4/10] 生成邻域参数并评估...
+2026-02-25 17:25:43 [INFO] quant:   邻域 1/8 评估中...
+2026-02-25 17:26:03 [INFO] quant:   邻域 1 得分: 0.084256
+2026-02-25 17:26:03 [INFO] quant:   邻域 2/8 评估中...
+2026-02-25 17:26:24 [INFO] quant:   邻域 2 得分: 0.121010
+2026-02-25 17:26:24 [INFO] quant:   邻域 3/8 评估中...
+2026-02-25 17:26:34 [INFO] quant:   邻域 3 得分: -999.000000
+2026-02-25 17:26:34 [INFO] quant:   邻域 4/8 评估中...
+2026-02-25 17:27:00 [INFO] quant:   邻域 4 得分: 0.190457
+2026-02-25 17:27:00 [INFO] quant:   邻域 5/8 评估中...
+2026-02-25 17:27:29 [INFO] quant:   邻域 5 得分: 0.237944
+2026-02-25 17:27:29 [INFO] quant:   邻域 6/8 评估中...
+2026-02-25 17:27:40 [INFO] quant:   邻域 6 得分: -999.000000
+2026-02-25 17:27:40 [INFO] quant:   邻域 7/8 评估中...
+2026-02-25 17:28:00 [INFO] quant:   邻域 7 得分: 0.187190
+2026-02-25 17:28:00 [INFO] quant:   邻域 8/8 评估中...
+2026-02-25 17:28:22 [INFO] quant:   邻域 8 得分: 0.195355
+2026-02-25 17:28:22 [INFO] quant: [Round 4] ❌ 未改进, 当前最优保持: 0.379219
+2026-02-25 17:28:22 [INFO] quant: [Round 4] 连续 2 轮无显著改进, 提前收敛停止
+2026-02-25 17:28:22 [INFO] quant: === 优化完成 === 最终得分: 0.379219
+2026-02-25 17:28:22 [INFO] quant: 优化结果已保存: data/optimize_results\20260225_172822
+2026-02-25 17:28:22 [INFO] quant: 优化结果已保存: data/optimize_results\20260225_172822
+2026-02-25 17:48:37 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 18:15:36 [ERROR] quant: 历史数据文件不存在: data\sh.600000.csv
+2026-02-25 18:15:36 [ERROR] quant: 历史数据文件不存在: data\sz.000001.csv
+2026-02-25 18:21:59 [INFO] quant: 开始对 1649 支股票执行多因子综合分析...
+2026-02-25 18:22:07 [INFO] quant: 分析完成。共有 1345 支股票满足评分阈值。
+2026-02-25 18:22:07 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260225.csv

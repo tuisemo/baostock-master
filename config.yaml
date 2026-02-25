@@ -1,0 +1,54 @@
+# 生产级量化系统配置 (Production Quant System Config)
+
+log:
+  level: "INFO"
+  file: "data/quant.log"
+
+filter:
+  keep_star_market: false
+  min_market_cap_billion: 50.0
+  min_turnover_amount_wan: 10000.0
+  max_turnover_rate_pct: 20.0
+  min_turnover_rate_pct: 2.0
+
+history_data:
+  default_lookback_days: 500
+  data_dir: "data"
+
+analyzer:
+  weights:
+    trend: 0.4
+    reversion: 0.3
+    volume: 0.3
+  ma_short: 5
+  ma_long: 20
+  macd_fast: 12
+  macd_slow: 26
+  macd_signal: 9
+  rsi_length: 14
+  rsi_buy_threshold: 40
+  rsi_sell_threshold: 70
+  bbands_length: 20
+  bbands_std: 2.0
+  atr_length: 14
+  atr_multiplier: 2.0
+
+strategy:
+  vol_up_ratio: 1.35          # 放量判定倍数
+  rsi_cooled_max: 55           # 信号A的RSI上限
+  pullback_ma_tolerance: 1.02  # 回踩MA20的容差
+  negative_bias_pct: 0.95      # 信号B的乖离率阈值
+  rsi_oversold: 35             # 信号B的RSI超卖阈值
+  trail_atr_mult: 1.8          # 追踪止损ATR倍数
+  take_profit_pct: 0.06        # 波段止盈比例
+  breakeven_trigger: 0.04      # 保本触发比例
+  breakeven_buffer: 1.005      # 保本缓冲系数
+
+optimizer:
+  sample_count: 200              # 每轮优化采样的股票数量
+  max_rounds: 5                  # 最大优化轮数
+  convergence_threshold: 0.005   # 收敛判定阈值, 连续两轮综合得分变化小于此值则停止
+  walk_forward_splits: 5         # Walk-Forward滚动窗口数
+  train_ratio: 0.7               # 训练集占比
+  objective: "sharpe_adj"        # 优化目标: sharpe_adj=夏普比率调整, return=收益率, win_rate=胜率
+  results_dir: "data/optimize_results"  # 优化结果存放目录
