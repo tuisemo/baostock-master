@@ -426,3 +426,45 @@
 2026-02-25 18:21:59 [INFO] quant: 开始对 1649 支股票执行多因子综合分析...
 2026-02-25 18:22:07 [INFO] quant: 分析完成。共有 1345 支股票满足评分阈值。
 2026-02-25 18:22:07 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260225.csv
+2026-02-25 21:46:42 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 21:47:36 [INFO] quant: Starting stock list update process.
+2026-02-25 21:47:36 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-02-25 21:47:43 [INFO] quant: Total entries from baostock: 7122
+2026-02-25 21:47:43 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 6347
+2026-02-25 21:47:43 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-02-25 21:48:05 [INFO] quant: Filtered 2935 micro-cap stocks (< 50.0 亿).
+2026-02-25 21:48:05 [INFO] quant: Filtered 429 zombie stocks (< 10000.0 万).
+2026-02-25 21:48:05 [INFO] quant: Filtered 57 potential manipulated stocks (turnover > 20.0%).
+2026-02-25 21:48:05 [INFO] quant: Filtered 1214 highly inactive stocks (turnover < 2.0%).
+2026-02-25 21:48:05 [INFO] quant: Final high-value stock count: 1712
+2026-02-25 21:48:05 [INFO] quant: Saved high-value stock list to data\stock-list.csv
+2026-02-25 21:48:35 [INFO] quant: Loaded 1712 stocks to update historical data.
+2026-02-25 21:57:14 [INFO] quant: 开始对 1749 支股票执行多因子综合分析...
+2026-02-25 21:57:34 [INFO] quant: 分析完成。共有 1434 支股票满足评分阈值。
+2026-02-25 21:57:34 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260225.csv
+2026-02-25 22:01:45 [INFO] quant: Process interrupted by user.
+2026-02-25 22:02:12 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 22:12:08 [INFO] quant: Loaded 1712 stocks to update historical data.
+2026-02-25 22:28:45 [INFO] quant: Update summary: 196 new files created, 1104 files incrementally updated, 0 API requests returned no new data.
+2026-02-25 22:31:18 [INFO] quant: 开始对 1945 支股票执行多因子综合分析...
+2026-02-25 22:31:28 [INFO] quant: 分析完成。共有 1653 支股票满足评分阈值。
+2026-02-25 22:31:28 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260225.csv
+2026-02-25 22:40:22 [INFO] quant: Scanning progress: 0/1653 (sz.300917)
+2026-02-25 22:40:25 [INFO] quant: Scanning progress: 100/1653 (sz.002585)
+2026-02-25 22:40:26 [INFO] quant: Scanning progress: 200/1653 (sz.000875)
+2026-02-25 22:40:27 [INFO] quant: Scanning progress: 300/1653 (sh.601778)
+2026-02-25 22:40:29 [INFO] quant: Scanning progress: 400/1653 (sh.000104)
+2026-02-25 22:40:33 [INFO] quant: Scanning progress: 500/1653 (sh.600590)
+2026-02-25 22:40:38 [INFO] quant: Scanning progress: 600/1653 (sz.399624)
+2026-02-25 22:40:42 [INFO] quant: Scanning progress: 700/1653 (sh.603516)
+2026-02-25 22:40:44 [INFO] quant: Scanning progress: 800/1653 (sz.301248)
+2026-02-25 22:40:45 [INFO] quant: Scanning progress: 900/1653 (sz.301486)
+2026-02-25 22:40:46 [INFO] quant: Scanning progress: 1000/1653 (sh.603950)
+2026-02-25 22:40:47 [INFO] quant: Scanning progress: 1100/1653 (sz.301286)
+2026-02-25 22:40:48 [INFO] quant: Scanning progress: 1200/1653 (sz.399616)
+2026-02-25 22:40:49 [INFO] quant: Scanning progress: 1300/1653 (sh.603599)
+2026-02-25 22:40:50 [INFO] quant: Scanning progress: 1400/1653 (sz.000620)
+2026-02-25 22:40:51 [INFO] quant: Scanning progress: 1500/1653 (sz.002094)
+2026-02-25 22:40:51 [INFO] quant: Scanning progress: 1600/1653 (sz.399379)
+2026-02-25 22:58:13 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-25 22:58:26 [INFO] quant: 开始对 1945 支股票执行多因子综合分析...

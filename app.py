@@ -243,58 +243,61 @@ def ui_run_optimization(rounds, samples, objective):
 
 
 with gr.Blocks(title="生产级 A 股量化系统", theme=gr.themes.Default()) as demo:
-    gr.Markdown("# 📈 生产级 A 股多因子量化选股与回测系统")
+    gr.Markdown("# 📈 自动化量化选股与闭环自演进分析系统")
 
-    with gr.Tab("1️⃣ 数据同步中心"):
+    with gr.Tab("1️⃣ 数据同步与底仓构建"):
         gr.Markdown("### 步骤一：获取并清洗基础股票池")
-        gr.Markdown("将查询全量 A 股字典，并按照 `config.yaml` 严格剔除微盘股（<50亿）、僵尸股（低成交量）、被操盘高危股（异常高换手）。")
+        gr.Markdown("将查询全量 A 股字典，并按照 `config.yaml` 严格剔除微盘股（<50亿）、僵尸股（低成交额）、被操盘高危股（异常高换手）。")
         btn_update_list = gr.Button("🔄 1. 拉取/清洗最新有效股票池", variant="primary")
         txt_list_log = gr.Textbox(label="运行日志", lines=3, interactive=False)
         btn_update_list.click(fn=ui_update_list, outputs=txt_list_log)
         gr.Markdown("---")
         gr.Markdown("### 步骤二：增量拉取历史 K 线数据")
-        gr.Markdown("增量模式：将为上述股票池拉取或从断点处续接（追加）最新的日均线数据，自动免除冗余抓取。")
+        gr.Markdown("增量模式：将为上述股票池拉取或从断点处续接最新的日线数据，自动免除冗余抓取。")
         btn_update_data = gr.Button("📥 2. 增量更新所有股票历史 K 线", variant="secondary")
         txt_data_log = gr.Textbox(label="运行日志", lines=3, interactive=False)
         btn_update_data.click(fn=ui_update_data, outputs=txt_data_log)
 
-    with gr.Tab("2️⃣ 每日量化多因子选股"):
-        gr.Markdown("对当前所有本地数据集进行多因子矩阵（趋势因子、均值回归因子、量价因子、波幅因子）并行计算并给每一只股票综合打分。")
-        btn_analyze = gr.Button("⚡ 运行今日高分优选", variant="primary")
-        txt_analyze_log = gr.Textbox(label="运行状态", lines=2, interactive=False)
-        df_selected = gr.Dataframe(label="🎯 今日强势选股结果 (按评分降序)", interactive=False)
+    with gr.Tab("2️⃣ 核心策略打分与精准买点扫描"):
+        gr.Markdown("### 并发计算多因子模型，输出今日最高胜率的买入标的")
+        gr.Markdown("先通过“跑批引擎”对所有标的计算趋势、均值回归、量价强弱综合打分，过滤出潜力标的池。\n\n然后通过“买机引擎”，精确定位**今天**触发了【均线极致缩量回踩】或【大级别乖离超卖】硬性买点的特定个股！")
+        
+        with gr.Row():
+            btn_analyze = gr.Button("⚡ 第一步：运行全市场多因子综合评级", variant="primary")
+            btn_scan = gr.Button("🎯 第二步：在评级池中精确扫描今日买点标的", variant="primary")
+            
+        with gr.Row():
+            txt_analyze_log = gr.Textbox(label="评级运行状态", lines=2, interactive=False)
+            txt_scan_log = gr.Textbox(label="扫描运行状态", lines=2, interactive=False)
+            
+        df_selected = gr.Dataframe(label="📊 今日多因子综合得分排名榜 (底层潜力池)", interactive=False)
+        df_scan_result = gr.Dataframe(label="🚨 明日可市价建仓的精准标的 (触发强烈波段买点)", interactive=False)
+        
         btn_analyze.click(fn=ui_run_analyzer, outputs=[txt_analyze_log, df_selected])
-
-    with gr.Tab("3️⃣ 个股回测与买卖信号分析"):
-        gr.Markdown("输入指定股票的代码（例如 `sh.600000` 或 `sz.000001`），系统将模拟该策略在过去区间的历史回测，并标记出买卖点。")
-        with gr.Row():
-            txt_code = gr.Textbox(label="股票代码", placeholder="例如: sh.600000", scale=4)
-            btn_backtest = gr.Button("🔬 运行策略回测", variant="primary", scale=1)
-        with gr.Row():
-            txt_stats = gr.Markdown("等待执行...")
-            plot_chart = gr.HTML(label="策略买卖点复盘")
-        df_trades = gr.Dataframe(label="详细交易明细表", interactive=False)
-        btn_backtest.click(fn=ui_backtest_stock, inputs=txt_code, outputs=[txt_stats, plot_chart, df_trades])
-
-    with gr.Tab("4️⃣ 策略买点扫描 (特定股票池)"):
-        gr.Markdown("对当前选股结果进行扫描，筛选出**最新交易日**符合量化策略买入条件的标的。")
-        btn_scan = gr.Button("🔍 扫描最新买入信号", variant="primary")
-        txt_scan_log = gr.Textbox(label="运行状态", lines=2, interactive=False)
-        df_scan_result = gr.Dataframe(label="🎯 触发买入信号的标的", interactive=False)
         btn_scan.click(fn=ui_scan_signals, outputs=[txt_scan_log, df_scan_result])
 
-    with gr.Tab("5️⃣ 策略参数自动优化"):
-        gr.Markdown("### 多轮迭代优化引擎")
-        gr.Markdown("基于海量数据回测，通过**策略制定 → 买卖回测 → 反哺策略优化 → 下一轮优化**的闭环模式，")
-        gr.Markdown("自动调整 MA、MACD、RSI、布林带、ATR 等所有技术指标参数，以及买卖阈值、止盈止损系数，")
-        gr.Markdown("寻找使**夏普比率调整值**最大化的最优参数组合，以实现盈利最大化、稳定性最高。")
+    with gr.Tab("3️⃣ 历史胜率回测与沙盘推演"):
+        gr.Markdown("对扫描出的买入标的，或您自选的个股，验证其在当前自动优化参数下的历史盈利能力和交易点位准确性。")
         with gr.Row():
-            sl_rounds = gr.Slider(label="最大优化轮数", minimum=1, maximum=10, value=5, step=1)
-            sl_samples = gr.Slider(label="每轮采样股票数", minimum=50, maximum=500, value=200, step=50)
-            sl_objective = gr.Dropdown(label="优化目标函数", choices=["sharpe_adj", "return", "win_rate"], value="sharpe_adj")
-        btn_optimize = gr.Button("🚀 启动自动优化", variant="primary")
-        txt_opt_log = gr.Textbox(label="运行状态", lines=2, interactive=False)
-        df_opt_history = gr.Dataframe(label="📊 优化历史记录", interactive=False)
+            txt_code = gr.Textbox(label="输入股票代码", placeholder="例如: sh.600000", scale=4)
+            btn_backtest = gr.Button("🔬 开始历史行情回溯复盘", variant="primary", scale=1)
+        with gr.Row():
+            txt_stats = gr.Markdown("等待运行回测引擎...")
+            plot_chart = gr.HTML(label="买卖点复盘可视化")
+        df_trades = gr.Dataframe(label="详细交易明细表 (含动态追踪止盈止损点位)", interactive=False)
+        btn_backtest.click(fn=ui_backtest_stock, inputs=txt_code, outputs=[txt_stats, plot_chart, df_trades])
+
+    with gr.Tab("4️⃣ 递归自学习与参数寻优 (Auto-Optimizer)"):
+        gr.Markdown("### 利用历史回测反馈，让系统机器自己推算最优参数")
+        gr.Markdown("利用启发式爬山算法（Hill Climbing）与前向演进（Walk-Forward）验证，每天收盘后通过几十万次的大规模并行沙盒推演，")
+        gr.Markdown("自动帮您寻找到使得“风险收益比(Sharpe)”最大、“最大回撤”最小的 MA / MACD / RSI 等关键参数，**并即时应用生效于明天的选股当中**。")
+        with gr.Row():
+            sl_rounds = gr.Slider(label="本次机器迭代最多次数（轮次越多效果越好，耗时更久）", minimum=1, maximum=10, value=5, step=1)
+            sl_samples = gr.Slider(label="每轮回测抽样的大盘标的数量", minimum=50, maximum=500, value=200, step=50)
+            sl_objective = gr.Dropdown(label="极值攀登目标", choices=["sharpe_adj", "return", "win_rate"], value="sharpe_adj")
+        btn_optimize = gr.Button("🚀 立即启动参数自我进化引擎", variant="primary")
+        txt_opt_log = gr.Textbox(label="演进运行状态", lines=2, interactive=False)
+        df_opt_history = gr.Dataframe(label="📈 历次参数变异爬山记录 (评估报告)", interactive=False)
         btn_optimize.click(fn=ui_run_optimization, inputs=[sl_rounds, sl_samples, sl_objective], outputs=[txt_opt_log, df_opt_history])
 
 
