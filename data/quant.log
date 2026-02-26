@@ -2398,3 +2398,130 @@ dtype: float64
 2026-02-26 17:51:55 [INFO] quant: Scanning progress: 1600/1747 (sz.002094)
 2026-02-26 17:51:57 [INFO] quant: Scanning progress: 1700/1747 (sh.000059)
 2026-02-26 17:52:33 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (29 features)
+2026-02-26 21:11:23 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 21:11:23 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 21:11:23 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 21:12:14 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-02-26 21:12:14 [INFO] quant: Building dataset from historical data...
+2026-02-26 21:13:43 [INFO] quant: Dataset built successfully. Total rows: 581516. Features: 29
+2026-02-26 21:13:43 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-26 21:13:43 [INFO] quant: Target distribution: Positive 192738, Negative 388778. Ratio: 1:2.02
+2026-02-26 21:13:43 [INFO] quant: Starting LightGBM training...
+2026-02-26 21:14:07 [INFO] quant: Model AUC on Test Set: 0.8008
+2026-02-26 21:14:07 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.85      0.68      0.75     77730
+           1       0.54      0.77      0.63     38574
+
+    accuracy                           0.71    116304
+   macro avg       0.70      0.72      0.69    116304
+weighted avg       0.75      0.71      0.71    116304
+
+2026-02-26 21:14:07 [INFO] quant: Top 10 Important Features:
+feat_atr_ratio         663240.981686
+feat_market_bias_20    154468.758324
+feat_market_pct_20     150589.388730
+feat_market_pct_10     132344.924083
+feat_market_pct_5      125548.928902
+feat_turnover          105193.926444
+feat_market_pct_1       94410.929712
+feat_bb_width           29222.558507
+feat_pct_chg_1          26731.981949
+feat_macd_norm          26581.823685
+dtype: float64
+2026-02-26 21:14:07 [INFO] quant: Model saved to models/alpha_lgbm.txt
+2026-02-26 21:40:57 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-26 21:41:41 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-26 21:41:52 [INFO] quant: Starting stock list update process.
+2026-02-26 21:41:52 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-02-26 21:42:22 [ERROR] quant: Query all stock failed: 网络接收错误。
+2026-02-26 21:42:31 [INFO] quant: Starting stock list update process.
+2026-02-26 21:42:31 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-02-26 21:42:49 [INFO] quant: Total entries from baostock: 7124
+2026-02-26 21:42:49 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 6349
+2026-02-26 21:42:49 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-02-26 21:43:13 [INFO] quant: Filtered 2928 micro-cap stocks (< 50.0 亿).
+2026-02-26 21:43:13 [INFO] quant: Filtered 464 zombie stocks (< 10000.0 万).
+2026-02-26 21:43:13 [INFO] quant: Filtered 61 potential manipulated stocks (turnover > 20.0%).
+2026-02-26 21:43:13 [INFO] quant: Filtered 1739 highly inactive stocks (turnover < 3.0%).
+2026-02-26 21:43:13 [INFO] quant: Filtered 924 stocks failing PE/PB fundamentals.
+2026-02-26 21:43:13 [INFO] quant: Final high-value stock count: 233
+2026-02-26 21:43:13 [INFO] quant: Saved high-value stock list to data\stock-list.csv
+2026-02-26 21:43:20 [INFO] quant: Loaded 234 stocks to update historical data (including market index).
+2026-02-26 21:45:34 [INFO] quant: Update summary: 12 new files created, 222 files incrementally updated, 0 API requests returned no new data.
+2026-02-26 21:47:48 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-26 21:47:53 [INFO] quant: Starting stock list update process.
+2026-02-26 21:47:53 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-02-26 21:48:26 [INFO] quant: Total entries from baostock: 7124
+2026-02-26 21:48:26 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 6349
+2026-02-26 21:48:26 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-02-26 21:48:51 [INFO] quant: Filtered 2928 micro-cap stocks (< 50.0 亿).
+2026-02-26 21:48:51 [INFO] quant: Filtered 464 zombie stocks (< 10000.0 万).
+2026-02-26 21:48:51 [INFO] quant: Filtered 61 potential manipulated stocks (turnover > 20.0%).
+2026-02-26 21:48:51 [INFO] quant: Filtered 1739 highly inactive stocks (turnover < 3.0%).
+2026-02-26 21:48:51 [INFO] quant: Filtered 924 stocks failing PE/PB fundamentals.
+2026-02-26 21:48:51 [INFO] quant: Final high-value stock count: 233
+2026-02-26 21:48:51 [INFO] quant: Saved high-value stock list to data\stock-list.csv
+2026-02-26 21:49:23 [INFO] quant: Loaded 234 stocks to update historical data (including market index).
+2026-02-26 22:05:51 [INFO] quant: Update summary: 234 new files created, 0 files incrementally updated, 0 API requests returned no new data.
+2026-02-26 22:06:00 [INFO] quant: 开始对 234 支股票执行多因子综合分析...
+2026-02-26 22:06:02 [INFO] quant: 分析完成。共有 0 支股票满足评分阈值。
+2026-02-26 22:06:02 [INFO] quant: 今日没有匹配到强势标的，建议空仓观望。
+2026-02-26 22:06:10 [INFO] quant: Scanning progress: 0/1747 (sh.605196)
+2026-02-26 22:06:12 [INFO] quant: Scanning progress: 100/1747 (sh.600339)
+2026-02-26 22:06:12 [INFO] quant: Scanning progress: 200/1747 (sz.002173)
+2026-02-26 22:06:13 [INFO] quant: Scanning progress: 300/1747 (sz.002606)
+2026-02-26 22:06:14 [INFO] quant: Scanning progress: 400/1747 (sh.563300)
+2026-02-26 22:06:15 [INFO] quant: Scanning progress: 500/1747 (sh.603058)
+2026-02-26 22:06:15 [INFO] quant: Scanning progress: 600/1747 (sh.603698)
+2026-02-26 22:06:16 [INFO] quant: Scanning progress: 700/1747 (sh.000858)
+2026-02-26 22:06:16 [INFO] quant: Scanning progress: 800/1747 (sz.002540)
+2026-02-26 22:06:17 [INFO] quant: Scanning progress: 900/1747 (sz.002291)
+2026-02-26 22:06:17 [INFO] quant: Scanning progress: 1000/1747 (sz.002334)
+2026-02-26 22:06:18 [INFO] quant: Scanning progress: 1100/1747 (sz.002632)
+2026-02-26 22:06:19 [INFO] quant: Scanning progress: 1200/1747 (sh.588750)
+2026-02-26 22:06:20 [INFO] quant: Scanning progress: 1300/1747 (sh.605056)
+2026-02-26 22:06:20 [INFO] quant: Scanning progress: 1400/1747 (sh.512890)
+2026-02-26 22:06:21 [INFO] quant: Scanning progress: 1500/1747 (sh.000106)
+2026-02-26 22:06:22 [INFO] quant: Scanning progress: 1600/1747 (sz.002094)
+2026-02-26 22:06:22 [INFO] quant: Scanning progress: 1700/1747 (sh.000059)
+2026-02-26 22:06:51 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 22:06:51 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 90 | 采样: 200
+2026-02-26 22:06:51 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-04-30
+2026-02-26 22:06:53 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (29 features)
+2026-02-26 23:12:56 [INFO] quant: === Optuna 调参完结 ===
+2026-02-26 23:12:56 [INFO] quant: 历史最佳样本内得分 (Train Score): 0.534288
+2026-02-26 23:13:26 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): 0.844774
+2026-02-26 23:13:26 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_231326
+2026-02-26 23:13:26 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_231326
+2026-02-26 23:22:30 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-02-26 23:22:30 [INFO] quant: Building dataset from historical data...
+2026-02-26 23:22:36 [INFO] quant: Dataset built successfully. Total rows: 147909. Features: 29
+2026-02-26 23:22:36 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-26 23:22:36 [INFO] quant: Target distribution: Positive 49496, Negative 98413. Ratio: 1:1.99
+2026-02-26 23:22:36 [INFO] quant: Starting LightGBM training...
+2026-02-26 23:22:39 [INFO] quant: Model AUC on Test Set: 0.7810
+2026-02-26 23:22:39 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.82      0.72      0.77     19631
+           1       0.55      0.69      0.62      9951
+
+    accuracy                           0.71     29582
+   macro avg       0.69      0.71      0.69     29582
+weighted avg       0.73      0.71      0.72     29582
+
+2026-02-26 23:22:39 [INFO] quant: Top 10 Important Features:
+feat_atr_ratio         87863.284513
+feat_market_pct_5      54001.167136
+feat_market_pct_20     47826.121393
+feat_market_bias_20    45199.046908
+feat_market_pct_10     43443.953610
+feat_market_pct_1      40233.116474
+feat_turnover          30132.223367
+feat_rsi_val            9563.668995
+feat_atr_mom_5          9360.399386
+feat_bb_width           9182.373155
+dtype: float64
+2026-02-26 23:22:39 [INFO] quant: Model saved to models/alpha_lgbm.txt

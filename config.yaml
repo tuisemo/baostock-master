@@ -11,7 +11,7 @@ filter:
   max_pe: 50.0
   min_pb: 1.0
 history_data:
-  default_lookback_days: 500
+  default_lookback_days: 1000
   data_dir: data
 analyzer:
   weights:
