@@ -559,3 +559,1714 @@
 2026-02-25 23:09:12 [INFO] quant:   邻域 6/8 评估中...
 2026-02-25 23:09:17 [INFO] quant:   邻域 6 得分: -999.000000
 2026-02-25 23:09:17 [INFO] quant:   邻域 7/8 评估中...
+2026-02-26 09:46:25 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-26 09:46:33 [INFO] quant: 开始对 1945 支股票执行多因子综合分析...
+2026-02-26 09:46:42 [INFO] quant: 分析完成。共有 1660 支股票满足评分阈值。
+2026-02-26 09:46:42 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260226.csv
+2026-02-26 09:46:45 [INFO] quant: Scanning progress: 0/1660 (sz.002108)
+2026-02-26 09:46:47 [INFO] quant: Scanning progress: 100/1660 (sz.002730)
+2026-02-26 09:46:49 [INFO] quant: Scanning progress: 200/1660 (sz.300080)
+2026-02-26 09:46:50 [INFO] quant: Scanning progress: 300/1660 (sh.603806)
+2026-02-26 09:46:52 [INFO] quant: Scanning progress: 400/1660 (sz.000688)
+2026-02-26 09:46:53 [INFO] quant: Scanning progress: 500/1660 (sh.603685)
+2026-02-26 09:46:55 [INFO] quant: Scanning progress: 600/1660 (sh.603113)
+2026-02-26 09:46:56 [INFO] quant: Scanning progress: 700/1660 (sh.600141)
+2026-02-26 09:46:58 [INFO] quant: Scanning progress: 800/1660 (sz.399640)
+2026-02-26 09:47:00 [INFO] quant: Scanning progress: 900/1660 (sz.301489)
+2026-02-26 09:47:01 [INFO] quant: Scanning progress: 1000/1660 (sh.600497)
+2026-02-26 09:47:03 [INFO] quant: Scanning progress: 1100/1660 (sh.600019)
+2026-02-26 09:47:04 [INFO] quant: Scanning progress: 1200/1660 (sz.399677)
+2026-02-26 09:47:06 [INFO] quant: Scanning progress: 1300/1660 (sh.000010)
+2026-02-26 09:47:07 [INFO] quant: Scanning progress: 1400/1660 (sh.603341)
+2026-02-26 09:47:09 [INFO] quant: Scanning progress: 1500/1660 (sz.000791)
+2026-02-26 09:47:10 [INFO] quant: Scanning progress: 1600/1660 (sh.000935)
+2026-02-26 09:49:06 [INFO] quant: === 策略优化引擎启动 ===
+2026-02-26 09:49:06 [INFO] quant: 目标函数: win_rate | 最大轮数: 8 | 每轮采样: 400
+2026-02-26 09:49:06 [INFO] quant: [Round 0] 评估基线策略...
+2026-02-26 09:49:27 [INFO] quant: [Round 0] 基线得分: 51.770459
+2026-02-26 09:49:27 [INFO] quant: [Round 1/8] 生成邻域参数并评估...
+2026-02-26 09:49:27 [INFO] quant:   邻域 1/8 评估中...
+2026-02-26 09:49:47 [INFO] quant:   邻域 1 得分: 52.068555
+2026-02-26 09:49:47 [INFO] quant:   邻域 2/8 评估中...
+2026-02-26 09:50:08 [INFO] quant:   邻域 2 得分: 51.940902
+2026-02-26 09:50:08 [INFO] quant:   邻域 3/8 评估中...
+2026-02-26 09:50:30 [INFO] quant:   邻域 3 得分: 52.008731
+2026-02-26 09:50:30 [INFO] quant:   邻域 4/8 评估中...
+2026-02-26 09:50:52 [INFO] quant:   邻域 4 得分: 51.940253
+2026-02-26 09:50:52 [INFO] quant:   邻域 5/8 评估中...
+2026-02-26 09:51:11 [INFO] quant:   邻域 5 得分: 52.086156
+2026-02-26 09:51:11 [INFO] quant:   邻域 6/8 评估中...
+2026-02-26 09:51:29 [INFO] quant:   邻域 6 得分: 52.060271
+2026-02-26 09:51:29 [INFO] quant:   邻域 7/8 评估中...
+2026-02-26 09:51:47 [INFO] quant:   邻域 7 得分: 52.006774
+2026-02-26 09:51:47 [INFO] quant:   邻域 8/8 评估中...
+2026-02-26 09:51:54 [INFO] quant:   邻域 8 得分: -999.000000
+2026-02-26 09:51:54 [INFO] quant: [Round 1] ✅ 改进! 新最优: 52.086156 (+0.315697)
+2026-02-26 09:51:54 [INFO] quant: [Round 2/8] 生成邻域参数并评估...
+2026-02-26 09:51:54 [INFO] quant:   邻域 1/8 评估中...
+2026-02-26 09:52:12 [INFO] quant:   邻域 1 得分: 52.281724
+2026-02-26 09:52:12 [INFO] quant:   邻域 2/8 评估中...
+2026-02-26 09:52:30 [INFO] quant:   邻域 2 得分: 52.162186
+2026-02-26 09:52:30 [INFO] quant:   邻域 3/8 评估中...
+2026-02-26 09:52:49 [INFO] quant:   邻域 3 得分: 52.487263
+2026-02-26 09:52:49 [INFO] quant:   邻域 4/8 评估中...
+2026-02-26 09:53:07 [INFO] quant:   邻域 4 得分: 52.556387
+2026-02-26 09:53:07 [INFO] quant:   邻域 5/8 评估中...
+2026-02-26 09:53:25 [INFO] quant:   邻域 5 得分: 52.186259
+2026-02-26 09:53:25 [INFO] quant:   邻域 6/8 评估中...
+2026-02-26 09:53:43 [INFO] quant:   邻域 6 得分: 52.327692
+2026-02-26 09:53:43 [INFO] quant:   邻域 7/8 评估中...
+2026-02-26 09:54:01 [INFO] quant:   邻域 7 得分: 52.297927
+2026-02-26 09:54:01 [INFO] quant:   邻域 8/8 评估中...
+2026-02-26 09:54:19 [INFO] quant:   邻域 8 得分: 52.603869
+2026-02-26 09:54:19 [INFO] quant: [Round 2] ✅ 改进! 新最优: 52.603869 (+0.517713)
+2026-02-26 09:54:19 [INFO] quant: [Round 3/8] 生成邻域参数并评估...
+2026-02-26 09:54:19 [INFO] quant:   邻域 1/8 评估中...
+2026-02-26 09:54:37 [INFO] quant:   邻域 1 得分: 52.276278
+2026-02-26 09:54:37 [INFO] quant:   邻域 2/8 评估中...
+2026-02-26 09:54:55 [INFO] quant:   邻域 2 得分: 52.297655
+2026-02-26 09:54:55 [INFO] quant:   邻域 3/8 评估中...
+2026-02-26 09:55:02 [INFO] quant:   邻域 3 得分: -999.000000
+2026-02-26 09:55:02 [INFO] quant:   邻域 4/8 评估中...
+2026-02-26 09:55:28 [INFO] quant:   邻域 4 得分: 52.459794
+2026-02-26 09:55:28 [INFO] quant:   邻域 5/8 评估中...
+2026-02-26 09:55:44 [INFO] quant:   邻域 5 得分: -999.000000
+2026-02-26 09:55:44 [INFO] quant:   邻域 6/8 评估中...
+2026-02-26 09:56:22 [INFO] quant:   邻域 6 得分: 52.414675
+2026-02-26 09:56:22 [INFO] quant:   邻域 7/8 评估中...
+2026-02-26 09:57:00 [INFO] quant:   邻域 7 得分: 52.457839
+2026-02-26 09:57:00 [INFO] quant:   邻域 8/8 评估中...
+2026-02-26 09:57:37 [INFO] quant:   邻域 8 得分: 52.194480
+2026-02-26 09:57:37 [INFO] quant: [Round 3] ❌ 未改进, 当前最优保持: 52.603869
+2026-02-26 09:57:37 [INFO] quant: [Round 4/8] 生成邻域参数并评估...
+2026-02-26 09:57:37 [INFO] quant:   邻域 1/8 评估中...
+2026-02-26 09:58:15 [INFO] quant:   邻域 1 得分: 52.143429
+2026-02-26 09:58:15 [INFO] quant:   邻域 2/8 评估中...
+2026-02-26 09:58:50 [INFO] quant:   邻域 2 得分: 52.134310
+2026-02-26 09:58:50 [INFO] quant:   邻域 3/8 评估中...
+2026-02-26 09:59:26 [INFO] quant:   邻域 3 得分: 51.855255
+2026-02-26 09:59:26 [INFO] quant:   邻域 4/8 评估中...
+2026-02-26 09:59:51 [INFO] quant:   邻域 4 得分: 52.083487
+2026-02-26 09:59:51 [INFO] quant:   邻域 5/8 评估中...
+2026-02-26 10:00:08 [INFO] quant:   邻域 5 得分: 52.024943
+2026-02-26 10:00:08 [INFO] quant:   邻域 6/8 评估中...
+2026-02-26 10:00:25 [INFO] quant:   邻域 6 得分: 51.977980
+2026-02-26 10:00:25 [INFO] quant:   邻域 7/8 评估中...
+2026-02-26 10:00:42 [INFO] quant:   邻域 7 得分: 52.085181
+2026-02-26 10:00:42 [INFO] quant:   邻域 8/8 评估中...
+2026-02-26 10:00:49 [INFO] quant:   邻域 8 得分: -999.000000
+2026-02-26 10:00:49 [INFO] quant: [Round 4] ❌ 未改进, 当前最优保持: 52.603869
+2026-02-26 10:00:49 [INFO] quant: [Round 4] 连续 2 轮无显著改进, 提前收敛停止
+2026-02-26 10:00:49 [INFO] quant: === 优化完成 === 最终得分: 52.603869
+2026-02-26 10:00:49 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_100049
+2026-02-26 10:00:49 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_100049
+2026-02-26 10:04:34 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-26 10:21:24 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-26 10:24:29 [INFO] quant: 开始对 1945 支股票执行多因子综合分析...
+2026-02-26 10:24:38 [INFO] quant: 分析完成。共有 1505 支股票满足评分阈值。
+2026-02-26 10:24:38 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260226.csv
+2026-02-26 10:24:41 [INFO] quant: Scanning progress: 0/1505 (sh.603727)
+2026-02-26 10:24:43 [INFO] quant: Scanning progress: 100/1505 (sz.300438)
+2026-02-26 10:24:45 [INFO] quant: Scanning progress: 200/1505 (sh.000031)
+2026-02-26 10:24:47 [INFO] quant: Scanning progress: 300/1505 (sz.001203)
+2026-02-26 10:24:48 [INFO] quant: Scanning progress: 400/1505 (sz.002922)
+2026-02-26 10:24:50 [INFO] quant: Scanning progress: 500/1505 (sz.300409)
+2026-02-26 10:24:52 [INFO] quant: Scanning progress: 600/1505 (sh.603421)
+2026-02-26 10:24:53 [INFO] quant: Scanning progress: 700/1505 (sz.399905)
+2026-02-26 10:24:55 [INFO] quant: Scanning progress: 800/1505 (sz.399643)
+2026-02-26 10:24:56 [INFO] quant: Scanning progress: 900/1505 (sz.300228)
+2026-02-26 10:24:58 [INFO] quant: Scanning progress: 1000/1505 (sh.600889)
+2026-02-26 10:25:00 [INFO] quant: Scanning progress: 1100/1505 (sz.300113)
+2026-02-26 10:25:02 [INFO] quant: Scanning progress: 1200/1505 (sh.600237)
+2026-02-26 10:25:03 [INFO] quant: Scanning progress: 1300/1505 (sh.603660)
+2026-02-26 10:25:05 [INFO] quant: Scanning progress: 1400/1505 (sz.000420)
+2026-02-26 10:25:06 [INFO] quant: Scanning progress: 1500/1505 (sh.600170)
+2026-02-26 10:28:32 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 10:28:32 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 10:28:32 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 10:31:36 [INFO] quant: Process interrupted by user.
+2026-02-26 10:36:59 [INFO] quant: Process interrupted by user.
+2026-02-26 10:37:14 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 10:37:14 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 10:37:14 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 10:42:52 [ERROR] quant: A fatal error occurred.
+Traceback (most recent call last):
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 154, in <module>
+    main()
+    ~~~~^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 144, in main
+    cmd_optimize(args)
+    ~~~~~~~~~~~~^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 46, in cmd_optimize
+    result = run_optimization()
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\quant\optimizer.py", line 183, in run_optimization
+    best_trial = study.best_trial
+                 ^^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\study.py", line 156, in best_trial
+    return self._get_best_trial(deepcopy=True)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\study.py", line 308, in _get_best_trial
+    best_trial = self._storage.get_best_trial(self._study_id)
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\storages\_in_memory.py", line 251, in get_best_trial
+    raise ValueError("No trials are completed yet.")
+ValueError: No trials are completed yet.
+2026-02-26 10:43:59 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 10:43:59 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 10:43:59 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 10:53:26 [INFO] quant: === Optuna 调参完结 ===
+2026-02-26 10:53:26 [INFO] quant: 历史最佳样本内得分 (Train Score): -0.388095
+2026-02-26 10:53:42 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): -0.592194
+2026-02-26 10:53:42 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_105342
+2026-02-26 10:53:42 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_105342
+2026-02-26 10:53:42 [INFO] quant: 基线得分:  0.000000
+2026-02-26 10:53:42 [INFO] quant: 最优得分:  -0.388095
+2026-02-26 10:53:42 [INFO] quant: 提升幅度:  -0.388095
+2026-02-26 10:53:56 [INFO] quant: 最优参数已写回 config.yaml
+2026-02-26 10:53:56 [INFO] quant: 最优参数已应用到 config.yaml
+2026-02-26 10:55:03 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 10:55:03 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 10:55:03 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 11:03:46 [INFO] quant: === Optuna 调参完结 ===
+2026-02-26 11:03:46 [INFO] quant: 历史最佳样本内得分 (Train Score): -0.391278
+2026-02-26 11:04:03 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): -0.624408
+2026-02-26 11:04:03 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_110403
+2026-02-26 11:04:03 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_110403
+2026-02-26 11:04:03 [INFO] quant: 基线得分:  0.000000
+2026-02-26 11:04:03 [INFO] quant: 最优得分:  -0.391278
+2026-02-26 11:04:03 [INFO] quant: 提升幅度:  -0.391278
+2026-02-26 11:09:42 [INFO] quant: 最优参数已写回 config.yaml
+2026-02-26 11:09:42 [INFO] quant: 最优参数已应用到 config.yaml
+2026-02-26 11:11:05 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-26 11:11:16 [INFO] quant: 开始对 1945 支股票执行多因子综合分析...
+2026-02-26 11:11:28 [INFO] quant: 分析完成。共有 1747 支股票满足评分阈值。
+2026-02-26 11:11:28 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260226.csv
+2026-02-26 11:12:10 [INFO] quant: Scanning progress: 0/1747 (sh.605196)
+2026-02-26 11:12:12 [INFO] quant: Scanning progress: 100/1747 (sh.600339)
+2026-02-26 11:12:13 [INFO] quant: Scanning progress: 200/1747 (sz.002173)
+2026-02-26 11:12:15 [INFO] quant: Scanning progress: 300/1747 (sz.002606)
+2026-02-26 11:12:17 [INFO] quant: Scanning progress: 400/1747 (sh.563300)
+2026-02-26 11:12:19 [INFO] quant: Scanning progress: 500/1747 (sh.603058)
+2026-02-26 11:12:20 [INFO] quant: Scanning progress: 600/1747 (sh.603698)
+2026-02-26 11:12:22 [INFO] quant: Scanning progress: 700/1747 (sh.000858)
+2026-02-26 11:12:23 [INFO] quant: Scanning progress: 800/1747 (sz.002540)
+2026-02-26 11:12:25 [INFO] quant: Scanning progress: 900/1747 (sz.002291)
+2026-02-26 11:12:26 [INFO] quant: Scanning progress: 1000/1747 (sz.002334)
+2026-02-26 11:12:28 [INFO] quant: Scanning progress: 1100/1747 (sz.002632)
+2026-02-26 11:12:29 [INFO] quant: Scanning progress: 1200/1747 (sh.588750)
+2026-02-26 11:12:30 [INFO] quant: Scanning progress: 1300/1747 (sh.605056)
+2026-02-26 11:12:31 [INFO] quant: Scanning progress: 1400/1747 (sh.512890)
+2026-02-26 11:12:33 [INFO] quant: Scanning progress: 1500/1747 (sh.000106)
+2026-02-26 11:12:34 [INFO] quant: Scanning progress: 1600/1747 (sz.002094)
+2026-02-26 11:12:36 [INFO] quant: Scanning progress: 1700/1747 (sh.000059)
+2026-02-26 11:48:54 [INFO] quant: Loaded 1713 stocks to update historical data (including market index).
+2026-02-26 11:52:41 [INFO] quant: Update summary: 0 new files created, 1 files incrementally updated, 1712 API requests returned no new data.
+2026-02-26 12:32:47 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 12:32:47 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 12:32:47 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 12:38:16 [INFO] quant: === Optuna 调参完结 ===
+2026-02-26 12:38:16 [INFO] quant: 历史最佳样本内得分 (Train Score): -0.403276
+2026-02-26 12:38:25 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): -0.610645
+2026-02-26 12:38:25 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_123825
+2026-02-26 12:38:25 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_123825
+2026-02-26 12:38:25 [INFO] quant: 基线得分:  0.000000
+2026-02-26 12:38:25 [INFO] quant: 最优得分:  -0.403276
+2026-02-26 12:38:25 [INFO] quant: 提升幅度:  -0.403276
+2026-02-26 12:38:43 [INFO] quant: 最优参数已写回 config.yaml
+2026-02-26 12:38:43 [INFO] quant: 最优参数已应用到 config.yaml
+2026-02-26 12:42:57 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-26 12:44:08 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 12:44:08 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 12:44:08 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 12:51:02 [INFO] quant: === Optuna 调参完结 ===
+2026-02-26 12:51:02 [INFO] quant: 历史最佳样本内得分 (Train Score): -0.405342
+2026-02-26 12:51:12 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): -0.621820
+2026-02-26 12:51:12 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_125112
+2026-02-26 12:51:12 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_125112
+2026-02-26 12:51:12 [INFO] quant: 基线得分:  0.000000
+2026-02-26 12:51:12 [INFO] quant: 最优得分:  -0.405342
+2026-02-26 12:51:12 [INFO] quant: 提升幅度:  -0.405342
+2026-02-26 12:53:12 [INFO] quant: 最优参数已写回 config.yaml
+2026-02-26 12:53:12 [INFO] quant: 最优参数已应用到 config.yaml
+2026-02-26 13:03:03 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 13:03:03 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 13:03:03 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 13:06:01 [INFO] quant: === Optuna 调参完结 ===
+2026-02-26 13:06:01 [INFO] quant: 历史最佳样本内得分 (Train Score): -999.000000
+2026-02-26 13:06:05 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): -999.000000
+2026-02-26 13:06:05 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_130605
+2026-02-26 13:06:05 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_130605
+2026-02-26 13:06:05 [INFO] quant: 基线得分:  0.000000
+2026-02-26 13:06:05 [INFO] quant: 最优得分:  -999.000000
+2026-02-26 13:06:05 [INFO] quant: 提升幅度:  -999.000000
+2026-02-26 13:06:33 [INFO] quant: 已跳过参数应用。
+2026-02-26 13:06:59 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 13:06:59 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 13:06:59 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 13:09:54 [INFO] quant: === Optuna 调参完结 ===
+2026-02-26 13:09:54 [INFO] quant: 历史最佳样本内得分 (Train Score): -999.000000
+2026-02-26 13:09:58 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): -999.000000
+2026-02-26 13:09:58 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_130958
+2026-02-26 13:09:58 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_130958
+2026-02-26 13:09:58 [INFO] quant: 基线得分:  0.000000
+2026-02-26 13:09:58 [INFO] quant: 最优得分:  -999.000000
+2026-02-26 13:09:58 [INFO] quant: 提升幅度:  -999.000000
+2026-02-26 13:13:31 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 13:13:31 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 13:13:31 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 13:15:06 [INFO] quant: Process interrupted by user.
+2026-02-26 13:23:48 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 13:23:48 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 13:23:48 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 13:28:51 [INFO] quant: === Optuna 调参完结 ===
+2026-02-26 13:28:51 [INFO] quant: 历史最佳样本内得分 (Train Score): 0.594250
+2026-02-26 13:29:00 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): 0.631167
+2026-02-26 13:29:00 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_132900
+2026-02-26 13:29:00 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_132900
+2026-02-26 13:29:00 [INFO] quant: 基线得分:  0.000000
+2026-02-26 13:29:00 [INFO] quant: 最优得分:  0.594250
+2026-02-26 13:29:00 [INFO] quant: 提升幅度:  +0.594250
+2026-02-26 13:29:39 [INFO] quant: 最优参数已写回 config.yaml
+2026-02-26 13:29:39 [INFO] quant: 最优参数已应用到 config.yaml
+2026-02-26 13:35:50 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-26 13:41:47 [INFO] quant: 批量回测: 100 只股票 (seed=42)
+2026-02-26 13:50:02 [INFO] quant: 批量回测: 100 只股票 (seed=42)
+2026-02-26 14:13:09 [INFO] quant: 批量回测: 100 只股票 (seed=42)
+2026-02-26 14:13:11 [INFO] quant: 无有效回测结果。
+2026-02-26 14:18:01 [INFO] quant: 批量回测: 100 只股票 (seed=42)
+2026-02-26 14:18:25 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-26 14:18:25 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-26 14:18:25 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-09-19
+2026-02-26 14:24:44 [INFO] quant: === Optuna 调参完结 ===
+2026-02-26 14:24:44 [INFO] quant: 历史最佳样本内得分 (Train Score): 0.689207
+2026-02-26 14:24:55 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): 0.604727
+2026-02-26 14:24:55 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_142455
+2026-02-26 14:24:55 [INFO] quant: 优化结果已保存: data/optimize_results\20260226_142455
+2026-02-26 14:24:55 [INFO] quant: 基线得分:  0.000000
+2026-02-26 14:24:55 [INFO] quant: 最优得分:  0.689207
+2026-02-26 14:24:55 [INFO] quant: 提升幅度:  +0.689207
+2026-02-26 14:25:34 [INFO] quant: 最优参数已写回 config.yaml
+2026-02-26 14:25:34 [INFO] quant: 最优参数已应用到 config.yaml
+2026-02-26 14:25:55 [INFO] quant: 批量回测: 100 只股票 (seed=42)
+2026-02-26 14:41:05 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-02-26 14:41:05 [INFO] quant: Building dataset from historical data...
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:07 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:08 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:09 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:10 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:11 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:12 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:13 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:14 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:15 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:16 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:17 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:18 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:19 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:20 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:21 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:22 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:23 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:24 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:25 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:26 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:27 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:28 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:29 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:30 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:31 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:32 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:33 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:34 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:35 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:36 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:37 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:38 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:39 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:40 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:41 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:42 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:43 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:44 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:45 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:46 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:47 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:48 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:49 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:50 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:51 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:52 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:53 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:54 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:55 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:56 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:57 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:58 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:41:59 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:00 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:01 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:02 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:03 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:04 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:05 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:06 [WARNING] quant: 指标计算异常: 'volume'
+2026-02-26 14:42:06 [INFO] quant: Process interrupted by user.
+2026-02-26 14:44:55 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-02-26 14:44:55 [INFO] quant: Building dataset from historical data...
+2026-02-26 14:45:37 [INFO] quant: Dataset built successfully. Total rows: 556632. Features: 22
+2026-02-26 14:45:37 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-26 14:45:37 [INFO] quant: Target distribution: Positive 176782, Negative 379850. Ratio: 1:2.15
+2026-02-26 14:45:38 [INFO] quant: Starting LightGBM training...
+2026-02-26 14:45:55 [INFO] quant: Model AUC on Test Set: 0.9510
+2026-02-26 14:45:55 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.93      0.91      0.92     76078
+           1       0.81      0.85      0.83     35249
+
+    accuracy                           0.89    111327
+   macro avg       0.87      0.88      0.87    111327
+weighted avg       0.89      0.89      0.89    111327
+
+2026-02-26 14:45:55 [INFO] quant: Top 10 Important Features:
+feat_atr_ratio             1.636303e+06
+feat_pct_chg_3             1.232450e+06
+feat_macd_diff             3.094803e+05
+feat_atr_mom_5             2.154371e+05
+feat_pct_chg_1             1.619601e+05
+feat_turnover              1.260109e+05
+feat_upper_shadow_ratio    1.099761e+05
+feat_pct_chg_5             9.119237e+04
+feat_body_ratio            6.164958e+04
+feat_vol_slope             4.304712e+04
+dtype: float64
+2026-02-26 14:45:55 [INFO] quant: Model saved to models/alpha_lgbm.txt
+2026-02-26 14:49:02 [INFO] quant: 批量回测: 100 只股票 (seed=42)
+2026-02-26 14:49:03 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (22 features)
+2026-02-26 14:50:02 [INFO] quant: 批量回测: 100 只股票 (seed=42)
+2026-02-26 14:50:03 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (22 features)
+2026-02-26 14:54:18 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-02-26 14:54:18 [INFO] quant: Building dataset from historical data...
+2026-02-26 14:55:00 [INFO] quant: Dataset built successfully. Total rows: 556632. Features: 22
+2026-02-26 14:55:00 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-26 14:55:00 [INFO] quant: Target distribution: Positive 176782, Negative 379850. Ratio: 1:2.15
+2026-02-26 14:55:00 [INFO] quant: Starting LightGBM training...
+2026-02-26 14:55:17 [INFO] quant: Model AUC on Test Set: 0.9510
+2026-02-26 14:55:17 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.93      0.91      0.92     76078
+           1       0.81      0.85      0.83     35249
+
+    accuracy                           0.89    111327
+   macro avg       0.87      0.88      0.87    111327
+weighted avg       0.89      0.89      0.89    111327
+
+2026-02-26 14:55:17 [INFO] quant: Top 10 Important Features:
+feat_atr_ratio             1.636303e+06
+feat_pct_chg_3             1.232450e+06
+feat_macd_diff             3.094803e+05
+feat_atr_mom_5             2.154371e+05
+feat_pct_chg_1             1.619601e+05
+feat_turnover              1.260109e+05
+feat_upper_shadow_ratio    1.099761e+05
+feat_pct_chg_5             9.119237e+04
+feat_body_ratio            6.164958e+04
+feat_vol_slope             4.304712e+04
+dtype: float64
+2026-02-26 14:55:17 [INFO] quant: Model saved to models/alpha_lgbm.txt

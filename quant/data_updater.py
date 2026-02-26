@@ -19,7 +19,9 @@ def update_history_data():
         return
 
     codes = df_list['code'].tolist()
-    logger.info(f"Loaded {len(codes)} stocks to update historical data.")
+    if 'sh.000001' not in codes:
+        codes.append('sh.000001')
+    logger.info(f"Loaded {len(codes)} stocks to update historical data (including market index).")
 
     lg = bs.login()
     if lg.error_code != '0':

@@ -40,15 +40,21 @@ def get_tencent_hq(codes: list) -> dict:
             try:
                 # 37: 成交额(万)
                 # 38: 换手率(%)
+                # 39: 市盈率 (peTTM)
                 # 44: 流通市值(亿) 
                 # 45: 总市值(亿)
+                # 46: 市净率 (pb)
                 amount_wan = float(vals[37]) if vals[37] else 0.0
                 turnover_rate = float(vals[38]) if vals[38] else 0.0
+                pe = float(vals[39]) if len(vals) > 39 and vals[39] else -1.0
                 circulating_mcap_yi = float(vals[44]) if vals[44] else 0.0
+                pb = float(vals[46]) if len(vals) > 46 and vals[46] else -1.0
                 
                 result[key] = {
                     'amount_wan': amount_wan,
                     'turnover_rate': turnover_rate,
+                    'pe': pe,
+                    'pb': pb,
                     'circulating_mcap_yi': circulating_mcap_yi,
                 }
             except ValueError:
@@ -107,7 +113,7 @@ def update_stock_list():
         time.sleep(0.1)
 
     final_list = []
-    stats = {"micro_cap": 0, "zombie": 0, "manipulated": 0, "inactive": 0}
+    stats = {"micro_cap": 0, "zombie": 0, "manipulated": 0, "inactive": 0, "fundamental_fail": 0}
     
     for _, row in filtered_df.iterrows():
         hq = tc_data.get(row['tc_code'])
@@ -117,6 +123,8 @@ def update_stock_list():
         mcap = hq.get('circulating_mcap_yi', 0.0)
         amount = hq.get('amount_wan', 0.0)
         turnover = hq.get('turnover_rate', 0.0)
+        pe = hq.get('pe', -1.0)
+        pb = hq.get('pb', -1.0)
         
         if mcap < CONF.filter.min_market_cap_billion:
             stats["micro_cap"] += 1
@@ -134,12 +142,21 @@ def update_stock_list():
             stats["inactive"] += 1
             continue
             
+        if pe < CONF.filter.min_pe or pe > CONF.filter.max_pe:
+            stats["fundamental_fail"] += 1
+            continue
+            
+        if pb < CONF.filter.min_pb:
+            stats["fundamental_fail"] += 1
+            continue
+            
         final_list.append(row)
 
     logger.info(f"Filtered {stats['micro_cap']} micro-cap stocks (< {CONF.filter.min_market_cap_billion} 亿).")
     logger.info(f"Filtered {stats['zombie']} zombie stocks (< {CONF.filter.min_turnover_amount_wan} 万).")
     logger.info(f"Filtered {stats['manipulated']} potential manipulated stocks (turnover > {CONF.filter.max_turnover_rate_pct}%).")
     logger.info(f"Filtered {stats['inactive']} highly inactive stocks (turnover < {CONF.filter.min_turnover_rate_pct}%).")
+    logger.info(f"Filtered {stats['fundamental_fail']} stocks failing PE/PB fundamentals.")
     
     final_df = pd.DataFrame(final_list)
     logger.info(f"Final high-value stock count: {len(final_df)}")

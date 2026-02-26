@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import random
+import typing
 import warnings
 from datetime import datetime
 from typing import Callable
@@ -61,175 +62,139 @@ def sample_stock_codes(n: int, seed: int | None = None) -> list[str]:
     return rng.sample(codes, n)
 
 
+def get_train_test_split_dates(codes: list[str], train_ratio: float) -> str | None:
+    data_dir = CONF.history_data.data_dir
+    if not codes:
+        return None
+    
+    sample_file = os.path.join(data_dir, f"{codes[0]}.csv")
+    if not os.path.exists(sample_file):
+        return None
+        
+    df = pd.read_csv(sample_file)
+    if "date" not in df.columns:
+        return None
+        
+    dates = pd.to_datetime(df["date"]).sort_values().dropna()
+    if len(dates) < 50:
+        return None
+        
+    split_idx = int(len(dates) * train_ratio)
+    split_date = dates.iloc[split_idx]
+    if isinstance(split_date, pd.Timestamp):
+        return split_date.strftime('%Y-%m-%d')
+    return str(split_date)
+
+
 def walk_forward_evaluate(
     params: StrategyParams,
     codes: list[str],
     n_splits: int,
     train_ratio: float,
     objective: str,
+    train_end_date: str | None = None,
 ) -> tuple[float, float]:
-    df_results = batch_backtest(codes, params)
-    score = compute_objective(df_results, objective)
-    return score, score
+    df_train = batch_backtest(codes, params, end_date=train_end_date)
+    train_score = compute_objective(df_train, objective)
+    
+    df_test = batch_backtest(codes, params, start_date=train_end_date)
+    test_score = compute_objective(df_test, objective)
+    
+    return train_score, test_score
 
 
-def generate_neighbors(
-    base: StrategyParams, param_space: dict, n_neighbors: int = 8
-) -> list[StrategyParams]:
-    neighbors: list[StrategyParams] = []
-    base_dict = base.to_dict()
+import optuna
 
-    param_names = list(param_space.keys())
-
-    for _ in range(n_neighbors):
-        candidate = dict(base_dict)
-        n_perturb = random.randint(3, 5)
-        chosen = random.sample(param_names, min(n_perturb, len(param_names)))
-
-        for pname in chosen:
-            lo, hi, step = param_space[pname]
-            steps_delta = random.choice([-2, -1, 1, 2])
-            new_val = candidate[pname] + steps_delta * step
-
-            if isinstance(base_dict[pname], int):
-                new_val = int(round(new_val))
-            else:
-                new_val = round(new_val, 6)
-
-            new_val = max(lo, min(hi, new_val))
-            candidate[pname] = new_val
-
-        # Normalize weights to sum to ~1.0
-        w_t = candidate["weight_trend"]
-        w_r = candidate["weight_reversion"]
-        w_v = candidate["weight_volume"]
-        w_sum = w_t + w_r + w_v
-        if w_sum > 0:
-            candidate["weight_trend"] = round(w_t / w_sum, 4)
-            candidate["weight_reversion"] = round(w_r / w_sum, 4)
-            candidate["weight_volume"] = round(w_v / w_sum, 4)
-
-        # Ensure macd_fast < macd_slow
-        if candidate["macd_fast"] >= candidate["macd_slow"]:
-            candidate["macd_fast"] = candidate["macd_slow"] - int(param_space["macd_fast"][2])
-
-        # Ensure ma_short < ma_long
-        if candidate["ma_short"] >= candidate["ma_long"]:
-            candidate["ma_short"] = candidate["ma_long"] - int(param_space["ma_short"][2])
-
-        # Ensure rsi_oversold < rsi_cooled_max
-        if candidate["rsi_oversold"] >= candidate["rsi_cooled_max"]:
-            candidate["rsi_oversold"] = candidate["rsi_cooled_max"] - param_space["rsi_oversold"][2]
-
-        # Clamp once more after constraint fixes
-        for pname in param_space:
-            lo, hi, _ = param_space[pname]
-            candidate[pname] = max(lo, min(hi, candidate[pname]))
-
-        neighbors.append(StrategyParams.from_dict(candidate))
-
-    return neighbors
-
-
-def run_optimization(callback: Callable | None = None) -> dict:
+def objective_function(trial: optuna.Trial, codes_train: list[str], train_end_date: str) -> float:
     opt_cfg = CONF.optimizer
-    max_rounds = opt_cfg.max_rounds
-    sample_count = opt_cfg.sample_count
     objective = opt_cfg.objective
     n_splits = opt_cfg.walk_forward_splits
     train_ratio = opt_cfg.train_ratio
 
-    baseline_params = StrategyParams.from_app_config(CONF)
-    history: list[dict] = []
-
-    logger.info("=== 策略优化引擎启动 ===")
-    logger.info(f"目标函数: {objective} | 最大轮数: {max_rounds} | 每轮采样: {sample_count}")
-
-    # Round 0: evaluate baseline
-    logger.info("[Round 0] 评估基线策略...")
-    codes_r0 = sample_stock_codes(sample_count, seed=0)
-    baseline_score, _ = walk_forward_evaluate(
-        baseline_params, codes_r0, n_splits, train_ratio, objective
-    )
-    logger.info(f"[Round 0] 基线得分: {baseline_score:.6f}")
-
-    history.append({
-        "round": 0,
-        "score": baseline_score,
-        "params": baseline_params.to_dict(),
-        "improved": False,
-    })
-
-    current_best_params = baseline_params
-    current_best_score = baseline_score
-    stale_rounds = 0
-
-    if callback is not None:
-        callback(0, max_rounds, current_best_score, current_best_params.to_dict(), history)
-
-    for rnd in range(1, max_rounds + 1):
-        logger.info(f"[Round {rnd}/{max_rounds}] 生成邻域参数并评估...")
-
-        codes_rnd = sample_stock_codes(sample_count, seed=rnd * 42)
-        neighbors = generate_neighbors(current_best_params, PARAM_SPACE, n_neighbors=8)
-
-        best_neighbor_score = -999.0
-        best_neighbor_params: StrategyParams | None = None
-
-        for i, nb_params in enumerate(neighbors):
-            logger.info(f"  邻域 {i + 1}/{len(neighbors)} 评估中...")
-            nb_score, _ = walk_forward_evaluate(
-                nb_params, codes_rnd, n_splits, train_ratio, objective
-            )
-            logger.info(f"  邻域 {i + 1} 得分: {nb_score:.6f}")
-
-            if nb_score > best_neighbor_score:
-                best_neighbor_score = nb_score
-                best_neighbor_params = nb_params
-
-        improved = False
-        if best_neighbor_params is not None and best_neighbor_score > current_best_score:
-            improvement = best_neighbor_score - current_best_score
-            current_best_params = best_neighbor_params
-            current_best_score = best_neighbor_score
-            improved = True
-            logger.info(
-                f"[Round {rnd}] ✅ 改进! 新最优: {current_best_score:.6f} (+{improvement:.6f})"
-            )
-
-            if improvement < opt_cfg.convergence_threshold:
-                stale_rounds += 1
-            else:
-                stale_rounds = 0
+    # 1. Suggest parameters from PARAM_SPACE
+    candidate: dict[str, float] = {}
+    for pname, (lo, hi, step) in PARAM_SPACE.items():
+        if isinstance(lo, int) and isinstance(hi, int) and isinstance(step, int):
+            candidate[pname] = trial.suggest_int(pname, lo, hi, step=step)
         else:
-            stale_rounds += 1
-            logger.info(
-                f"[Round {rnd}] ❌ 未改进, 当前最优保持: {current_best_score:.6f}"
-            )
+            candidate[pname] = trial.suggest_float(pname, lo, hi, step=step)
 
-        history.append({
-            "round": rnd,
-            "score": current_best_score,
-            "best_neighbor_score": best_neighbor_score,
-            "params": current_best_params.to_dict(),
-            "improved": improved,
-        })
+    # 2. Constraints and Normalizations
+    w_t = candidate["weight_trend"]
+    w_r = candidate["weight_reversion"]
+    w_v = candidate["weight_volume"]
+    w_sum = w_t + w_r + w_v
+    if w_sum > 0:
+        candidate["weight_trend"] = round(w_t / w_sum, 4)
+        candidate["weight_reversion"] = round(w_r / w_sum, 4)
+        candidate["weight_volume"] = round(w_v / w_sum, 4)
 
-        if callback is not None:
-            callback(rnd, max_rounds, current_best_score, current_best_params.to_dict(), history)
+    if candidate["macd_fast"] >= candidate["macd_slow"]:
+        candidate["macd_fast"] = candidate["macd_slow"] - int(PARAM_SPACE["macd_fast"][2])
 
-        if stale_rounds >= 2:
-            logger.info(f"[Round {rnd}] 连续 {stale_rounds} 轮无显著改进, 提前收敛停止")
-            break
+    if candidate["ma_short"] >= candidate["ma_long"]:
+        candidate["ma_short"] = candidate["ma_long"] - int(PARAM_SPACE["ma_short"][2])
 
-    logger.info(f"=== 优化完成 === 最终得分: {current_best_score:.6f}")
+    if candidate["rsi_oversold"] >= candidate["rsi_cooled_max"]:
+        candidate["rsi_oversold"] = candidate["rsi_cooled_max"] - PARAM_SPACE["rsi_oversold"][2]
 
-    results = {
-        "best_params": current_best_params.to_dict(),
-        "best_score": current_best_score,
-        "baseline_score": baseline_score,
-        "history": history,
-        "rounds_completed": len(history) - 1,
+    # Map directly back and evaluate Train-only for objective search
+    nb_params = StrategyParams.from_dict(candidate)
+    
+    df_train = batch_backtest(codes_train, nb_params, end_date=train_end_date)
+    train_score = compute_objective(df_train, objective)
+    # Store candidate dict to trial so we can reconstruct OOS easily later
+    trial.set_user_attr("params_dict", nb_params.to_dict())
+    
+    return float(train_score)
+
+def run_optimization(callback: Callable | None = None) -> dict:
+    opt_cfg = CONF.optimizer
+    # max_rounds is repurposed as n_trials for Optuna
+    n_trials = opt_cfg.max_rounds * 10
+    sample_count = opt_cfg.sample_count
+    
+    logger.info("=== Optuna 贝叶斯策略引擎启动 (Phase 3) ===")
+    logger.info(f"目标函数: {opt_cfg.objective} | 最大试错: {n_trials} | 采样: {sample_count}")
+
+    codes_r0 = sample_stock_codes(sample_count, seed=0)
+    train_end_date = get_train_test_split_dates(codes_r0, opt_cfg.train_ratio)
+    
+    logger.info(f"训练(Train)/测试(OOS) 时间横切点: {train_end_date}")
+
+    study = optuna.create_study(
+        direction="maximize",
+        pruner=optuna.pruners.MedianPruner(n_warmup_steps=5)
+    )
+    
+    # Run bayesian optimization ONLY on Train sets
+    study.optimize(
+        lambda t: objective_function(t, codes_r0, train_end_date),
+        n_trials=n_trials,
+        n_jobs=1,  # Keep single threaded due to Backtesting internal DF overrides
+        catch=(Exception,)
+    )
+    
+    best_trial = study.best_trial
+    best_train_score = best_trial.value
+    best_params_dict = best_trial.user_attrs.get("params_dict", {})
+    best_params = StrategyParams.from_dict(best_params_dict)
+
+    logger.info(f"=== Optuna 调参完结 ===")
+    logger.info(f"历史最佳样本内得分 (Train Score): {best_train_score:.6f}")
+    
+    # Now run strict One-Off Test/OOS Evaluation
+    df_test = batch_backtest(codes_r0, best_params, start_date=train_end_date)
+    best_test_score = compute_objective(df_test, opt_cfg.objective)
+    logger.info(f"真实验本外盲测得分 (Test/OOS Score): {best_test_score:.6f}")
+
+    results: dict[str, typing.Any] = {
+        "best_params": best_params.to_dict(),
+        "best_score": best_train_score,
+        "test_score": best_test_score,
+        "baseline_score": 0.0,
+        "history": [], # Legacy mock to avoid breaking downstream
+        "rounds_completed": n_trials,
     }
 
     save_results(results)
@@ -298,6 +263,11 @@ def apply_best_params(results: dict) -> None:
         "take_profit_pct": bp["take_profit_pct"],
         "breakeven_trigger": bp["breakeven_trigger"],
         "breakeven_buffer": bp["breakeven_buffer"],
+        "w_pullback_ma": bp["w_pullback_ma"],
+        "w_macd_cross": bp["w_macd_cross"],
+        "w_vol_up": bp["w_vol_up"],
+        "w_rsi_rebound": bp["w_rsi_rebound"],
+        "w_green_candle": bp["w_green_candle"],
     }
 
     with open(config_path, "w", encoding="utf-8") as f:

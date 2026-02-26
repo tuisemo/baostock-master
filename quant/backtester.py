@@ -12,6 +12,23 @@ from quant.analyzer import calculate_indicators
 from quant.config import CONF
 from quant.logger import logger
 
+# ===== AI Model (Phase 8) =====
+_AI_MODEL = None
+_AI_MODEL_PATH = "models/alpha_lgbm.txt"
+
+def _get_ai_model():
+    """Lazy-load the LightGBM model singleton."""
+    global _AI_MODEL
+    if _AI_MODEL is None:
+        import os
+        if os.path.exists(_AI_MODEL_PATH):
+            import lightgbm as lgb
+            _AI_MODEL = lgb.Booster(model_file=_AI_MODEL_PATH)
+            logger.info(f"AI 模型已加载: {_AI_MODEL_PATH} ({_AI_MODEL.num_feature()} features)")
+        else:
+            logger.debug(f"AI 模型文件不存在: {_AI_MODEL_PATH}，将使用纯规则引擎。")
+    return _AI_MODEL
+
 if TYPE_CHECKING:
     from quant.strategy_params import StrategyParams
 
@@ -29,12 +46,110 @@ def _build_column_names(p: StrategyParams) -> dict[str, str]:
     }
 
 
+_MARKET_INDEX_CACHE = None
+
+def get_market_index() -> pd.DataFrame | None:
+    global _MARKET_INDEX_CACHE
+    if _MARKET_INDEX_CACHE is not None:
+        return _MARKET_INDEX_CACHE
+
+    file_path = os.path.join(CONF.history_data.data_dir, "sh.000001.csv")
+    if not os.path.exists(file_path):
+        return None
+
+    df_idx = pd.read_csv(file_path)
+    if df_idx.empty or "date" not in df_idx.columns:
+        return None
+
+    df_idx.rename(columns={"date": "Date"}, inplace=True)
+    df_idx["Date"] = pd.to_datetime(df_idx["Date"])
+    df_idx.set_index("Date", inplace=True)
+    df_idx.sort_index(inplace=True)
+    
+    close_col = "close" if "close" in df_idx.columns else "Close"
+    df_idx["MA20"] = df_idx[close_col].rolling(window=20).mean()
+    df_idx["market_uptrend"] = df_idx[close_col] > df_idx["MA20"]
+    
+    _MARKET_INDEX_CACHE = df_idx
+    return _MARKET_INDEX_CACHE
+
 def _resolve_params(params: StrategyParams | None) -> StrategyParams:
     from quant.strategy_params import StrategyParams as SP
 
     if params is not None:
         return params
     return SP.from_app_config(CONF)
+
+
+def evaluate_buy_signals(
+    price: float,
+    open_p: float,
+    low_p: float,
+    sma_l_1: float,
+    sma_l_3: float | None,
+    sma_s_1: float,
+    macd_h_1: float,
+    macd_h_2: float,
+    rsi_1: float,
+    bb_lower_1: float,
+    vol_1: float,
+    vol_2: float,
+    has_vol_slope: bool,
+    vol_slope_1: float,
+    has_mom_div: bool,
+    mom_div_1: float,
+    market_uptrend: bool,
+    p: StrategyParams,
+) -> tuple[bool, bool, bool]:
+    macd_golden_cross = macd_h_2 <= 0 and macd_h_1 > 0
+    is_green_candle = price > open_p
+
+    if has_vol_slope and vol_slope_1 > 0.1:
+        vol_up = True
+    else:
+        vol_up = vol_1 > vol_2 * p.vol_up_ratio
+
+    mom_ok = True
+    if has_mom_div and mom_div_1 <= -0.02:
+        mom_ok = False
+
+    # === 左侧交易评估 ===
+    is_bb_dip = price < bb_lower_1 * p.bbands_lower_bias
+    is_rsi_dip = rsi_1 < p.rsi_oversold_extreme
+    
+    signal_pullback = False
+    signal_rebound = False
+    
+    if is_bb_dip or is_rsi_dip:
+        # 止跌形态验证（收阳线或长下影线），作为强烈加分项
+        lower_shadow = min(open_p, price) - low_p
+        body = abs(price - open_p)
+        has_bottoming_sign = is_green_candle or (lower_shadow > body * 1.5 and lower_shadow > 0)
+            
+        # 左侧接飞刀算分系统
+        score = 0.0
+        if has_bottoming_sign: score += 1.0       # 有止跌形态直接+1分
+        if is_bb_dip: score += p.w_pullback_ma    # 复用回调权重为布林下轨突刺分
+        if is_rsi_dip: score += p.w_rsi_rebound   # 复用超卖权重为极度恐慌分
+        if is_green_candle: score += p.w_green_candle
+        if vol_up: score += p.w_vol_up
+        if macd_golden_cross or macd_h_1 > macd_h_2: score += p.w_macd_cross
+        if mom_ok: score += 1.0
+        
+        # 大盘熊市时，左侧入局门槛提高
+        pass_threshold = 1.0 if market_uptrend else 3.0
+        signal_pullback = (score >= pass_threshold) and is_bb_dip
+        signal_rebound = (score >= pass_threshold) and is_rsi_dip
+
+    # === 右侧交易评估 (牛市专属) ===
+    signal_trend_breakout = False
+    if market_uptrend:
+        is_above_ma = price > sma_s_1
+        is_rsi_health = 40 < rsi_1 < 75
+        if macd_golden_cross and is_above_ma and vol_up and is_rsi_health:
+            signal_trend_breakout = True
+
+    return signal_pullback, signal_rebound, signal_trend_breakout
 
 
 def create_strategy(params: StrategyParams) -> type[Strategy]:
@@ -56,6 +171,7 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
             self.obv = self.data[c["obv"]]
             self.atr = self.data[c["atr"]]
             self.current_stop_loss = 0.0
+            self.current_trade_type = ""
             self._has_vol_slope = "vol_slope" in self.data.df.columns
             self._has_mom_div = "momentum_divergence" in self.data.df.columns
             if self._has_vol_slope:
@@ -80,69 +196,99 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                     return
 
                 if self.position.pl_pct >= p.take_profit_pct:
-                    self.position.close()
-                    return
+                    # 利润达到初步目标后，不立刻清仓，而是收紧移动止损，放飞利润
+                    if self.current_trade_type == "right":
+                        tight_stop = price - 1.5 * self.atr[-1]
+                    else:
+                        tight_stop = price - 0.8 * self.atr[-1]
+                        
+                    if tight_stop > self.current_stop_loss:
+                        self.current_stop_loss = tight_stop
+
+                if self.position.pl_pct >= 0.02:
+                    # 提早激活移动保护
+                    if self.current_trade_type == "right":
+                        protect_stop = price - 1.5 * self.atr[-1]
+                    else:
+                        protect_stop = price - 1.0 * self.atr[-1]
+                        
+                    if protect_stop > self.current_stop_loss:
+                        self.current_stop_loss = protect_stop
 
                 if self.position.pl_pct >= p.breakeven_trigger and len(self.trades) > 0:
                     breakeven_stop = self.trades[0].entry_price * p.breakeven_buffer
                     if self.current_stop_loss < breakeven_stop:
                         self.current_stop_loss = breakeven_stop
 
-                if price >= self.bb_upper[-1]:
-                    self.position.close()
-                elif price < self.sma_s[-1] and self.data.Close[-2] < self.sma_s[-2]:
+                # 极端过热才强制离场（比如主升浪触及顶端）
+                if self.rsi[-1] >= 85.0:
                     self.position.close()
                 return
 
-            is_ma_long_up = False
-            if len(self.sma_l) >= 3:
-                is_ma_long_up = self.sma_l[-1] > self.sma_l[-3]
+            sma_l_3 = self.sma_l[-3] if len(self.sma_l) >= 3 else None
+            vol_slope_1 = self.vol_slope[-1] if self._has_vol_slope else 0.0
+            mom_div_1 = self.mom_div[-1] if self._has_mom_div else 0.0
 
-            macd_golden_cross = self.macd_h[-2] <= 0 and self.macd_h[-1] > 0
-            is_green_candle = price > self.data.Open[-1]
+            # ===== 大盘情绪过滤 (Market Regime Filter) =====
+            # 如果大盘在上证指数 20日均线下方，认定为熊市/调整期，彻底拒绝一切买入信号
+            current_date = self.data.index[-1]
+            market_uptrend = True  # Default True if no index found
+            idx_df = get_market_index()
+            if idx_df is not None:
+                # Use 'pad' to get the latest available market data without looking into the future
+                idx_loc = idx_df.index.get_indexer([current_date], method='pad')[0]
+                if idx_loc != -1:
+                    market_uptrend = bool(idx_df.iloc[idx_loc]["market_uptrend"])
 
-            if self._has_vol_slope and self.vol_slope[-1] > 0.1:
-                vol_up = True
+            # if not market_uptrend:
+            #     return
+            # ===============================================
+
+            signal_pullback, signal_rebound, signal_trend_breakout = evaluate_buy_signals(
+                price=price,
+                open_p=self.data.Open[-1],
+                low_p=self.data.Low[-1],
+                sma_l_1=self.sma_l[-1],
+                sma_l_3=sma_l_3,
+                sma_s_1=self.sma_s[-1],
+                macd_h_1=self.macd_h[-1],
+                macd_h_2=self.macd_h[-2],
+                rsi_1=self.rsi[-1],
+                bb_lower_1=self.bb_lower[-1],
+                vol_1=self.data.Volume[-1],
+                vol_2=self.data.Volume[-2],
+                has_vol_slope=self._has_vol_slope,
+                vol_slope_1=vol_slope_1,
+                has_mom_div=self._has_mom_div,
+                mom_div_1=mom_div_1,
+                market_uptrend=market_uptrend,
+                p=p,
+            )
+
+            has_rule_signal = signal_pullback or signal_rebound or signal_trend_breakout
+            if not has_rule_signal:
+                return
+
+            # ===== AI 模型概率门控 (Phase 8) =====
+            ai_model = _get_ai_model()
+            if ai_model is not None:
+                feat_cols = [c for c in self.data.df.columns if c.startswith('feat_')]
+                if feat_cols:
+                    bar_idx = len(self.data.Close) - 1
+                    feat_row = self.data.df.iloc[bar_idx][feat_cols]
+                    if not feat_row.isna().any():
+                        prob = ai_model.predict(feat_row.values.reshape(1, -1))[0]
+                        if prob < 0.35:
+                            return  # AI 预测未来不佳，拒绝开仓
+            # ============================================
+
+            self.buy()
+            if signal_trend_breakout:
+                self.current_stop_loss = price - 2.5 * self.atr[-1]
+                self.current_trade_type = "right"
             else:
-                vol_up = self.data.Volume[-1] > self.data.Volume[-2] * p.vol_up_ratio
-
-            rsi_cooled = self.rsi[-1] < p.rsi_cooled_max
-
-            mom_ok = True
-            if self._has_mom_div and self.mom_div[-1] <= -0.02:
-                mom_ok = False
-
-            # 均线回踩信波段买点打分机制
-            near_ma_long = self.data.Low[-1] <= self.sma_l[-1] * p.pullback_ma_tolerance
-            pullback_score = 0
-            if is_ma_long_up: pullback_score += 1
-            if near_ma_long: pullback_score += 2 # 回踩均线是核心点，权重较高
-            if is_green_candle: pullback_score += 1
-            if macd_golden_cross or self.macd_h[-1] > self.macd_h[-2]: pullback_score += 1 # 放宽MACD条件：金叉或红柱变长/绿柱缩短
-            if vol_up: pullback_score += 1
-            if rsi_cooled: pullback_score += 1
-            if mom_ok: pullback_score += 1
-            
-            signal_pullback = pullback_score >= 5
-
-            # 乖离率超卖波段打分机制
-            macd_turn_up = self.macd_h[-1] > self.macd_h[-2]
-            negative_bias = price < self.sma_s[-1] * p.negative_bias_pct
-            rsi_oversold = self.rsi[-1] < p.rsi_oversold
-
-            rebound_score = 0
-            if negative_bias: rebound_score += 2 # 核心点
-            if rsi_oversold: rebound_score += 2 # 核心点
-            if is_green_candle: rebound_score += 1
-            if vol_up: rebound_score += 1
-            if macd_turn_up: rebound_score += 1
-            if mom_ok: rebound_score += 1
-            
-            signal_rebound = rebound_score >= 5
-
-            if signal_pullback or signal_rebound:
-                self.buy()
-                self.current_stop_loss = price - p.atr_multiplier * self.atr[-1]
+                self.current_stop_loss = price - 1.5 * self.atr[-1]
+                self.current_trade_type = "left"
 
     _Strategy.__name__ = "MultiFactorStrategy"
     _Strategy.__qualname__ = "MultiFactorStrategy"
@@ -160,6 +306,13 @@ def _load_and_prepare(code: str, params: StrategyParams) -> pd.DataFrame | None:
         return None
 
     df = calculate_indicators(df, params)
+
+    # ===== Phase 8: Add ML features for AI model inference =====
+    try:
+        from quant.features import extract_features
+        df = extract_features(df)
+    except Exception:
+        pass  # Gracefully degrade if features module has issues
 
     # Check data quality after indicators
     non_nan_count = len(df.dropna(subset=[f"SMA_{params.ma_long}", f"MACDh_{params.macd_fast}_{params.macd_slow}_{params.macd_signal}", f"RSI_{params.rsi_length}", f"ATRr_{params.atr_length}"]))
@@ -186,19 +339,29 @@ def _load_and_prepare(code: str, params: StrategyParams) -> pd.DataFrame | None:
 
 
 def run_backtest(
-    code: str, params: StrategyParams | None = None
+    code: str, params: StrategyParams | None = None,
+    start_date: str | None = None, end_date: str | None = None
 ) -> tuple[Backtest, pd.Series] | None:
     params = _resolve_params(params)
     df = _load_and_prepare(code, params)
     if df is None:
         return None
 
+    if start_date is not None:
+        df = df[df.index >= start_date]
+    if end_date is not None:
+        df = df[df.index <= end_date]
+
+    if df.empty or len(df) < 10:
+        return None
+
     strategy_cls = create_strategy(params)
+    slippage = getattr(CONF.strategy, "slippage_pct", 0.002)
     bt = Backtest(
         df,
         strategy_cls,
         cash=100_000,
-        commission=0.0002,
+        commission=0.0002 + slippage,
         trade_on_close=True,
         exclusive_orders=True,
     )
@@ -245,55 +408,56 @@ def scan_today_signal(
     vol_1 = row_1.get("volume", row_1.get("Volume", 0))
     vol_2 = row_2.get("volume", row_2.get("Volume", 0))
 
-    is_ma_long_up = sma_l_1 > sma_l_3
-    macd_golden_cross = macd_h_2 <= 0 and macd_h_1 > 0
-    is_green_candle = price > row_1["open"]
-
     has_vol_slope = "vol_slope" in df.columns
-    if has_vol_slope and row_1["vol_slope"] > 0.1:
-        vol_up = True
-    else:
-        vol_up = vol_1 > vol_2 * params.vol_up_ratio
+    vol_slope_1 = row_1["vol_slope"] if has_vol_slope else 0.0
+    has_mom_div = "momentum_divergence" in df.columns
+    mom_div_1 = row_1["momentum_divergence"] if has_mom_div else 0.0
 
-    rsi_cooled = rsi_val < params.rsi_cooled_max
+    # ===== 大盘情绪过滤 (Market Regime Filter) =====
+    current_date_str = row_1.get("date")
+    market_uptrend = True
+    idx_df = get_market_index()
+    if idx_df is not None and current_date_str is not None:
+        try:
+            current_date_ts = pd.to_datetime(current_date_str)
+            idx_loc = idx_df.index.get_indexer([current_date_ts], method='pad')[0]
+            if idx_loc != -1:
+                market_uptrend = bool(idx_df.iloc[idx_loc]["market_uptrend"])
+        except Exception:
+            pass
 
-    mom_ok = True
-    if "momentum_divergence" in df.columns and row_1["momentum_divergence"] <= -0.02:
-        mom_ok = False
+    # if not market_uptrend:
+    #     return None
+    # ===============================================
 
-    # 均线回踩打分
-    near_ma_long = row_1["low"] <= sma_l_1 * params.pullback_ma_tolerance
-    pullback_score = 0
-    if is_ma_long_up: pullback_score += 1
-    if near_ma_long: pullback_score += 2
-    if is_green_candle: pullback_score += 1
-    if macd_golden_cross or macd_h_1 > macd_h_2: pullback_score += 1
-    if vol_up: pullback_score += 1
-    if rsi_cooled: pullback_score += 1
-    if mom_ok: pullback_score += 1
-    
-    signal_pullback = pullback_score >= 5
-
-    macd_turn_up = macd_h_1 > macd_h_2
-    negative_bias = price < sma_s_1 * params.negative_bias_pct
-    rsi_oversold = rsi_val < params.rsi_oversold
-    
-    # 乖离反弹打分
-    rebound_score = 0
-    if negative_bias: rebound_score += 2
-    if rsi_oversold: rebound_score += 2
-    if is_green_candle: rebound_score += 1
-    if vol_up: rebound_score += 1
-    if macd_turn_up: rebound_score += 1
-    if mom_ok: rebound_score += 1
-
-    signal_rebound = rebound_score >= 5
+    signal_pullback, signal_rebound, signal_trend_breakout = evaluate_buy_signals(
+        price=price,
+        open_p=row_1["open"],
+        low_p=row_1["low"],
+        sma_l_1=sma_l_1,
+        sma_l_3=sma_l_3,
+        sma_s_1=sma_s_1,
+        macd_h_1=macd_h_1,
+        macd_h_2=macd_h_2,
+        rsi_1=rsi_val,
+        bb_lower_1=row_1[cols["bb_lower"]],
+        vol_1=vol_1,
+        vol_2=vol_2,
+        has_vol_slope=has_vol_slope,
+        vol_slope_1=vol_slope_1,
+        has_mom_div=has_mom_div,
+        mom_div_1=mom_div_1,
+        market_uptrend=market_uptrend,
+        p=params,
+    )
 
     signal_type = ""
     if signal_pullback:
-        signal_type = "均线回踩波段买点"
+        signal_type = "布林带极度下杀反弹 (左侧)"
     elif signal_rebound:
-        signal_type = "乖离率超卖波段"
+        signal_type = "超卖恐慌底部 (左侧)"
+    elif signal_trend_breakout:
+        signal_type = "均线放量金叉 (右侧)"
     else:
         return None
 
@@ -308,14 +472,15 @@ def scan_today_signal(
 
 
 def batch_backtest(
-    codes: list[str], params: StrategyParams | None = None
+    codes: list[str], params: StrategyParams | None = None,
+    start_date: str | None = None, end_date: str | None = None
 ) -> pd.DataFrame:
     params = _resolve_params(params)
     records: list[dict] = []
 
     for code in tqdm(codes, desc="批量回测"):
         try:
-            result = run_backtest(code, params)
+            result = run_backtest(code, params, start_date=start_date, end_date=end_date)
             if result is None:
                 continue
             _, stats = result

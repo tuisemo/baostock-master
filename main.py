@@ -94,6 +94,26 @@ def cmd_batch_test(args: argparse.Namespace):
     print(f"平均夏普比率:  {df['sharpe'].mean():.2f}")
 
 
+def cmd_train_ai():
+    from quant.trainer import build_dataset, train_model
+    from quant.config import CONF
+    from quant.strategy_params import StrategyParams
+
+    logger.info("启动 AI 模型离线训练管道 (Phase 8)...")
+    p = StrategyParams.from_app_config(CONF)
+    data_dir = CONF.history_data.data_dir
+    
+    # 构建包含高阶特征的数据集
+    df = build_dataset(data_dir, p, n_forward_days=5, target_pct=0.05)
+    
+    if df.empty:
+        logger.error("数据集为空，训练中止。")
+        return
+        
+    # 训练模型并保存
+    train_model(df, model_path="models/alpha_lgbm.txt")
+    
+
 def main():
     parser = argparse.ArgumentParser(description="Production-grade A-Share Quant System")
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -130,6 +150,11 @@ def main():
     bt_parser.add_argument("--num", type=int, default=100, help="Number of stocks to sample")
     bt_parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility")
 
+    subparsers.add_parser(
+        "train-ai",
+        help="Train the LightGBM machine learning predictive model.",
+    )
+
     args = parser.parse_args()
 
     if args.command == "update-list":
@@ -144,6 +169,8 @@ def main():
         cmd_optimize(args)
     elif args.command == "batch-test":
         cmd_batch_test(args)
+    elif args.command == "train-ai":
+        cmd_train_ai()
     else:
         parser.print_help()
         sys.exit(1)
