@@ -60,7 +60,14 @@ def calculate_indicators(df: pd.DataFrame, params: StrategyParams | None = None)
         df.ta.sma(length=ma_long, append=True)
         df.ta.macd(fast=macd_fast, slow=macd_slow, signal=macd_signal, append=True)
         df.ta.rsi(length=rsi_length, append=True)
-        df.ta.bbands(length=bbands_length, std=bbands_std, append=True)
+        
+        # Manually compute BBands to avoid pandas-ta std parsing bugs
+        sma_bb = df['close'].rolling(window=bbands_length).mean()
+        std_bb = df['close'].rolling(window=bbands_length).std()
+        df[f'BBL_{bbands_length}_{bbands_std}'] = sma_bb - bbands_std * std_bb
+        df[f'BBM_{bbands_length}_{bbands_std}'] = sma_bb
+        df[f'BBU_{bbands_length}_{bbands_std}'] = sma_bb + bbands_std * std_bb
+        
         df.ta.obv(append=True)
         df.ta.atr(length=atr_length, append=True)
 

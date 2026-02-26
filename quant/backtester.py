@@ -39,8 +39,8 @@ def _build_column_names(p: StrategyParams) -> dict[str, str]:
         "sma_l": f"SMA_{p.ma_long}",
         "macd_h": f"MACDh_{p.macd_fast}_{p.macd_slow}_{p.macd_signal}",
         "rsi": f"RSI_{p.rsi_length}",
-        "bb_lower": f"BBL_{p.bbands_length}_{p.bbands_std}_{p.bbands_std}",
-        "bb_upper": f"BBU_{p.bbands_length}_{p.bbands_std}_{p.bbands_std}",
+        "bb_lower": f"BBL_{p.bbands_length}_{p.bbands_std}",
+        "bb_upper": f"BBU_{p.bbands_length}_{p.bbands_std}",
         "obv": "OBV",
         "atr": f"ATRr_{p.atr_length}",
     }

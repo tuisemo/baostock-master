@@ -62,6 +62,9 @@ class StrategyParams:
     breakeven_trigger: float = 0.04
     breakeven_buffer: float = 1.005
 
+    # --- Phase 9: AI Model Gate ---
+    ai_prob_threshold: float = 0.35
+
     def to_dict(self) -> dict[str, int | float]:
         return asdict(self)
 
@@ -107,6 +110,7 @@ class StrategyParams:
                 "negative_bias_pct", "rsi_oversold", "trail_atr_mult",
                 "take_profit_pct", "breakeven_trigger", "breakeven_buffer",
                 "w_pullback_ma", "w_macd_cross", "w_vol_up", "w_rsi_rebound", "w_green_candle",
+                "bbands_lower_bias", "rsi_oversold_extreme", "ai_prob_threshold"
             ):
                 val = getattr(strategy_data, name, None)
                 if val is not None:
@@ -151,4 +155,7 @@ PARAM_SPACE: dict[str, tuple[float, float, float]] = {
     "take_profit_pct": (0.03, 0.12, 0.01),
     "breakeven_trigger": (0.02, 0.06, 0.005),
     "breakeven_buffer": (1.002, 1.010, 0.001),
+    
+    # AI ML Gate
+    "ai_prob_threshold": (0.1, 0.5, 0.05),
 }

@@ -45,6 +45,7 @@ strategy:
   w_vol_up: 0.5
   w_rsi_rebound: 2.5
   w_green_candle: 1.5
+  ai_prob_threshold: 0.35
 optimizer:
   sample_count: 200
   max_rounds: 5
