@@ -45,7 +45,15 @@ def compute_objective(df_results: pd.DataFrame, objective: str) -> float:
         return -999.0
 
 
-def sample_stock_codes(n: int, seed: int | None = None) -> list[str]:
+def sample_stock_codes(n: int, seed: int | None = None, stratify_by: str = "market_cap") -> list[str]:
+    """
+    Sample stock codes with optional stratification for better representation.
+    
+    Args:
+        n: Number of codes to sample
+        seed: Random seed for reproducibility
+        stratify_by: Stratification strategy - 'market_cap', 'volatility', 'sector', or None (random)
+    """
     data_dir = CONF.history_data.data_dir
     all_files = os.listdir(data_dir)
     codes: list[str] = []
@@ -64,7 +72,113 @@ def sample_stock_codes(n: int, seed: int | None = None) -> list[str]:
         rng = random.Random()
 
     n = min(n, len(codes))
-    return rng.sample(codes, n)
+    
+    # If no stratification, use simple random sampling
+    if stratify_by is None or stratify_by == "random":
+        return rng.sample(codes, n)
+    
+    # Stratified sampling based on market characteristics
+    logger.info(f"Using stratified sampling by {stratify_by}...")
+    
+    # Group stocks by characteristics
+    stratified_groups = _stratify_stocks(codes, data_dir, stratify_by)
+    
+    # Sample from each group proportionally
+    selected_codes = []
+    total_groups = len(stratified_groups)
+    
+    for group_name, group_codes in stratified_groups.items():
+        group_size = max(1, int(n / total_groups))
+        sample_size = min(group_size, len(group_codes))
+        if sample_size > 0:
+            selected_codes.extend(rng.sample(group_codes, sample_size))
+    
+    # If we need more codes to reach n, fill randomly
+    if len(selected_codes) < n:
+        remaining = n - len(selected_codes)
+        available = [c for c in codes if c not in selected_codes]
+        if available:
+            selected_codes.extend(rng.sample(available, min(remaining, len(available))))
+    
+    logger.info(f"Stratified sampling completed: {len(selected_codes)} codes from {total_groups} groups")
+    
+    return selected_codes[:n]
+
+def _stratify_stocks(codes: list[str], data_dir: str, stratify_by: str) -> dict[str, list[str]]:
+    """
+    Stratify stocks based on specified criteria.
+    """
+    stratified_groups = {}
+    
+    for code in codes:
+        try:
+            file_path = os.path.join(data_dir, f"{code}.csv")
+            if not os.path.exists(file_path):
+                continue
+                
+            # Read last row for recent characteristics
+            df = pd.read_csv(file_path, nrows=100)  # Read recent data
+            if df.empty:
+                continue
+            
+            last_row = df.iloc[-1]
+            
+            if stratify_by == "market_cap":
+                # Stratify by market cap (if available in data)
+                if 'market_cap' in last_row:
+                    cap = last_row['market_cap']
+                    if cap > 100:  # Large cap
+                        group = "large_cap"
+                    elif cap > 30:  # Mid cap
+                        group = "mid_cap"
+                    else:  # Small cap
+                        group = "small_cap"
+                else:
+                    # Fallback: use price as proxy
+                    close = last_row.get('close', last_row.get('Close', 0))
+                    if close > 50:
+                        group = "large_cap"
+                    elif close > 10:
+                        group = "mid_cap"
+                    else:
+                        group = "small_cap"
+                        
+            elif stratify_by == "volatility":
+                # Stratify by recent volatility
+                if len(df) >= 20:
+                    recent_returns = df['close'].pct_change().tail(20).std() if 'close' in df.columns else 0
+                    if recent_returns > 0.05:
+                        group = "high_volatility"
+                    elif recent_returns > 0.02:
+                        group = "medium_volatility"
+                    else:
+                        group = "low_volatility"
+                else:
+                    group = "medium_volatility"
+                    
+            elif stratify_by == "sector":
+                # Stratify by sector (using stock code prefix as proxy)
+                if code.startswith("sh.6"):
+                    group = "shanghai_main"
+                elif code.startswith("sz.00"):
+                    group = "shenzhen_main"
+                elif code.startswith("sz.30"):
+                    group = "shenzhen_chi_next"
+                else:
+                    group = "other"
+                    
+            else:
+                group = "default"
+            
+            if group not in stratified_groups:
+                stratified_groups[group] = []
+            stratified_groups[group].append(code)
+            
+        except Exception as e:
+            logger.debug(f"Error stratifying {code}: {e}")
+            continue
+    
+    return stratified_groups
 
 
 def get_train_test_split_dates(codes: list[str], train_ratio: float) -> str | None:

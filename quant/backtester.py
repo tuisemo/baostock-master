@@ -8,7 +8,7 @@ import pandas as pd
 from backtesting import Backtest, Strategy
 from tqdm import tqdm
 
-from quant.analyzer import calculate_indicators
+from quant.analyzer import calculate_indicators, classify_market_state, get_dynamic_params
 from quant.config import CONF
 from quant.logger import logger
 
@@ -172,7 +172,10 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
 
     class _Strategy(Strategy):
         _p = params
+        _base_p = params  # Keep original params for reference
         _cols = cols
+        _market_state = "sideways"  # Default
+        _dynamic_p = params  # Dynamic params based on market state
 
         def init(self):
             p = self._p
@@ -197,12 +200,21 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                 self.vol_slope = self.I(_get_col, "vol_slope", name="vol_slope")
             if self._has_mom_div:
                 self.mom_div = self.I(_get_col, "momentum_divergence", name="mom_div")
+            
+            # Initialize market state
+            idx_df = get_market_index()
+            if idx_df is not None:
+                self._market_state = classify_market_state(idx_df)
+                self._dynamic_p = get_dynamic_params(self._base_p, self._market_state)
+                logger.debug(f"Market state: {self._market_state}, using dynamic params")
+            else:
+                self._dynamic_p = self._base_p
 
         def next(self):
             if pd.isna(self.sma_s[-1]) or pd.isna(self.rsi[-1]) or pd.isna(self.atr[-1]):
                 return
 
-            p = self._p
+            p = self._dynamic_p  # Use dynamic params
             price = self.data.Close[-1]
 
             if self.position:
@@ -247,10 +259,44 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                     if self.current_stop_loss < breakeven_stop:
                         self.current_stop_loss = breakeven_stop
 
-                # 极端过热才强制离场
+                # Enhanced Exit Signals - Active Take-Profit Mechanisms
+                
+                # 1. RSI Overheating (existing, but with dynamic thresholds)
                 rsi_limit = p.rsi_overbought_right if self.current_trade_type == "right" else p.rsi_overbought_left
                 if self.rsi[-1] >= rsi_limit:
                     self.position.close()
+                    return
+                
+                # 2. Volume-Price Divergence (volume shrinks while price stalls)
+                if hasattr(self, 'vol_slope') and len(self.data) >= 5:
+                    recent_slope = np.mean(self.vol_slope[-5:])
+                    recent_price_change = (self.data.Close[-1] - self.data.Close[-5]) / self.data.Close[-5]
+                    if recent_slope < -0.05 and 0 < recent_price_change < 0.02:
+                        self.position.close()
+                        return
+                
+                # 3. MACD Top Divergence
+                if len(self.macd_h) >= 10:
+                    recent_macd = self.macd_h[-5:].tolist()
+                    recent_highs = self.data.High[-5:].tolist()
+                    if (recent_macd[0] > recent_macd[-1] and 
+                        recent_highs[0] > recent_highs[-1]):
+                        self.position.close()
+                        return
+                
+                # 4. Timeout with Minimal Return (Time-based exit)
+                if days_held >= p.max_hold_days and self.position.pl_pct < p.max_hold_min_return:
+                    self.position.close()
+                    return
+                
+                # 5. Consecutive Small Losses Warning (reduce position on next trade)
+                if len(self.trades) >= 3:
+                    last_3_trades = self.trades[-3:]
+                    consecutive_losses = all(t.pl_pct < 0 for t in last_3_trades)
+                    if consecutive_losses:
+                        # Signal to reduce exposure (handled in position sizing)
+                        pass
+                
                 return
 
             sma_l_3 = self.sma_l[-3] if len(self.sma_l) >= 3 else None
@@ -311,19 +357,48 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                             return  # AI 预测未来不佳，拒绝开仓
             # ============================================
 
-            # Position Sizing (ATR based or fixed ratio based)
-            if hasattr(p, 'atr_risk_per_trade') and p.atr_risk_per_trade > 0 and self.atr[-1] > 0:
+            # Position Sizing (Dynamic based on AI confidence, volatility, and market state)
+            if ai_model is not None and hasattr(p, 'atr_risk_per_trade') and p.atr_risk_per_trade > 0 and self.atr[-1] > 0:
+                # Get AI confidence
+                feat_cols = [c for c in self.data.df.columns if c.startswith('feat_')]
+                ai_confidence = 0.5  # Default moderate confidence
+                if feat_cols:
+                    bar_idx = len(self.data.Close) - 1
+                    feat_row = self.data.df.iloc[bar_idx][feat_cols]
+                    if not feat_row.isna().any():
+                        ai_confidence = float(ai_model.predict(feat_row.values.reshape(1, -1))[0])
+                
+                # Volatility adjustment (higher volatility = smaller position)
+                vol_ratio = self.atr[-1] / price
+                volatility_factor = 1.0 / (1.0 + vol_ratio * 10)
+                
+                # Market state factor (already applied to dynamic params)
+                # Strong bull = 1.3x, Weak bull = 1.1x, Sideways = 1.0x, Weak bear = 0.8x, Strong bear = 0.6x
+                
+                # Trade type factor (right side = slightly larger position)
+                trade_type_factor = 1.1 if (signal_pullback or signal_rebound) else 1.0
+                
+                # Calculate base position size
                 risk_amt = self.equity * p.atr_risk_per_trade
-                # We typically set stop loss at ~2 ATR away. So 1 share risk = 2 * ATR.
-                # size = risk_amt / (2 * ATR * multiplier)
-                # But to keep simple fractional sizing in backtesting.py without exact lot conversions:
                 risk_per_share = 2.0 * self.atr[-1]
                 shares = risk_amt / risk_per_share
-                # Convert shares to a fraction of available equity to use size=X.X format
                 fractional_size = min(0.99, (shares * price) / self.equity)
-                # Fallback to standard param if calculation yields tiny/massive size
+                
+                # Apply dynamic factors
+                confidence_factor = ai_confidence / 0.5  # Normalize around 0.5 threshold
+                dynamic_size = fractional_size * confidence_factor * volatility_factor * trade_type_factor
+                
+                # Clamp position size to reasonable range (2% to 25% of equity)
+                pos_size = max(0.02, min(0.25, dynamic_size))
+            elif hasattr(p, 'atr_risk_per_trade') and p.atr_risk_per_trade > 0 and self.atr[-1] > 0:
+                # Fallback to standard ATR-based sizing
+                risk_amt = self.equity * p.atr_risk_per_trade
+                risk_per_share = 2.0 * self.atr[-1]
+                shares = risk_amt / risk_per_share
+                fractional_size = min(0.99, (shares * price) / self.equity)
                 pos_size = max(0.01, min(0.99, fractional_size))
             else:
+                # Fallback to fixed ratio
                 pos_size = p.position_size
 
             self.buy(size=pos_size)

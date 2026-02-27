@@ -224,6 +224,114 @@ def _analyze_single_file(file_path: str) -> dict | None:
     return None
 
 
+def classify_market_state(index_df: pd.DataFrame, lookback_days: int = 60) -> str:
+    """
+    Classify market state into 5 categories:
+    - strong_bull: Strong uptrend with low volatility
+    - weak_bull: Mild uptrend
+    - sideways: Range-bound with low volatility
+    - weak_bear: Mild downtrend
+    - strong_bear: Strong downtrend with high volatility
+    """
+    if index_df is None or len(index_df) < lookback_days:
+        return "sideways"
+
+    # Use latest data
+    recent = index_df.tail(lookback_days)
+    
+    # Calculate moving averages
+    ma20 = recent['close'].rolling(window=20).mean()
+    ma60 = recent['close'].rolling(window=60).mean()
+    
+    # Trend strength (distance between MA20 and MA60)
+    trend_strength = (ma20.iloc[-1] - ma60.iloc[-1]) / ma60.iloc[-1]
+    
+    # Volatility (20-day return standard deviation)
+    returns = recent['close'].pct_change().dropna()
+    volatility = returns.tail(20).std()
+    
+    # Rate of change (20-day return)
+    roc_20 = (recent['close'].iloc[-1] - recent['close'].iloc[-20]) / recent['close'].iloc[-20]
+    
+    # Classification logic
+    if trend_strength > 0.02 and volatility < 0.02 and roc_20 > 0.05:
+        return "strong_bull"
+    elif trend_strength > 0.005:
+        return "weak_bull"
+    elif -0.005 <= trend_strength <= 0.005 and volatility < 0.025:
+        return "sideways"
+    elif trend_strength < -0.005 and volatility < 0.03:
+        return "weak_bear"
+    elif trend_strength < -0.02 or (trend_strength < -0.01 and volatility > 0.03):
+        return "strong_bear"
+    else:
+        return "sideways"
+
+
+def get_dynamic_params(base_params: StrategyParams, market_state: str) -> StrategyParams:
+    """
+    Dynamically adjust strategy parameters based on market state.
+    """
+    from dataclasses import replace
+    try:
+        params = replace(base_params)
+    except:
+        params = StrategyParams(**base_params.to_dict())
+    
+    # Market state adjustments
+    state_adjustments = {
+        'strong_bull': {
+            'position_size': 1.3,
+            'ai_prob_threshold': -0.05,
+            'max_hold_days': 5,
+            'trail_atr_mult': 2.2,
+            'take_profit_pct': 0.001,  # Increase by 1%
+        },
+        'weak_bull': {
+            'position_size': 1.1,
+            'ai_prob_threshold': -0.02,
+            'max_hold_days': 2,
+            'trail_atr_mult': 2.0,
+        },
+        'sideways': {
+            'position_size': 1.0,
+            'ai_prob_threshold': 0.0,
+            'max_hold_days': 0,
+        },
+        'weak_bear': {
+            'position_size': 0.8,
+            'ai_prob_threshold': 0.08,
+            'max_hold_days': -2,
+            'trail_atr_mult': 1.6,
+        },
+        'strong_bear': {
+            'position_size': 0.6,
+            'ai_prob_threshold': 0.12,
+            'max_hold_days': -5,
+            'trail_atr_mult': 1.4,
+            'take_profit_pct': -0.002,  # Decrease by 0.2%
+        },
+    }
+    
+    # Apply adjustments
+    adjustments = state_adjustments.get(market_state, {})
+    for key, delta in adjustments.items():
+        current_value = getattr(params, key, None)
+        if current_value is not None:
+            if isinstance(current_value, float):
+                # Add delta (or multiply for position_size)
+                if key == 'position_size':
+                    params.__setattr__(key, min(0.25, max(0.02, current_value * delta)))
+                elif key in ['ai_prob_threshold', 'take_profit_pct']:
+                    params.__setattr__(key, current_value + delta)
+                else:
+                    params.__setattr__(key, current_value + delta)
+            elif isinstance(current_value, int):
+                params.__setattr__(key, current_value + int(delta))
+    
+    return params
+
+
 def analyze_all_stocks() -> None:
     """Batch analysis entry point using CONF-based defaults."""
     data_files = glob(os.path.join(CONF.history_data.data_dir, "*.csv"))
@@ -256,6 +364,10 @@ def analyze_all_stocks() -> None:
         if 'mom_20' in res_df.columns:
             res_df['mom_rank'] = res_df['mom_20'].rank(pct=True)
             
+        # Add sector rotation signals
+        sector_signals = calculate_sector_rotation_signals(res_df)
+        res_df = pd.merge(res_df, sector_signals, on='code', how='left')
+            
         res_df = res_df.sort_values("total_score", ascending=False)
 
         date_str = datetime.now().strftime("%Y%m%d")
@@ -264,3 +376,67 @@ def analyze_all_stocks() -> None:
         logger.info(f"高分优选股列表已保存至: {out_filename}")
     else:
         logger.info("今日没有匹配到强势标的，建议空仓观望。")
+
+def calculate_sector_rotation_signals(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate sector rotation signals based on stock codes.
+    Group stocks by exchange and market cap, then calculate relative strength.
+    """
+    sector_data = []
+    
+    if df.empty:
+        return pd.DataFrame()
+    
+    # Group by sector (using stock code prefix)
+    def get_sector(code: str) -> str:
+        if code.startswith("sh.6"):
+            return "shanghai_main"
+        elif code.startswith("sz.00"):
+            return "shenzhen_main"
+        elif code.startswith("sz.30"):
+            return "shenzhen_chi_next"
+        else:
+            return "other"
+    
+    # Add sector to dataframe temporarily
+    df['sector'] = df['code'].apply(get_sector)
+    
+    # Calculate sector performance metrics
+    for sector in df['sector'].unique():
+        sector_stocks = df[df['sector'] == sector]
+        
+        if len(sector_stocks) > 0:
+            # Average metrics for the sector
+            avg_mom = sector_stocks.get('mom_20', pd.Series([0])).mean()
+            avg_rsi = sector_stocks.get('rsi', pd.Series([50])).mean()
+            avg_score = sector_stocks.get('total_score', pd.Series([0])).mean()
+            
+            # Store sector data
+            for code in sector_stocks['code']:
+                sector_data.append({
+                    'code': code,
+                    'sector': sector,
+                    'sector_avg_mom': avg_mom,
+                    'sector_avg_rsi': avg_rsi,
+                    'sector_avg_score': avg_score,
+                })
+    
+    # Create sector signals dataframe
+    sector_df = pd.DataFrame(sector_data)
+    
+    # Calculate relative strength within sector
+    sector_df['stock_sector_relative_strength'] = (
+        sector_df['total_score'] - sector_df['sector_avg_score']
+    )
+    
+    # Identify top performing sectors
+    if not sector_df.empty:
+        sector_performance = sector_df.groupby('sector')['sector_avg_score'].mean().sort_values(ascending=False)
+        top_sectors = sector_performance.head(2).index.tolist()
+        bottom_sectors = sector_performance.tail(2).index.tolist()
+        
+        sector_df['sector_rotation_signal'] = sector_df['sector'].apply(
+            lambda x: 1 if x in top_sectors else (-1 if x in bottom_sectors else 0)
+        )
+    
+    return sector_df.drop(columns=['sector'], errors='ignore')

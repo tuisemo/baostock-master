@@ -198,6 +198,9 @@ def extract_features(df: pd.DataFrame) -> pd.DataFrame:
         if c in df.columns:
             df[c] = df[c].fillna(0.5)
     
+    # Add candlestick pattern features
+    df = add_candlestick_patterns(df)
+    
     return df
 
 def create_targets(df: pd.DataFrame, n_forward_days: int = 5, target_atr_mult: float = 2.0, stop_loss_atr_mult: float = 1.5) -> pd.DataFrame:
@@ -270,4 +273,240 @@ def _fallback_create_targets(df, n_forward_days, target_pct, close_col, high_col
     future_max_return = (future_highest - close_series) / close_series
     df['label_max_ret_5d'] = (future_max_return >= target_pct).astype(int)
     df.loc[df.index[-n_forward_days:], 'label_max_ret_5d'] = np.nan
+    return df
+
+def add_candlestick_patterns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add candlestick pattern recognition features.
+    """
+    df = df.copy()
+    
+    # Get required columns
+    close_col = 'close' if 'close' in df.columns else 'Close'
+    open_col = 'open' if 'open' in df.columns else 'Open'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    high_col = 'high' if 'high' in df.columns else 'High'
+    
+    close = df[close_col]
+    open_p = df[open_col]
+    low = df[low_col]
+    high = df[high_col]
+    
+    # Calculate body and shadows
+    body = abs(close - open_p)
+    lower_shadow = df[[open_col, close_col]].min(axis=1) - low
+    upper_shadow = high - df[[open_col, close_col]].max(axis=1)
+    body_range = high - low + 1e-8
+    
+    # 1. Hammer Pattern (potential reversal at bottom)
+    # Long lower shadow, small body at top, little upper shadow
+    hammer = (
+        (lower_shadow >= 2 * body) &
+        (body <= body_range * 0.3) &
+        (upper_shadow <= body_range * 0.1)
+    )
+    df['feat_pattern_hammer'] = hammer.astype(float)
+    
+    # 2. Shooting Star (potential reversal at top)
+    # Long upper shadow, small body at bottom, little lower shadow
+    shooting_star = (
+        (upper_shadow >= 2 * body) &
+        (body <= body_range * 0.3) &
+        (lower_shadow <= body_range * 0.1)
+    )
+    df['feat_pattern_shooting_star'] = shooting_star.astype(float)
+    
+    # 3. Bullish Engulfing (strong reversal signal)
+    # Red candle followed by green candle that completely engulfs it
+    prev_close = close.shift(1)
+    prev_open = open_p.shift(1)
+    
+    # Previous candle is bearish (close < open)
+    prev_bearish = prev_close < prev_open
+    # Current candle is bullish (close > open)
+    current_bullish = close > open_p
+    # Current candle engulfs previous
+    engulfing = (
+        (open_p <= prev_close) &  # Current open <= previous close
+        (close >= prev_open)      # Current close >= previous open
+    )
+    
+    bullish_engulfing = prev_bearish & current_bullish & engulfing
+    df['feat_pattern_bullish_engulf'] = bullish_engulfing.astype(float)
+    
+    # 4. Bearish Engulfing
+    prev_bullish = prev_close > prev_open
+    current_bearish = close < open_p
+    bearish_engulfing = (
+        prev_bullish &
+        current_bearish &
+        (open_p >= prev_close) &
+        (close <= prev_open)
+    )
+    df['feat_pattern_bearish_engulf'] = bearish_engulfing.astype(float)
+    
+    # 5. Doji (indecision, potential reversal)
+    # Very small body
+    doji = body <= body_range * 0.1
+    df['feat_pattern_doji'] = doji.astype(float)
+    
+    # 6. Morning Star (3-candle bullish reversal pattern)
+    # First: large bearish candle
+    # Second: small body (can be red or green)
+    # Third: large bullish candle that closes above first candle's midpoint
+    if len(df) >= 3:
+        first_bearish = close.shift(2) < open_p.shift(2)
+        second_small = body.shift(1) <= body_range.shift(1) * 0.3
+        third_bullish = close > open_p
+        third_recovery = close > (open_p.shift(2) + close.shift(2)) / 2
+        
+        morning_star = first_bearish & second_small & third_bullish & third_recovery
+        df['feat_pattern_morning_star'] = morning_star.astype(float).fillna(0)
+    else:
+        df['feat_pattern_morning_star'] = 0.0
+    
+    # 7. Evening Star (3-candle bearish reversal pattern)
+    if len(df) >= 3:
+        first_bullish = close.shift(2) > open_p.shift(2)
+        second_small = body.shift(1) <= body_range.shift(1) * 0.3
+        third_bearish = close < open_p
+        third_decline = close < (open_p.shift(2) + close.shift(2)) / 2
+        
+        evening_star = first_bullish & second_small & third_bearish & third_decline
+        df['feat_pattern_evening_star'] = evening_star.astype(float).fillna(0)
+    else:
+        df['feat_pattern_evening_star'] = 0.0
+    
+    # 8. Three White Soldiers (strong bullish continuation)
+    if len(df) >= 3:
+        candle1 = close.shift(2) > open_p.shift(2)
+        candle2 = close.shift(1) > open_p.shift(1)
+        candle3 = close > open_p
+        all_bullish = candle1 & candle2 & candle3
+        
+        # Each candle closes higher than previous
+        higher_highs = (close.shift(1) > close.shift(2)) & (close > close.shift(1))
+        
+        # Small upper shadows
+        small_shadows = (
+            (upper_shadow.shift(2) <= body_range.shift(2) * 0.3) &
+            (upper_shadow.shift(1) <= body_range.shift(1) * 0.3) &
+            (upper_shadow <= body_range * 0.3)
+        )
+        
+        three_white = all_bullish & higher_highs & small_shadows
+        df['feat_pattern_three_white'] = three_white.astype(float).fillna(0)
+    else:
+        df['feat_pattern_three_white'] = 0.0
+    
+    return df
+
+def create_multi_class_targets(df: pd.DataFrame, n_forward_days: int = 5, target_atr_mult: float = 2.0, stop_loss_atr_mult: float = 1.5) -> pd.DataFrame:
+    """
+    Enhanced multi-class target variable for better prediction granularity.
+    
+    Labels:
+    0: Loss (hit stop loss)
+    1: Small profit (0-3% return)
+    2: Medium profit (3-8% return)
+    3: Large profit (>8% return)
+    
+    This helps the model distinguish between different quality trades.
+    """
+    df = df.copy()
+    
+    close_col = 'close' if 'close' in df.columns else 'Close'
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    atr_cols = [c for c in df.columns if c.startswith('ATRr_')]
+    
+    if not atr_cols:
+        # Fallback to simple multi-class if ATR is missing
+        logger = __import__('quant.logger').logger
+        logger.warning("No ATR column found, using fixed thresholds for multi-class targets.")
+        return _fallback_multi_class_targets(df, n_forward_days, close_col, high_col, low_col)
+        
+    atr_col = atr_cols[0]
+    
+    close_series = df[close_col].values
+    high_series = df[high_col].values
+    low_series = df[low_col].values
+    atr_series = df[atr_col].values
+    
+    n = len(df)
+    labels = np.full(n, np.nan)
+    
+    # Define return thresholds
+    small_profit_threshold = 0.03  # 3%
+    medium_profit_threshold = 0.08  # 8%
+    
+    for i in range(n - n_forward_days):
+        entry_price = close_series[i]
+        curr_atr = atr_series[i]
+        
+        # Dynamic stop loss
+        stop_loss = entry_price - stop_loss_atr_mult * curr_atr
+        
+        # Track maximum gain and whether stop loss was hit
+        max_gain = 0.0
+        hit_stop = False
+        
+        for lag in range(1, n_forward_days + 1):
+            future_idx = int(i + lag)
+            day_high = float(high_series[future_idx])
+            day_low = float(low_series[future_idx])
+            
+            # Check stop loss first (pessimistic assumption)
+            if day_low <= stop_loss:
+                hit_stop = True
+                break
+            
+            # Calculate gain
+            gain = (day_high - entry_price) / entry_price
+            max_gain = max(max_gain, gain)
+            
+            # Early exit if we hit target (2 ATR)
+            if gain >= target_atr_mult * curr_atr / entry_price:
+                break
+        
+        # Assign label based on outcome
+        if hit_stop:
+            labels[i] = 0  # Loss
+        elif max_gain < small_profit_threshold:
+            labels[i] = 1  # Small profit
+        elif max_gain < medium_profit_threshold:
+            labels[i] = 2  # Medium profit
+        else:
+            labels[i] = 3  # Large profit
+    
+    df['label_multi_class'] = labels
+    return df
+
+def _fallback_multi_class_targets(df, n_forward_days, close_col, high_col, low_col):
+    """Fallback multi-class targets using fixed thresholds."""
+    close_series = df[close_col]
+    high_series = df[high_col]
+    low_series = df[low_col]
+    
+    # Calculate future highs and lows
+    future_high = high_series.shift(-1).rolling(window=n_forward_days, min_periods=1).max()
+    future_low = low_series.shift(-1).rolling(window=n_forward_days, min_periods=1).min()
+    
+    # Calculate gains and losses
+    future_max_gain = (future_high - close_series) / close_series
+    future_max_loss = (future_low - close_series) / close_series
+    
+    labels = np.full(len(df), np.nan)
+    
+    for i in range(len(df) - n_forward_days):
+        if future_max_loss.iloc[i] < -0.02:  # Hit 2% stop loss
+            labels[i] = 0
+        elif future_max_gain.iloc[i] < 0.03:
+            labels[i] = 1
+        elif future_max_gain.iloc[i] < 0.08:
+            labels[i] = 2
+        else:
+            labels[i] = 3
+    
+    df['label_multi_class'] = labels
     return df
