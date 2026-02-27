@@ -64,9 +64,21 @@ class StrategyParams:
 
     # --- Phase 9: AI Model Gate ---
     ai_prob_threshold: float = 0.35
+    bear_market_ai_threshold: float = 0.55  # Higher bar during bear markets
 
     # --- Position Sizing ---
     position_size: float = 0.1
+    atr_risk_per_trade: float = 0.02  # Risk budget per trade for ATR-based sizing
+
+    # --- Time-Decay Exit ---
+    max_hold_days: int = 15
+    max_hold_min_return: float = 0.01  # Min return after max_hold_days
+
+    # --- Left/Right Independent Take-Profit & RSI ---
+    take_profit_pct_left: float = 0.04
+    take_profit_pct_right: float = 0.08
+    rsi_overbought_left: float = 70.0
+    rsi_overbought_right: float = 85.0
 
     def to_dict(self) -> dict[str, int | float]:
         return asdict(self)
@@ -113,7 +125,11 @@ class StrategyParams:
                 "negative_bias_pct", "rsi_oversold", "trail_atr_mult",
                 "take_profit_pct", "breakeven_trigger", "breakeven_buffer",
                 "w_pullback_ma", "w_macd_cross", "w_vol_up", "w_rsi_rebound", "w_green_candle",
-                "bbands_lower_bias", "rsi_oversold_extreme", "ai_prob_threshold", "position_size"
+                "bbands_lower_bias", "rsi_oversold_extreme", "ai_prob_threshold", "position_size",
+                "bear_market_ai_threshold", "atr_risk_per_trade",
+                "max_hold_days", "max_hold_min_return",
+                "take_profit_pct_left", "take_profit_pct_right",
+                "rsi_overbought_left", "rsi_overbought_right",
             ):
                 val = getattr(strategy_data, name, None)
                 if val is not None:

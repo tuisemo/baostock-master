@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import lightgbm as lgb
-from sklearn.model_selection import train_test_split
+# Time-series aware splitting (no random shuffle for temporal data)
 from sklearn.metrics import classification_report, roc_auc_score
 from quant.config import CONF
 from quant.logger import logger
@@ -60,8 +60,15 @@ def build_dataset(data_dir: str, p: StrategyParams, n_forward_days: int = 5, tar
         # Drop rows where Y is nan (the last n_forward_days)
         df = df.dropna(subset=['label_max_ret_5d'] + feature_cols)
         
-        # Optionally, keep stock code for cross validation splits
+        # Keep stock code for cross validation splits
         df['stock_code'] = f.replace(".csv", "")
+        # Keep a sortable date column for chronological splitting
+        if 'Date' not in df.columns and df.index.name == 'Date':
+            df['_sort_date'] = df.index
+        elif 'Date' in df.columns:
+            df['_sort_date'] = pd.to_datetime(df['Date'])
+        else:
+            df['_sort_date'] = range(len(df))
         all_dfs.append(df)
         
     if not all_dfs:
@@ -83,6 +90,11 @@ def train_model(df: pd.DataFrame, model_path: str = "models/alpha_lgbm.txt"):
         logger.error("Target column or feature columns missing. Cannot train.")
         return None
         
+    # ===== Chronological Split with Purging =====
+    # Sort by date to prevent future data leaking into the training set
+    if '_sort_date' in df.columns:
+        df = df.sort_values('_sort_date')
+    
     X = df[feature_cols]
     y = df[target_col].astype(int)
     
@@ -92,8 +104,16 @@ def train_model(df: pd.DataFrame, model_path: str = "models/alpha_lgbm.txt"):
     scale_pos_weight = neg_count / pos_count if pos_count > 0 else 1.0
     logger.info(f"Target distribution: Positive {pos_count}, Negative {neg_count}. Ratio: 1:{scale_pos_weight:.2f}")
 
-    # Time series aware split (simplified as random for cross-sectional proof-of-concept)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Time-series aware split: first 80% train, last 20% test
+    split_idx = int(len(X) * 0.8)
+    # Purging: remove n_forward_days rows around the split to prevent label leakage
+    purge_days = 5  # matches default n_forward_days in create_targets
+    train_end = max(0, split_idx - purge_days)
+    test_start = min(len(X), split_idx + purge_days)
+    
+    X_train, y_train = X.iloc[:train_end], y.iloc[:train_end]
+    X_test, y_test = X.iloc[test_start:], y.iloc[test_start:]
+    logger.info(f"Chronological split: Train {len(X_train)} rows, Test {len(X_test)} rows (purged {purge_days * 2} rows)")
     
     lgb_train = lgb.Dataset(X_train, y_train)
     lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
@@ -104,10 +124,14 @@ def train_model(df: pd.DataFrame, model_path: str = "models/alpha_lgbm.txt"):
         'boosting_type': 'gbdt',
         'learning_rate': 0.05,
         'num_leaves': 31,
+        'max_depth': 7,              # Prevent overfitting to deep tree patterns
+        'min_child_samples': 80,     # Require more samples per leaf for stability
         'feature_fraction': 0.8,
         'bagging_fraction': 0.8,
         'bagging_freq': 5,
-        'scale_pos_weight': scale_pos_weight, # Manage imbalanced data where >5% return is rare
+        'lambda_l1': 0.1,            # L1 regularization
+        'lambda_l2': 1.0,            # L2 regularization
+        'scale_pos_weight': scale_pos_weight,
         'verbose': -1
     }
 

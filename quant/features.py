@@ -146,6 +146,12 @@ def extract_features(df: pd.DataFrame) -> pd.DataFrame:
             slope = cov / x_var
             slope_arr[i] = slope / y_mean
     df['feat_vol_slope'] = slope_arr
+    
+    # 10. Realized Volatility (20-day return std)
+    daily_ret = close_series.pct_change(1)
+    df['feat_realized_vol_20'] = daily_ret.rolling(window=20).std()
+    # Volatility regime change (5-day pct change of realized vol)
+    df['feat_vol_regime_chg'] = df['feat_realized_vol_20'].pct_change(5)
         
     if 'turn' in df.columns:
         # turn 已经是百分比起步

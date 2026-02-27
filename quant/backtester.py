@@ -199,7 +199,15 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                     self.position.close()
                     return
 
-                if self.position.pl_pct >= p.take_profit_pct:
+                # Time-Decay Exit (If held too long with minimal return)
+                days_held = len(self.data) - self.trades[0].entry_bar
+                if days_held >= p.max_hold_days and self.position.pl_pct < p.max_hold_min_return:
+                    self.position.close()
+                    return
+
+                # Differentiated Take Profit Logic
+                tp_pct = p.take_profit_pct_right if self.current_trade_type == "right" else p.take_profit_pct_left
+                if self.position.pl_pct >= tp_pct:
                     # 利润达到初步目标后，不立刻清仓，而是收紧移动止损，放飞利润
                     if self.current_trade_type == "right":
                         tight_stop = price - 1.5 * self.atr[-1]
@@ -224,8 +232,9 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                     if self.current_stop_loss < breakeven_stop:
                         self.current_stop_loss = breakeven_stop
 
-                # 极端过热才强制离场（比如主升浪触及顶端）
-                if self.rsi[-1] >= 85.0:
+                # 极端过热才强制离场
+                rsi_limit = p.rsi_overbought_right if self.current_trade_type == "right" else p.rsi_overbought_left
+                if self.rsi[-1] >= rsi_limit:
                     self.position.close()
                 return
 
@@ -270,9 +279,6 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
             )
 
             has_rule_signal = signal_pullback or signal_rebound or signal_trend_breakout
-            if has_rule_signal:
-                with open("bt_match.txt", "a", encoding="utf-8") as f:
-                    f.write(f"Match on {current_date}: P={price}, MACD_1={self.macd_h[-1]}, MACD_2={self.macd_h[-2]}, RSI={self.rsi[-1]}\n")
             if not has_rule_signal:
                 return
 
@@ -285,11 +291,27 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                     feat_row = self.data.df.iloc[bar_idx][feat_cols]
                     if not feat_row.isna().any():
                         prob = ai_model.predict(feat_row.values.reshape(1, -1))[0]
-                        if prob < getattr(p, 'ai_prob_threshold', 0.35):
+                        ai_thresh = p.bear_market_ai_threshold if not market_uptrend else p.ai_prob_threshold
+                        if prob < ai_thresh:
                             return  # AI 预测未来不佳，拒绝开仓
             # ============================================
 
-            self.buy(size=p.position_size)
+            # Position Sizing (ATR based or fixed ratio based)
+            if hasattr(p, 'atr_risk_per_trade') and p.atr_risk_per_trade > 0 and self.atr[-1] > 0:
+                risk_amt = self.equity * p.atr_risk_per_trade
+                # We typically set stop loss at ~2 ATR away. So 1 share risk = 2 * ATR.
+                # size = risk_amt / (2 * ATR * multiplier)
+                # But to keep simple fractional sizing in backtesting.py without exact lot conversions:
+                risk_per_share = 2.0 * self.atr[-1]
+                shares = risk_amt / risk_per_share
+                # Convert shares to a fraction of available equity to use size=X.X format
+                fractional_size = min(0.99, (shares * price) / self.equity)
+                # Fallback to standard param if calculation yields tiny/massive size
+                pos_size = max(0.01, min(0.99, fractional_size))
+            else:
+                pos_size = p.position_size
+
+            self.buy(size=pos_size)
             if signal_trend_breakout:
                 self.current_stop_loss = price - 2.5 * self.atr[-1]
                 self.current_trade_type = "right"

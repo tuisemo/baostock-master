@@ -27,11 +27,16 @@ def compute_objective(df_results: pd.DataFrame, objective: str) -> float:
     if objective == "sharpe_adj":
         sharpe = df_results["sharpe"].fillna(0.0)
         mean_sharpe = sharpe.mean()
+        # Stability penalty: penalize high variance in Sharpe across stocks
+        std_sharpe = sharpe.std() if len(sharpe) > 1 else 0.0
+        stability_discount = max(0.2, 1.0 - (std_sharpe / (abs(mean_sharpe) + 1e-5)) * 0.2)
+        
         mean_dd = df_results["max_drawdown"].mean()
         total = len(df_results)
         count_profitable = (df_results["return_pct"] > 0).sum()
         ratio = count_profitable / total if total > 0 else 0.0
-        return float(mean_sharpe * (1 - abs(mean_dd) / 100) * np.sqrt(ratio))
+        
+        return float(mean_sharpe * stability_discount * (1 - abs(mean_dd) / 100) * np.sqrt(ratio))
     elif objective == "return":
         return float(df_results["return_pct"].mean())
     elif objective == "win_rate":

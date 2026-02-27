@@ -2731,3 +2731,44 @@ dtype: float64
 2026-02-27 10:53:55 [INFO] quant: 启动可视化量化平台 (Web UI)...
 2026-02-27 10:54:16 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
 2026-02-27 10:58:52 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 12:42:55 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 12:43:18 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-02-27 12:43:18 [INFO] quant: Building dataset from historical data...
+2026-02-27 12:43:43 [INFO] quant: Dataset built successfully. Total rows: 146739. Features: 33
+2026-02-27 12:43:43 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-27 12:43:43 [INFO] quant: Target distribution: Positive 31065, Negative 115674. Ratio: 1:3.72
+2026-02-27 12:43:43 [INFO] quant: Chronological split: Train 117386 rows, Test 29343 rows (purged 10 rows)
+2026-02-27 12:43:43 [INFO] quant: Starting LightGBM training...
+2026-02-27 12:43:44 [INFO] quant: Model AUC on Test Set: 0.6100
+2026-02-27 12:43:44 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.73      1.00      0.84     21412
+           1       0.00      0.00      0.00      7931
+
+    accuracy                           0.73     29343
+   macro avg       0.36      0.50      0.42     29343
+weighted avg       0.53      0.73      0.62     29343
+
+2026-02-27 12:43:44 [INFO] quant: Top 10 Important Features:
+feat_market_pct_1      12656.532043
+feat_market_pct_5       8536.453041
+feat_market_pct_20      6234.536942
+feat_rsi_val            5797.439987
+feat_market_bias_20     5060.139038
+feat_mom_rank_252       4318.840996
+feat_market_pct_10      3868.268921
+feat_macd_norm          1950.180000
+feat_body_ratio         1001.011993
+feat_bb_width            983.612976
+dtype: float64
+2026-02-27 12:43:44 [INFO] quant: Model saved to models/alpha_lgbm.txt
+2026-02-27 12:43:58 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (33 features)
+2026-02-27 12:44:15 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-27 12:44:15 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 10 | 采样: 5
+2026-02-27 12:44:15 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-04-30
+2026-02-27 12:44:16 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (33 features)
+2026-02-27 12:44:28 [INFO] quant: === Optuna 调参完结 ===
+2026-02-27 12:44:28 [INFO] quant: 历史最佳样本内得分 (Train Score): 1.217880
+2026-02-27 12:44:29 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): -999.000000
+2026-02-27 12:44:29 [INFO] quant: 优化结果已保存: data/optimize_results\20260227_124429
