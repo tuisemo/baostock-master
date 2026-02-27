@@ -3,9 +3,19 @@ import numpy as np
 
 import os
 from quant.config import CONF
+from quant.logger import logger
+from quant.numba_accelerator import (
+    compute_vol_slope_numba,
+    create_targets_numba,
+    create_multi_class_targets_numba,
+    get_numba_status
+)
 
 # Cache for the market index dataframe to avoid reading it on every stock
 _MARKET_INDEX_CACHE = None
+
+# Numba 状态
+_NUMBA_STATUS = get_numba_status()
 
 def _get_market_features() -> pd.DataFrame | None:
     global _MARKET_INDEX_CACHE
@@ -131,20 +141,27 @@ def extract_features(df: pd.DataFrame) -> pd.DataFrame:
     vol_ma_5 = df[vol_col].rolling(window=5).mean()
     df['feat_vol_ratio_5'] = df[vol_col] / (vol_ma_5 + 1e-8)
     
-    # 9. Volume Slope (Fixed 5)
+    # 9. Volume Slope (Fixed 5) - 使用 Numba 加速
     vol_arr = df[vol_col].values.astype(float)
-    n_days = len(vol_arr)
-    slope_arr = np.full(n_days, np.nan)
-    x = np.arange(5, dtype=float)
-    x_mean = 2.0
-    x_var = 10.0
-    for i in range(4, n_days):
-        y = vol_arr[i-4:i+1]
-        y_mean = np.mean(y)
-        if y_mean > 0:
-            cov = np.sum((x - x_mean) * (y - y_mean)) / 5.0
-            slope = cov / x_var
-            slope_arr[i] = slope / y_mean
+    if _NUMBA_STATUS['available']:
+        # 使用 Numba 加速版本
+        slope_arr = compute_vol_slope_numba(vol_arr, window=5)
+        logger.debug("使用 Numba 加速计算 Volume Slope")
+    else:
+        # 回退到原始版本
+        n_days = len(vol_arr)
+        slope_arr = np.full(n_days, np.nan)
+        x = np.arange(5, dtype=float)
+        x_mean = 2.0
+        x_var = 10.0
+        for i in range(4, n_days):
+            y = vol_arr[i-4:i+1]
+            y_mean = np.mean(y)
+            if y_mean > 0:
+                cov = np.sum((x - x_mean) * (y - y_mean)) / 5.0
+                slope = cov / x_var
+                slope_arr[i] = slope / y_mean
+        logger.debug("使用原始 Python 版本计算 Volume Slope")
     df['feat_vol_slope'] = slope_arr
     
     # 10. Realized Volatility (20-day return std)
@@ -212,57 +229,66 @@ def create_targets(df: pd.DataFrame, n_forward_days: int = 5, target_atr_mult: f
     - 其他情况 (既没止赢也没止损)，标记为失败 (0) 以鼓励高效资金周转。
     """
     df = df.copy()
-    
+
     close_col = 'close' if 'close' in df.columns else 'Close'
     high_col = 'high' if 'high' in df.columns else 'High'
     low_col = 'low' if 'low' in df.columns else 'Low'
     atr_cols = [c for c in df.columns if c.startswith('ATRr_')]
-    
+
     if not atr_cols:
-        logger = __import__('quant.logger').logger
         logger.warning("No ATR column found, falling back to fixed 5% target.")
         # 降级回老逻辑 (fallback to fixed 5% if ATR is missing)
         return _fallback_create_targets(df, n_forward_days, 0.05, close_col, high_col)
-        
+
     atr_col = atr_cols[0]
-    
+
     close_series = df[close_col].values
     high_series = df[high_col].values
     low_series = df[low_col].values
     atr_series = df[atr_col].values
-    
-    n = len(df)
-    labels = np.full(n, np.nan)
-    
-    # 向量化处理难以直接实现严密的基于时间的路径依赖（谁先发生），
-    # 由于 n_forward_days 很小 (比如5)，可以使用一个微循环来对每个样本盘点未来几天轨迹
-    for i in range(n - n_forward_days):
-        entry_price = close_series[i]
-        curr_atr = atr_series[i]
-        
-        # 动态止损与止盈位 (Dynamic Target & Stop based on Volatility)
-        initial_sl = entry_price - stop_loss_atr_mult * curr_atr
-        target_price = entry_price + target_atr_mult * curr_atr
-        
-        is_success = 0
-        
-        # 逐日审视未来 N 天
-        for lag in range(1, n_forward_days + 1):
-            future_idx = int(i + lag)
-            day_high = float(high_series[future_idx])
-            day_low = float(low_series[future_idx])
-            
-            # 悲观假定：如果同一天既碰到了止损又碰到了止盈，我们悲观认为是先触发止损 (洗盘扫损)
-            if day_low <= initial_sl:
-                is_success = 0
-                break # 被扫损出局，直接结束对这笔交易的未来观望
-                
-            if day_high >= target_price:
-                is_success = 1
-                break # 触及止盈，漂亮赢下一单
-                
-        labels[i] = is_success
-        
+
+    # 使用 Numba 加速版本（如果可用）
+    if _NUMBA_STATUS['available']:
+        labels = create_targets_numba(
+            close_series, high_series, low_series, atr_series,
+            n_forward_days, target_atr_mult, stop_loss_atr_mult
+        )
+        logger.debug("使用 Numba 加速计算 Binary Targets")
+    else:
+        # 回退到原始版本
+        n = len(df)
+        labels = np.full(n, np.nan)
+
+        # 向量化处理难以直接实现严密的基于时间的路径依赖（谁先发生），
+        # 由于 n_forward_days 很小 (比如5)，可以使用一个微循环来对每个样本盘点未来几天轨迹
+        for i in range(n - n_forward_days):
+            entry_price = close_series[i]
+            curr_atr = atr_series[i]
+
+            # 动态止损与止盈位 (Dynamic Target & Stop based on Volatility)
+            initial_sl = entry_price - stop_loss_atr_mult * curr_atr
+            target_price = entry_price + target_atr_mult * curr_atr
+
+            is_success = 0
+
+            # 逐日审视未来 N 天
+            for lag in range(1, n_forward_days + 1):
+                future_idx = int(i + lag)
+                day_high = float(high_series[future_idx])
+                day_low = float(low_series[future_idx])
+
+                # 悲观假定：如果同一天既碰到了止损又碰到了止盈，我们悲观认为是先触发止损 (洗盘扫损)
+                if day_low <= initial_sl:
+                    is_success = 0
+                    break # 被扫损出局，直接结束对这笔交易的未来观望
+
+                if day_high >= target_price:
+                    is_success = 1
+                    break # 触及止盈，漂亮赢下一单
+
+            labels[i] = is_success
+        logger.debug("使用原始 Python 版本计算 Binary Targets")
+
     df['label_max_ret_5d'] = labels
     return df
 
@@ -404,81 +430,90 @@ def add_candlestick_patterns(df: pd.DataFrame) -> pd.DataFrame:
 def create_multi_class_targets(df: pd.DataFrame, n_forward_days: int = 5, target_atr_mult: float = 2.0, stop_loss_atr_mult: float = 1.5) -> pd.DataFrame:
     """
     Enhanced multi-class target variable for better prediction granularity.
-    
+
     Labels:
     0: Loss (hit stop loss)
     1: Small profit (0-3% return)
     2: Medium profit (3-8% return)
     3: Large profit (>8% return)
-    
+
     This helps the model distinguish between different quality trades.
     """
     df = df.copy()
-    
+
     close_col = 'close' if 'close' in df.columns else 'Close'
     high_col = 'high' if 'high' in df.columns else 'High'
     low_col = 'low' if 'low' in df.columns else 'Low'
     atr_cols = [c for c in df.columns if c.startswith('ATRr_')]
-    
+
     if not atr_cols:
         # Fallback to simple multi-class if ATR is missing
-        logger = __import__('quant.logger').logger
         logger.warning("No ATR column found, using fixed thresholds for multi-class targets.")
         return _fallback_multi_class_targets(df, n_forward_days, close_col, high_col, low_col)
-        
+
     atr_col = atr_cols[0]
-    
+
     close_series = df[close_col].values
     high_series = df[high_col].values
     low_series = df[low_col].values
     atr_series = df[atr_col].values
-    
-    n = len(df)
-    labels = np.full(n, np.nan)
-    
-    # Define return thresholds
-    small_profit_threshold = 0.03  # 3%
-    medium_profit_threshold = 0.08  # 8%
-    
-    for i in range(n - n_forward_days):
-        entry_price = close_series[i]
-        curr_atr = atr_series[i]
-        
-        # Dynamic stop loss
-        stop_loss = entry_price - stop_loss_atr_mult * curr_atr
-        
-        # Track maximum gain and whether stop loss was hit
-        max_gain = 0.0
-        hit_stop = False
-        
-        for lag in range(1, n_forward_days + 1):
-            future_idx = int(i + lag)
-            day_high = float(high_series[future_idx])
-            day_low = float(low_series[future_idx])
-            
-            # Check stop loss first (pessimistic assumption)
-            if day_low <= stop_loss:
-                hit_stop = True
-                break
-            
-            # Calculate gain
-            gain = (day_high - entry_price) / entry_price
-            max_gain = max(max_gain, gain)
-            
-            # Early exit if we hit target (2 ATR)
-            if gain >= target_atr_mult * curr_atr / entry_price:
-                break
-        
-        # Assign label based on outcome
-        if hit_stop:
-            labels[i] = 0  # Loss
-        elif max_gain < small_profit_threshold:
-            labels[i] = 1  # Small profit
-        elif max_gain < medium_profit_threshold:
-            labels[i] = 2  # Medium profit
-        else:
-            labels[i] = 3  # Large profit
-    
+
+    # 使用 Numba 加速版本（如果可用）
+    if _NUMBA_STATUS['available']:
+        labels = create_multi_class_targets_numba(
+            close_series, high_series, low_series, atr_series,
+            n_forward_days, target_atr_mult, stop_loss_atr_mult
+        )
+        logger.debug("使用 Numba 加速计算 Multi-class Targets")
+    else:
+        # 回退到原始版本
+        n = len(df)
+        labels = np.full(n, np.nan)
+
+        # Define return thresholds
+        small_profit_threshold = 0.03  # 3%
+        medium_profit_threshold = 0.08  # 8%
+
+        for i in range(n - n_forward_days):
+            entry_price = close_series[i]
+            curr_atr = atr_series[i]
+
+            # Dynamic stop loss
+            stop_loss = entry_price - stop_loss_atr_mult * curr_atr
+
+            # Track maximum gain and whether stop loss was hit
+            max_gain = 0.0
+            hit_stop = False
+
+            for lag in range(1, n_forward_days + 1):
+                future_idx = int(i + lag)
+                day_high = float(high_series[future_idx])
+                day_low = float(low_series[future_idx])
+
+                # Check stop loss first (pessimistic assumption)
+                if day_low <= stop_loss:
+                    hit_stop = True
+                    break
+
+                # Calculate gain
+                gain = (day_high - entry_price) / entry_price
+                max_gain = max(max_gain, gain)
+
+                # Early exit if we hit target (2 ATR)
+                if gain >= target_atr_mult * curr_atr / entry_price:
+                    break
+
+            # Assign label based on outcome
+            if hit_stop:
+                labels[i] = 0  # Loss
+            elif max_gain < small_profit_threshold:
+                labels[i] = 1  # Small profit
+            elif max_gain < medium_profit_threshold:
+                labels[i] = 2  # Medium profit
+            else:
+                labels[i] = 3  # Large profit
+        logger.debug("使用原始 Python 版本计算 Multi-class Targets")
+
     df['label_multi_class'] = labels
     return df
 

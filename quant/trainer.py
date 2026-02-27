@@ -8,8 +8,11 @@ from quant.config import CONF
 from quant.logger import logger
 from quant.analyzer import calculate_indicators
 from quant.strategy_params import StrategyParams
-from quant.features import extract_features, create_targets
+from quant.features import extract_features, create_targets, create_multi_class_targets
+from quant.cache_utils import DatasetCache, get_data_hash
+from quant.numba_accelerator import get_numba_status
 from tqdm import tqdm
+import time
 
 def build_dataset(data_dir: str, p: StrategyParams, n_forward_days: int = 5, target_atr_mult: float = 2.0, stop_loss_atr_mult: float = 1.5) -> pd.DataFrame:
     """Read all csv files, compute indicators, extract features and targets, and concatenate into one large dataframe."""
@@ -82,6 +85,222 @@ def build_dataset(data_dir: str, p: StrategyParams, n_forward_days: int = 5, tar
     logger.info(f"Dataset built successfully. Total rows: {len(final_df)}. Features: {len(feature_cols)}")
     return final_df
 
+
+def build_dataset_with_cache(
+    data_dir: str,
+    p: StrategyParams,
+    n_forward_days: int = 5,
+    target_atr_mult: float = 2.0,
+    stop_loss_atr_mult: float = 1.5,
+    use_cache: bool = True,
+    use_parallel: bool = True,
+    n_workers: int = None,
+    force_rebuild: bool = False
+) -> pd.DataFrame:
+    """
+    带缓存和并行化支持的数据集构建函数
+
+    Args:
+        data_dir: 数据目录
+        p: 策略参数
+        n_forward_days: 向前看的天数
+        target_atr_mult: 目标ATR倍数
+        stop_loss_atr_mult: 止损ATR倍数
+        use_cache: 是否使用缓存
+        use_parallel: 是否使用并行化
+        n_workers: 工作进程数，None 表示自动
+        force_rebuild: 是否强制重建
+
+    Returns:
+        数据集 DataFrame
+    """
+    # 获取缓存键
+    params_dict = {
+        'n_forward_days': n_forward_days,
+        'target_atr_mult': target_atr_mult,
+        'stop_loss_atr_mult': stop_loss_atr_mult,
+        'use_parallel': use_parallel,
+        'n_workers': n_workers,
+        'params': p.to_dict()
+    }
+    cache_key = get_data_hash(data_dir, params_dict)
+
+    # 初始化缓存
+    cache = DatasetCache(os.path.join(data_dir, "cache"))
+
+    # 尝试从缓存加载
+    if use_cache and not force_rebuild:
+        cached_df = cache.load(cache_key)
+        if cached_df is not None:
+            feature_cols = [c for c in cached_df.columns if c.startswith('feat_')]
+            logger.info(f"从缓存加载数据集: {len(cached_df)} 行, {len(feature_cols)} 个特征")
+            return cached_df
+        else:
+            logger.info("缓存未命中，开始构建数据集...")
+
+    # 正常构建数据集（支持并行化）
+    start_time = time.time()
+    if use_parallel:
+        df = build_dataset_parallel(
+            data_dir, p, n_forward_days,
+            target_atr_mult, stop_loss_atr_mult, n_workers
+        )
+    else:
+        df = build_dataset(data_dir, p, n_forward_days, target_atr_mult, stop_loss_atr_mult)
+    build_time = time.time() - start_time
+
+    # 保存缓存
+    if use_cache and not df.empty:
+        cache.save(df, cache_key)
+        logger.info(f"数据集构建完成，耗时: {build_time:.2f}s，已缓存")
+
+    return df
+
+
+def _process_single_file(file_path: str, p: StrategyParams, n_forward_days: int,
+                      target_atr_mult: float, stop_loss_atr_mult: float):
+    """
+    处理单个文件的函数，供并行化调用
+
+    Args:
+        file_path: CSV 文件路径
+        p: 策略参数
+        n_forward_days: 向前看的天数
+        target_atr_mult: 目标 ATR 倍数
+        stop_loss_atr_mult: 止损 ATR 倍数
+
+    Returns:
+        处理后的 DataFrame，如果失败则返回 None
+    """
+    import traceback
+
+    try:
+        df = pd.read_csv(file_path)
+        if df.empty or len(df) < 50:
+            return None
+
+        # 1. Base Indicators
+        df = calculate_indicators(df, p)
+
+        # Clean and rename columns after indicator calculation
+        rename_map = {
+            "date": "Date", "open": "Open", "high": "High", "low": "Low",
+            "close": "Close", "volume": "Volume"
+        }
+        df.rename(columns=rename_map, inplace=True)
+        if "Date" in df.columns:
+            df["Date"] = pd.to_datetime(df["Date"])
+            df.set_index("Date", inplace=True)
+            df.sort_index(inplace=True)
+
+        # 2. Add derived features
+        df = extract_features(df)
+
+        # 3. Add truth Target Y (both binary and multi-class)
+        df = create_targets(df, n_forward_days=n_forward_days,
+                          target_atr_mult=target_atr_mult,
+                          stop_loss_atr_mult=stop_loss_atr_mult)
+
+        # 3.1 Add multi-class target
+        df = create_multi_class_targets(df, n_forward_days=n_forward_days,
+                                     target_atr_mult=target_atr_mult,
+                                     stop_loss_atr_mult=stop_loss_atr_mult)
+
+        feature_cols = [c for c in df.columns if c.startswith('feat_')]
+        if not feature_cols:
+            return None
+
+        # Drop rows where Y is nan (the last n_forward_days)
+        df = df.dropna(subset=['label_max_ret_5d'] + feature_cols)
+
+        # Keep stock code for cross validation splits
+        file_name = os.path.basename(file_path)
+        df['stock_code'] = file_name.replace(".csv", "")
+
+        # Keep a sortable date column for chronological splitting
+        if 'Date' not in df.columns and df.index.name == 'Date':
+            df['_sort_date'] = df.index
+        elif 'Date' in df.columns:
+            df['_sort_date'] = pd.to_datetime(df['Date'])
+        else:
+            df['_sort_date'] = range(len(df))
+
+        return df
+    except Exception as e:
+        logger.error(f"Error processing {file_path}: {e}")
+        logger.error(traceback.format_exc())
+        return None
+
+
+def build_dataset_parallel(data_dir: str, p: StrategyParams, n_forward_days: int = 5,
+                       target_atr_mult: float = 2.0, stop_loss_atr_mult: float = 1.5,
+                       n_workers: int = None) -> pd.DataFrame:
+    """
+    并行化数据集构建函数
+
+    Args:
+        data_dir: 数据目录
+        p: 策略参数
+        n_forward_days: 向前看的天数
+        target_atr_mult: 目标 ATR 倍数
+        stop_loss_atr_mult: 止损 ATR 倍数
+        n_workers: 工作进程数，None 表示自动
+
+    Returns:
+        合并后的数据集 DataFrame
+    """
+    from multiprocessing import Pool, cpu_count
+
+    logger.info("Building dataset from historical data (parallel)...")
+    files = [f for f in os.listdir(data_dir) if f.endswith(".csv")]
+
+    # 过滤掉 stock-list.csv
+    files = [f for f in files if f != "stock-list.csv"]
+
+    if not files:
+        logger.error(f"No csv files found in {data_dir}")
+        return pd.DataFrame()
+
+    # 确定工作进程数
+    if n_workers is None:
+        n_workers = max(1, cpu_count() - 1)  # 保留一个核心给主进程
+    else:
+        n_workers = min(n_workers, len(files))
+
+    logger.info(f"Using {n_workers} workers to process {len(files)} files")
+
+    # 创建任务列表
+    tasks = []
+    for f in files:
+        file_path = os.path.join(data_dir, f)
+        tasks.append((file_path, p, n_forward_days, target_atr_mult, stop_loss_atr_mult))
+
+    # 并行处理
+    all_dfs = []
+    with Pool(processes=n_workers) as pool:
+        # 使用 starmap 并行调用 _process_single_file
+        # 注意：Pool.imap 不能直接传递关键字参数，所以我们使用 starmap
+        results = list(tqdm(
+            pool.starmap(_process_single_file, tasks),
+            total=len(tasks),
+            desc="Processing files (parallel)"
+        ))
+
+        # 过滤掉 None 结果（处理失败的文件）
+        all_dfs = [df for df in results if df is not None]
+
+    if not all_dfs:
+        logger.error("Failed to build dataset. Valid data empty.")
+        return pd.DataFrame()
+
+    # 合并所有 DataFrame
+    final_df = pd.concat(all_dfs, axis=0)
+    feature_cols = [c for c in final_df.columns if c.startswith('feat_')]
+    logger.info(f"Dataset built successfully (parallel). Total rows: {len(final_df)}. Features: {len(feature_cols)}")
+
+    return final_df
+
+
 def train_model(df: pd.DataFrame, model_path: str = "models/alpha_lgbm.txt"):
     """Train a LightGBM classifier to predict label_max_ret_5d."""
     logger.info("Initializing LightGBM model training pipeline...")
@@ -121,20 +340,38 @@ def train_model(df: pd.DataFrame, model_path: str = "models/alpha_lgbm.txt"):
     lgb_train = lgb.Dataset(X_train, y_train)
     lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
 
+    # 优化后的 LightGBM 参数
     params = {
         'objective': 'binary',
         'metric': 'auc',
         'boosting_type': 'gbdt',
-        'learning_rate': 0.05,
-        'num_leaves': 31,
-        'max_depth': 7,              # Prevent overfitting to deep tree patterns
-        'min_child_samples': 80,     # Require more samples per leaf for stability
-        'feature_fraction': 0.8,
-        'bagging_fraction': 0.8,
-        'bagging_freq': 5,
-        'lambda_l1': 0.1,            # L1 regularization
-        'lambda_l2': 1.0,            # L2 regularization
+
+        # 学习率优化
+        'learning_rate': 0.03,  # 降低学习率，增加迭代次数
+        'num_boost_round': 1000,  # 增加最大迭代次数（传递给 lgb.train）
+
+        # 树结构优化
+        'num_leaves': 63,  # 增加叶子节点数，提升模型复杂度
+        'max_depth': 8,    # 增加最大深度
+        'min_child_samples': 50,  # 降低最小样本数要求
+
+        # 采样优化
+        'feature_fraction': 0.85,  # 增加特征采样比例
+        'bagging_fraction': 0.85,  # 增加 bagging 采样比例
+        'bagging_freq': 3,         # 更频繁的 bagging
+
+        # 正则化优化
+        'lambda_l1': 0.05,  # 降低 L1 正则化
+        'lambda_l2': 0.5,   # 降低 L2 正则化
+
+        # 类别不平衡处理
         'scale_pos_weight': scale_pos_weight,
+
+        # 其他优化
+        'drop_rate': 0.1,         # Dropout 防止过拟合
+        'skip_drop': 0.5,         # Dropout 跳过概率
+        'max_drop': 50,           # 最大 dropout 次数
+
         'verbose': -1
     }
 
@@ -142,9 +379,12 @@ def train_model(df: pd.DataFrame, model_path: str = "models/alpha_lgbm.txt"):
     gbm = lgb.train(
         params,
         lgb_train,
-        num_boost_round=500,
+        num_boost_round=1000,  # 增加最大迭代次数
         valid_sets=[lgb_train, lgb_eval],
-        callbacks=[lgb.early_stopping(stopping_rounds=50), lgb.log_evaluation(period=50)]
+        callbacks=[
+            lgb.early_stopping(stopping_rounds=100),  # 增加早停轮次
+            lgb.log_evaluation(period=50)
+        ]
     )
     
     # Evaluate

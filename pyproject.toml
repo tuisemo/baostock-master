@@ -18,4 +18,9 @@ dependencies = [
     "pyyaml>=6.0.3",
     "requests>=2.32.5",
     "tqdm>=4.67.3",
+    # Performance optimization
+    "numba>=0.60.0",
+    "joblib>=1.4.0",
+    # GPU monitoring (optional)
+    "pynvml>=0.9.0",
 ]
