@@ -15,18 +15,33 @@ from quant.logger import logger
 # ===== AI Model (Phase 8) =====
 _AI_MODEL = None
 _AI_MODEL_PATH = "models/alpha_lgbm.txt"
+_AI_MODEL_LOAD_ATTEMPTED = False
 
 def _get_ai_model():
-    """Lazy-load the LightGBM model singleton."""
-    global _AI_MODEL
-    if _AI_MODEL is None:
-        import os
-        if os.path.exists(_AI_MODEL_PATH):
-            import lightgbm as lgb
+    """Lazy-load the LightGBM model singleton. Returns None if model is unavailable or corrupted."""
+    global _AI_MODEL, _AI_MODEL_LOAD_ATTEMPTED
+    if _AI_MODEL_LOAD_ATTEMPTED:
+        return _AI_MODEL  # 已尝试过加载（成功返回模型，失败返回 None）
+    _AI_MODEL_LOAD_ATTEMPTED = True
+
+    import os
+    if not os.path.exists(_AI_MODEL_PATH):
+        logger.debug(f"AI 模型文件不存在: {_AI_MODEL_PATH}，将使用纯规则引擎。")
+        return None
+
+    try:
+        import lightgbm as lgb
+        import warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
             _AI_MODEL = lgb.Booster(model_file=_AI_MODEL_PATH)
-            logger.info(f"AI 模型已加载: {_AI_MODEL_PATH} ({_AI_MODEL.num_feature()} features)")
-        else:
-            logger.debug(f"AI 模型文件不存在: {_AI_MODEL_PATH}，将使用纯规则引擎。")
+        # 验证模型是否可用
+        _AI_MODEL.num_feature()
+        logger.info(f"AI 模型已加载: {_AI_MODEL_PATH} ({_AI_MODEL.num_feature()} features)")
+    except Exception as e:
+        logger.warning(f"AI 模型文件损坏或不兼容，将使用纯规则引擎: {e}")
+        _AI_MODEL = None
+
     return _AI_MODEL
 
 if TYPE_CHECKING:

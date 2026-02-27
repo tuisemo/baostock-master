@@ -3,48 +3,48 @@ log:
   file: data/quant.log
 filter:
   keep_star_market: false
-  min_market_cap_billion: 50.0
+  min_market_cap_billion: 30.0
   min_turnover_amount_wan: 10000.0
   max_turnover_rate_pct: 20.0
-  min_turnover_rate_pct: 3.0
-  min_pe: 5.0
-  max_pe: 50.0
-  min_pb: 1.0
+  min_turnover_rate_pct: 1.0
+  min_pe: 0.0
+  max_pe: 80.0
+  min_pb: 0.5
 history_data:
   default_lookback_days: 1000
   data_dir: data
 analyzer:
   weights:
-    trend: 0.5
-    reversion: 0.4167
-    volume: 0.0833
-  ma_short: 3
+    trend: 0.1429
+    reversion: 0.1429
+    volume: 0.7143
+  ma_short: 8
   ma_long: 55
-  macd_fast: 10
-  macd_slow: 32
-  macd_signal: 13
-  rsi_length: 20
-  rsi_buy_threshold: 35
-  rsi_sell_threshold: 85
+  macd_fast: 8
+  macd_slow: 30
+  macd_signal: 7
+  rsi_length: 10
+  rsi_buy_threshold: 25
+  rsi_sell_threshold: 70
   bbands_length: 22
-  bbands_std: 1.5
+  bbands_std: 1.75
   atr_length: 16
-  atr_multiplier: 2.75
+  atr_multiplier: 2.5
 strategy:
-  vol_up_ratio: 1.25
-  rsi_cooled_max: 45
-  pullback_ma_tolerance: 1.015
+  vol_up_ratio: 1.4500000000000002
+  rsi_cooled_max: 55
+  pullback_ma_tolerance: 1.0
   negative_bias_pct: 0.93
-  rsi_oversold: 35
-  trail_atr_mult: 1.4
-  take_profit_pct: 0.05
-  breakeven_trigger: 0.025
-  breakeven_buffer: 1.009
-  w_pullback_ma: 1.0
-  w_macd_cross: 2.5
-  w_vol_up: 1.0
-  w_rsi_rebound: 3.0
-  w_green_candle: 2.5
+  rsi_oversold: 40
+  trail_atr_mult: 2.5
+  take_profit_pct: 0.06
+  breakeven_trigger: 0.02
+  breakeven_buffer: 1.007
+  w_pullback_ma: 3.0
+  w_macd_cross: 1.0
+  w_vol_up: 0.5
+  w_rsi_rebound: 4.5
+  w_green_candle: 3.0
 optimizer:
   sample_count: 200
   max_rounds: 5

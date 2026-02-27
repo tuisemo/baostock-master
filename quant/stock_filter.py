@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 import os
 import time
+from datetime import datetime, timedelta
 from tqdm import tqdm
 from quant.config import CONF
 from quant.logger import logger
@@ -71,20 +72,35 @@ def update_stock_list():
         logger.error(f"Baostock login failed: {lg.error_msg}")
         return
 
-    # 2. Fetch all stocks
+    # 2. Fetch all stocks — 自动回退到最近交易日
     logger.info("Fetching all A-share combinations from baostock...")
-    rs = bs.query_all_stock()
-    if rs.error_code != '0':
-        logger.error(f"Query all stock failed: {rs.error_msg}")
+    df = pd.DataFrame()
+    query_date = datetime.now()
+    for attempt in range(10):
+        day_str = query_date.strftime("%Y-%m-%d")
+        logger.info(f"尝试查询日期: {day_str} (第 {attempt + 1} 次)")
+        rs = bs.query_all_stock(day=day_str)
+        if rs.error_code != '0':
+            logger.error(f"Query all stock failed: {rs.error_msg}")
+            bs.logout()
+            return
+
+        data_list = []
+        while (rs.error_code == '0') and rs.next():
+            data_list.append(rs.get_row_data())
+        
+        if len(data_list) > 0:
+            df = pd.DataFrame(data_list, columns=rs.fields)
+            logger.info(f"成功获取到 {len(df)} 条记录 (查询日期: {day_str})")
+            break
+        else:
+            logger.warning(f"日期 {day_str} 未返回任何股票数据，回退到前一天...")
+            query_date -= timedelta(days=1)
+
+    if df.empty:
+        logger.error("连续 10 天均未查询到股票数据，请检查网络连接或 baostock 服务状态。")
         bs.logout()
         return
-
-    data_list = []
-    while (rs.error_code == '0') and rs.next():
-        data_list.append(rs.get_row_data())
-    
-    df = pd.DataFrame(data_list, columns=rs.fields)
-    logger.info(f"Total entries from baostock: {len(df)}")
     
     # 3. Base Filtering
     # Remove BSE (bj.)

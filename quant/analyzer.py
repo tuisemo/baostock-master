@@ -147,7 +147,7 @@ def score_stock(df: pd.DataFrame, params: StrategyParams | None = None) -> dict:
     sma_l = f"SMA_{ma_long}"
     macd_h = f"MACDh_{macd_fast}_{macd_slow}_{macd_signal}"
     rsi_col = f"RSI_{rsi_length}"
-    bb_lower = f"BBL_{bbands_length}_{bbands_std}_{bbands_std}"
+    bb_lower = f"BBL_{bbands_length}_{bbands_std}"
     obv_col = "OBV"
     atr_col = f"ATRr_{atr_length}"
 

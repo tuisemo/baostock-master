@@ -12,12 +12,12 @@ class LogConfig:
 @dataclass
 class FilterConfig:
     keep_star_market: bool = False
-    min_market_cap_billion: float = 50.0
+    min_market_cap_billion: float = 30.0
     min_turnover_amount_wan: float = 10000.0
     max_turnover_rate_pct: float = 20.0
-    min_turnover_rate_pct: float = 2.0
+    min_turnover_rate_pct: float = 1.0
     min_pe: float = 0.0
-    max_pe: float = 100.0
+    max_pe: float = 80.0
     min_pb: float = 0.5
 
 
