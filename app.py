@@ -209,11 +209,12 @@ def ui_scan_signals():
 
 
 def ui_scan_historical_date(target_date: str):
-    if not target_date or not target_date.strip():
-        yield '❌ 请输入有效的日期格式，例如 2024-05-10', pd.DataFrame()
+    if not target_date or not str(target_date).strip():
+        yield '❌ 请输入有效的日期，例如 2024-05-10', pd.DataFrame()
         return
         
-    target_date = target_date.strip()
+    # Handle possible gr.DateTime formatting to just grab YYYY-MM-DD
+    target_date = str(target_date).strip()[:10]
     yield f'开始扫描 {target_date} 全库买点 (这可能需要几分钟)...请稍候。', pd.DataFrame()
     
     data_dir = CONF.history_data.data_dir
@@ -417,7 +418,7 @@ with gr.Blocks(title="生产级 A 股量化系统", theme=gr.themes.Default()) a
         gr.Markdown("然后您可以拿着这些当时的输出代码，对照后面的走势去进行极其客观的实盘验证推敲。注意，结果的csv文件属于临时缓存，不会被上传。")
         
         with gr.Row():
-            txt_target_date = gr.Textbox(label="目标扫描日期 (YYYY-MM-DD)", placeholder="例如: 2024-05-10 或 2023-10-23", scale=3)
+            txt_target_date = gr.DateTime(label="目标扫描日期", include_time=False, scale=3)
             btn_scan_historical = gr.Button("🕒 逆转时空扫描历史买点", variant="primary", scale=1)
             
         txt_history_scan_log = gr.Textbox(label="运行状态", lines=2, interactive=False)

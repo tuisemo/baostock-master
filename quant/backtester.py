@@ -162,22 +162,26 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
         def init(self):
             p = self._p
             c = self._cols
-            self.sma_s = self.data[c["sma_s"]]
-            self.sma_l = self.data[c["sma_l"]]
-            self.macd_h = self.data[c["macd_h"]]
-            self.rsi = self.data[c["rsi"]]
-            self.bb_lower = self.data[c["bb_lower"]]
-            self.bb_upper = self.data[c["bb_upper"]]
-            self.obv = self.data[c["obv"]]
-            self.atr = self.data[c["atr"]]
+            def _get_col(col_name):
+                return self.data.df[col_name].to_numpy() if col_name in self.data.df.columns else self.data.df["Close"].to_numpy()
+                
+            self.sma_s = self.I(_get_col, c["sma_s"], name="sma_s")
+            self.sma_l = self.I(_get_col, c["sma_l"], name="sma_l")
+            self.macd_h = self.I(_get_col, c["macd_h"], name="macd_h")
+            self.rsi = self.I(_get_col, c["rsi"], name="rsi")
+            self.bb_lower = self.I(_get_col, c["bb_lower"], name="bbl")
+            self.bb_upper = self.I(_get_col, c["bb_upper"], name="bbu")
+            self.obv = self.I(_get_col, c["obv"], name="obv")
+            self.atr = self.I(_get_col, c["atr"], name="atr")
+            
             self.current_stop_loss = 0.0
             self.current_trade_type = ""
             self._has_vol_slope = "vol_slope" in self.data.df.columns
             self._has_mom_div = "momentum_divergence" in self.data.df.columns
             if self._has_vol_slope:
-                self.vol_slope = self.data["vol_slope"]
+                self.vol_slope = self.I(_get_col, "vol_slope", name="vol_slope")
             if self._has_mom_div:
-                self.mom_div = self.data["momentum_divergence"]
+                self.mom_div = self.I(_get_col, "momentum_divergence", name="mom_div")
 
         def next(self):
             if pd.isna(self.sma_s[-1]) or pd.isna(self.rsi[-1]) or pd.isna(self.atr[-1]):
@@ -266,6 +270,9 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
             )
 
             has_rule_signal = signal_pullback or signal_rebound or signal_trend_breakout
+            if has_rule_signal:
+                with open("bt_match.txt", "a", encoding="utf-8") as f:
+                    f.write(f"Match on {current_date}: P={price}, MACD_1={self.macd_h[-1]}, MACD_2={self.macd_h[-2]}, RSI={self.rsi[-1]}\n")
             if not has_rule_signal:
                 return
 
@@ -278,7 +285,7 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                     feat_row = self.data.df.iloc[bar_idx][feat_cols]
                     if not feat_row.isna().any():
                         prob = ai_model.predict(feat_row.values.reshape(1, -1))[0]
-                        if prob < 0.35:
+                        if prob < getattr(p, 'ai_prob_threshold', 0.35):
                             return  # AI 预测未来不佳，拒绝开仓
             # ============================================
 
@@ -393,6 +400,14 @@ def scan_today_signal(
         return None
 
     df = calculate_indicators(df, params)
+    
+    # ===== Phase 8: Add ML features for AI model inference =====
+    try:
+        from quant.features import extract_features
+        df = extract_features(df)
+    except Exception as e:
+        logger.debug(f"[{code}] Feature extraction in scan failed: {e}")
+        
     if df.empty:
         return None
 
@@ -465,8 +480,23 @@ def scan_today_signal(
         signal_type = "超卖恐慌底部 (左侧)"
     elif signal_trend_breakout:
         signal_type = "均线放量金叉 (右侧)"
-    else:
+        
+    if not signal_type:
         return None
+        
+    # ===== AI 模型概率门控 (Phase 8) =====
+    ai_model = _get_ai_model()
+    act_prob = 1.0  # 默认满算力，纯规则兜底
+    if ai_model is not None:
+        feat_cols = [c for c in df.columns if c.startswith('feat_')]
+        if feat_cols:
+            feat_row = df.iloc[-1][feat_cols]
+            # 只有当所有特征都不是 NA 的时候才进行推断
+            if not feat_row.isna().any():
+                act_prob = float(ai_model.predict(feat_row.values.reshape(1, -1))[0])
+                if act_prob < getattr(params, 'ai_prob_threshold', 0.35):
+                    return None  # AI 预测未来不佳，残酷否决 (对齐回测逻辑)
+    # ============================================
 
     return {
         "代码": code,
@@ -475,6 +505,7 @@ def scan_today_signal(
         "信号类型": signal_type,
         "RSI指标": round(float(rsi_val), 2),
         "量能倍数": round(float(vol_1 / vol_2) if vol_2 > 0 else 0.0, 2),
+        "AI胜率预测": round(act_prob, 4),
     }
 
 

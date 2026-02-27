@@ -2621,3 +2621,113 @@ dtype: float64
 2026-02-27 10:09:12 [INFO] quant: 🏁 Auto-Pilot 闭环运转全部完成！ 🏁
 2026-02-27 10:09:12 [INFO] quant: 您可以直接进入 Web UI 的第 2 个 Tab 查看今日最新入选名单 (Scan)。
 2026-02-27 10:09:12 [INFO] quant: ==================================================
+2026-02-27 10:15:09 [INFO] quant: ========== 历史信号回溯扫描: 2024-05-10 ==========
+2026-02-27 10:15:09 [INFO] quant: 开始遍历 234 只股票寻找 2024-05-10 满足条件的买入点...
+2026-02-27 10:15:10 [ERROR] quant: A fatal error occurred.
+concurrent.futures.process._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\multiprocessing\queues.py", line 262, in _feed
+    obj = _ForkingPickler.dumps(obj)
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\multiprocessing\reduction.py", line 51, in dumps
+    cls(buf, protocol).dump(obj)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+AttributeError: Can't get local object 'cmd_scan_date.<locals>._scan_single'
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 284, in <module>
+    main()
+    ~~~~^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 276, in main
+    cmd_scan_date(args)
+    ~~~~~~~~~~~~~^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 187, in cmd_scan_date
+    res = future.result()
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\multiprocessing\queues.py", line 262, in _feed
+    obj = _ForkingPickler.dumps(obj)
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\multiprocessing\reduction.py", line 51, in dumps
+    cls(buf, protocol).dump(obj)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+AttributeError: Can't get local object 'cmd_scan_date.<locals>._scan_single'
+2026-02-27 10:15:46 [INFO] quant: ========== 历史信号回溯扫描: 2024-05-10 ==========
+2026-02-27 10:15:46 [INFO] quant: 开始遍历 234 只股票寻找 2024-05-10 满足条件的买入点...
+2026-02-27 10:15:50 [INFO] quant: 详细结果已保存至: historical_scan_20240510.csv
+2026-02-27 10:16:37 [INFO] quant: ========== 历史信号回溯扫描: 2024-05-10 ==========
+2026-02-27 10:16:37 [INFO] quant: 开始遍历 234 只股票寻找 2024-05-10 满足条件的买入点...
+2026-02-27 10:16:40 [INFO] quant: 详细结果已保存至: historical_scan_20240510.csv
+2026-02-27 10:22:37 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-27 10:24:58 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (29 features)
+2026-02-27 10:25:31 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-02-27 10:25:31 [INFO] quant: Building dataset from historical data...
+2026-02-27 10:26:22 [INFO] quant: Dataset built successfully. Total rows: 147909. Features: 31
+2026-02-27 10:26:22 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-27 10:26:22 [INFO] quant: Target distribution: Positive 31245, Negative 116664. Ratio: 1:3.73
+2026-02-27 10:26:22 [INFO] quant: Starting LightGBM training...
+2026-02-27 10:26:25 [INFO] quant: Model AUC on Test Set: 0.7466
+2026-02-27 10:26:25 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.88      0.73      0.80     23283
+           1       0.38      0.62      0.47      6299
+
+    accuracy                           0.71     29582
+   macro avg       0.63      0.68      0.64     29582
+weighted avg       0.77      0.71      0.73     29582
+
+2026-02-27 10:26:25 [INFO] quant: Top 10 Important Features:
+feat_market_pct_5      61045.818863
+feat_market_pct_20     59669.719456
+feat_market_pct_1      50760.101512
+feat_market_pct_10     48613.922777
+feat_market_bias_20    46083.695762
+feat_rsi_val           29041.646352
+feat_mom_rank_252      17866.768036
+feat_atr_ratio         16678.384127
+feat_macd_norm         16666.727709
+feat_turnover          16351.600518
+dtype: float64
+2026-02-27 10:26:25 [INFO] quant: Model saved to models/alpha_lgbm.txt
+2026-02-27 10:27:14 [INFO] quant: 开始对 234 支股票执行多因子综合分析...
+2026-02-27 10:27:18 [INFO] quant: 分析完成。共有 0 支股票满足评分阈值。
+2026-02-27 10:27:18 [INFO] quant: 今日没有匹配到强势标的，建议空仓观望。
+2026-02-27 10:29:28 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-27 10:31:11 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:37:53 [INFO] quant: ========== 历史信号回溯扫描: 2024-05-10 ==========
+2026-02-27 10:37:53 [INFO] quant: 开始遍历 234 只股票寻找 2024-05-10 满足条件的买入点...
+2026-02-27 10:38:00 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:00 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:00 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:01 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:01 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:01 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:01 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:01 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:01 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:01 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:01 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:01 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:02 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:02 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:02 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:02 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:02 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:02 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:02 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:38:06 [INFO] quant: 详细结果已保存至: historical_scan_20240510.csv
+2026-02-27 10:42:41 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-27 10:44:29 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:48:37 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:49:13 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:49:40 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:50:15 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:53:55 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-27 10:54:16 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
+2026-02-27 10:58:52 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (31 features)
