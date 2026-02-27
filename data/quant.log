@@ -2525,3 +2525,99 @@ feat_atr_mom_5          9360.399386
 feat_bb_width           9182.373155
 dtype: float64
 2026-02-26 23:22:39 [INFO] quant: Model saved to models/alpha_lgbm.txt
+2026-02-26 23:23:42 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-02-26 23:23:48 [INFO] quant: 开始对 234 支股票执行多因子综合分析...
+2026-02-26 23:23:51 [INFO] quant: 分析完成。共有 0 支股票满足评分阈值。
+2026-02-26 23:23:51 [INFO] quant: 今日没有匹配到强势标的，建议空仓观望。
+2026-02-26 23:24:00 [INFO] quant: Scanning progress: 0/1747 (sh.605196)
+2026-02-26 23:24:01 [INFO] quant: Scanning progress: 100/1747 (sh.600339)
+2026-02-26 23:24:02 [INFO] quant: Scanning progress: 200/1747 (sz.002173)
+2026-02-26 23:24:02 [INFO] quant: Scanning progress: 300/1747 (sz.002606)
+2026-02-26 23:24:03 [INFO] quant: Scanning progress: 400/1747 (sh.563300)
+2026-02-26 23:24:03 [INFO] quant: Scanning progress: 500/1747 (sh.603058)
+2026-02-26 23:24:03 [INFO] quant: Scanning progress: 600/1747 (sh.603698)
+2026-02-26 23:24:04 [INFO] quant: Scanning progress: 700/1747 (sh.000858)
+2026-02-26 23:24:04 [INFO] quant: Scanning progress: 800/1747 (sz.002540)
+2026-02-26 23:24:04 [INFO] quant: Scanning progress: 900/1747 (sz.002291)
+2026-02-26 23:24:04 [INFO] quant: Scanning progress: 1000/1747 (sz.002334)
+2026-02-26 23:24:04 [INFO] quant: Scanning progress: 1100/1747 (sz.002632)
+2026-02-26 23:24:04 [INFO] quant: Scanning progress: 1200/1747 (sh.588750)
+2026-02-26 23:24:04 [INFO] quant: Scanning progress: 1300/1747 (sh.605056)
+2026-02-26 23:24:04 [INFO] quant: Scanning progress: 1400/1747 (sh.512890)
+2026-02-26 23:24:05 [INFO] quant: Scanning progress: 1500/1747 (sh.000106)
+2026-02-26 23:24:05 [INFO] quant: Scanning progress: 1600/1747 (sz.002094)
+2026-02-26 23:24:05 [INFO] quant: Scanning progress: 1700/1747 (sh.000059)
+2026-02-26 23:24:32 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (29 features)
+2026-02-27 09:51:20 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-02-27 09:51:20 [INFO] quant: Building dataset from historical data...
+2026-02-27 09:51:27 [INFO] quant: Dataset built successfully. Total rows: 147909. Features: 29
+2026-02-27 09:51:27 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-27 09:51:27 [INFO] quant: Target distribution: Positive 31419, Negative 116490. Ratio: 1:3.71
+2026-02-27 09:51:27 [INFO] quant: Starting LightGBM training...
+2026-02-27 09:51:30 [INFO] quant: Model AUC on Test Set: 0.7402
+2026-02-27 09:51:30 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.87      0.73      0.79     23242
+           1       0.38      0.62      0.47      6340
+
+    accuracy                           0.70     29582
+   macro avg       0.63      0.67      0.63     29582
+weighted avg       0.77      0.70      0.73     29582
+
+2026-02-27 09:51:30 [INFO] quant: Top 10 Important Features:
+feat_market_pct_5      56910.237628
+feat_market_pct_1      54385.676789
+feat_market_pct_10     54031.425508
+feat_market_bias_20    51112.670549
+feat_market_pct_20     50098.903599
+feat_rsi_val           21432.930447
+feat_atr_ratio         17072.130105
+feat_macd_norm         16997.579186
+feat_turnover          14169.266041
+feat_bb_width          13728.152222
+dtype: float64
+2026-02-27 09:51:30 [INFO] quant: Model saved to models/alpha_lgbm.txt
+2026-02-27 09:57:23 [INFO] quant: 开始对 234 支股票执行多因子综合分析...
+2026-02-27 09:57:26 [INFO] quant: 分析完成。共有 0 支股票满足评分阈值。
+2026-02-27 09:57:26 [INFO] quant: 今日没有匹配到强势标的，建议空仓观望。
+2026-02-27 09:59:22 [INFO] quant: ==================================================
+2026-02-27 09:59:22 [INFO] quant: 🚀 启动 Auto-Pilot 全自动量化演进流水线 🚀
+2026-02-27 09:59:22 [INFO] quant: ==================================================
+2026-02-27 09:59:22 [INFO] quant: [Step 1/4] 更新股票池基底...
+2026-02-27 09:59:23 [INFO] quant: Starting stock list update process.
+2026-02-27 09:59:23 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-02-27 09:59:23 [INFO] quant: Total entries from baostock: 0
+2026-02-27 09:59:23 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 0
+2026-02-27 09:59:23 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-02-27 09:59:23 [INFO] quant: Filtered 0 micro-cap stocks (< 50.0 亿).
+2026-02-27 09:59:23 [INFO] quant: Filtered 0 zombie stocks (< 10000.0 万).
+2026-02-27 09:59:23 [INFO] quant: Filtered 0 potential manipulated stocks (turnover > 20.0%).
+2026-02-27 09:59:23 [INFO] quant: Filtered 0 highly inactive stocks (turnover < 3.0%).
+2026-02-27 09:59:23 [INFO] quant: Filtered 0 stocks failing PE/PB fundamentals.
+2026-02-27 09:59:23 [INFO] quant: Final high-value stock count: 0
+2026-02-27 09:59:23 [WARNING] quant: No stocks passed the filters! Check your config threshold.
+2026-02-27 09:59:23 [INFO] quant: [Step 2/4] 并发增量拉取最新 K 线数据...
+2026-02-27 09:59:23 [INFO] quant: Loaded 234 stocks to update historical data (including market index).
+2026-02-27 09:59:23 [INFO] quant: Starting multi-process pool with 20 workers...
+2026-02-27 09:59:28 [INFO] quant: Update summary: 0 new files created, 0 files incrementally updated, 128 API requests returned no new data, 0 skipped (up-to-date), 106 errors.
+2026-02-27 09:59:28 [INFO] quant: [Step 3/4] 启动 Optuna 每日自适应参数微调 (Fast Walk-Forward)...
+2026-02-27 09:59:29 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-27 09:59:29 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 30 | 采样: 100
+2026-02-27 09:59:29 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-04-30
+2026-02-27 09:59:30 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (29 features)
+2026-02-27 10:09:00 [INFO] quant: === Optuna 调参完结 ===
+2026-02-27 10:09:00 [INFO] quant: 历史最佳样本内得分 (Train Score): -999.000000
+2026-02-27 10:09:09 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): -999.000000
+2026-02-27 10:09:09 [INFO] quant: 优化结果已保存: data/optimize_results\20260227_100909
+2026-02-27 10:09:09 [INFO] quant: 优化结果已保存: data/optimize_results\20260227_100909
+2026-02-27 10:09:09 [INFO] quant: 最优参数已写回 config.yaml
+2026-02-27 10:09:09 [INFO] quant: ✅ 每日参数自适应微调完成。
+2026-02-27 10:09:09 [INFO] quant: [Step 4/4] 运行盘后多因子选股与预生成候选名单...
+2026-02-27 10:09:09 [INFO] quant: 开始对 234 支股票执行多因子综合分析...
+2026-02-27 10:09:12 [INFO] quant: 分析完成。共有 0 支股票满足评分阈值。
+2026-02-27 10:09:12 [INFO] quant: 今日没有匹配到强势标的，建议空仓观望。
+2026-02-27 10:09:12 [INFO] quant: ==================================================
+2026-02-27 10:09:12 [INFO] quant: 🏁 Auto-Pilot 闭环运转全部完成！ 🏁
+2026-02-27 10:09:12 [INFO] quant: 您可以直接进入 Web UI 的第 2 个 Tab 查看今日最新入选名单 (Scan)。
+2026-02-27 10:09:12 [INFO] quant: ==================================================

@@ -104,7 +104,7 @@ def cmd_train_ai():
     data_dir = CONF.history_data.data_dir
     
     # 构建包含高阶特征的数据集
-    df = build_dataset(data_dir, p, n_forward_days=5, target_pct=0.05)
+    df = build_dataset(data_dir, p, n_forward_days=5, target_atr_mult=2.0, stop_loss_atr_mult=1.5)
     
     if df.empty:
         logger.error("数据集为空，训练中止。")
@@ -112,7 +112,96 @@ def cmd_train_ai():
         
     # 训练模型并保存
     train_model(df, model_path="models/alpha_lgbm.txt")
+
+
+def cmd_auto_pilot():
+    import time
+    from quant.logger import logger
     
+    logger.info("==================================================")
+    logger.info("🚀 启动 Auto-Pilot 全自动量化演进流水线 🚀")
+    logger.info("==================================================")
+    
+    logger.info("[Step 1/4] 更新股票池基底...")
+    cmd_update_list()
+    
+    logger.info("[Step 2/4] 并发增量拉取最新 K 线数据...")
+    cmd_update_data()
+    
+    logger.info("[Step 3/4] 启动 Optuna 每日自适应参数微调 (Fast Walk-Forward)...")
+    from quant.config import CONF
+    from quant.optimizer import run_optimization, save_results, apply_best_params
+    
+    # Fast daily evolution
+    CONF.optimizer.max_rounds = 3
+    CONF.optimizer.sample_count = 100
+    try:
+        result = run_optimization()
+        save_results(result)
+        apply_best_params(result)
+        logger.info("✅ 每日参数自适应微调完成。")
+    except Exception as e:
+        logger.error(f"❌ 自动优化失败，跳过参数应用: {e}")
+        
+    logger.info("[Step 4/4] 运行盘后多因子选股与预生成候选名单...")
+    cmd_analyze()
+    
+    logger.info("==================================================")
+    logger.info("🏁 Auto-Pilot 闭环运转全部完成！ 🏁")
+    logger.info("您可以直接进入 Web UI 的第 2 个 Tab 查看今日最新入选名单 (Scan)。")
+    logger.info("==================================================")
+
+
+def _scan_single(args):
+    code, target_date = args
+    from quant.backtester import scan_today_signal
+    try:
+        return scan_today_signal(code, target_date=target_date)
+    except Exception:
+        return None
+
+def cmd_scan_date(args: argparse.Namespace):
+    import time
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    from quant.config import CONF
+    
+    target_date = args.date
+    logger.info(f"========== 历史信号回溯扫描: {target_date} ==========")
+    
+    data_dir = CONF.history_data.data_dir
+    all_files = [f for f in os.listdir(data_dir) if f.endswith(".csv") and f != "stock-list.csv"]
+    if not all_files:
+        logger.error(f"没有找到历史数据。请先执行 update-data。")
+        return
+        
+    codes = [f.replace(".csv", "") for f in all_files]
+    
+    results = []
+    total = len(codes)
+    logger.info(f"开始遍历 {total} 只股票寻找 {target_date} 满足条件的买入点...")
+            
+    max_workers = os.cpu_count() or 4
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_scan_single, (code, target_date)): code for code in codes}
+        import tqdm
+        for future in tqdm.tqdm(as_completed(futures), total=total, desc="扫描进度"):
+            res = future.result()
+            if res:
+                results.append(res)
+                
+    if not results:
+        logger.info(f"✅ 历史扫描完成：在 {target_date} 未发现任何满足策略要求的买入标的。")
+        return
+        
+    import pandas as pd
+    df = pd.DataFrame(results)
+    print(f"\n✅ {target_date} 共发现 {len(results)} 只高胜率买入节点标的：")
+    print(df.to_string(index=False))
+    
+    out_file = f"historical_scan_{target_date.replace('-', '')}.csv"
+    df.to_csv(out_file, index=False, encoding="utf-8-sig")
+    logger.info(f"详细结果已保存至: {out_file}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Production-grade A-Share Quant System")
@@ -154,6 +243,17 @@ def main():
         "train-ai",
         help="Train the LightGBM machine learning predictive model.",
     )
+    
+    subparsers.add_parser(
+        "auto-pilot",
+        help="Run the complete daily pipeline: Update -> Optimize -> Analyze.",
+    )
+    
+    scan_parser = subparsers.add_parser(
+        "scan-date",
+        help="Run signal scan on a specific historical date to verify past recommendations.",
+    )
+    scan_parser.add_argument("--date", type=str, required=True, help="Target date mapping in YYYY-MM-DD format (e.g., 2024-05-10)")
 
     args = parser.parse_args()
 
@@ -171,6 +271,10 @@ def main():
         cmd_batch_test(args)
     elif args.command == "train-ai":
         cmd_train_ai()
+    elif args.command == "auto-pilot":
+        cmd_auto_pilot()
+    elif args.command == "scan-date":
+        cmd_scan_date(args)
     else:
         parser.print_help()
         sys.exit(1)

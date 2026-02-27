@@ -11,7 +11,7 @@ from quant.strategy_params import StrategyParams
 from quant.features import extract_features, create_targets
 from tqdm import tqdm
 
-def build_dataset(data_dir: str, p: StrategyParams, n_forward_days: int = 5, target_pct: float = 0.05) -> pd.DataFrame:
+def build_dataset(data_dir: str, p: StrategyParams, n_forward_days: int = 5, target_atr_mult: float = 2.0, stop_loss_atr_mult: float = 1.5) -> pd.DataFrame:
     """Read all csv files, compute indicators, extract features and targets, and concatenate into one large dataframe."""
     logger.info("Building dataset from historical data...")
     all_dfs = []
@@ -48,7 +48,7 @@ def build_dataset(data_dir: str, p: StrategyParams, n_forward_days: int = 5, tar
             # 2. Add derived features
             df = extract_features(df)
             # 3. Add truth Target Y
-            df = create_targets(df, n_forward_days=n_forward_days, target_pct=target_pct)
+            df = create_targets(df, n_forward_days=n_forward_days, target_atr_mult=target_atr_mult, stop_loss_atr_mult=stop_loss_atr_mult)
         except Exception as e:
             logger.debug(f"Error processing {f}: {e}")
             continue

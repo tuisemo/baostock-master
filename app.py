@@ -208,6 +208,43 @@ def ui_scan_signals():
     yield f'✅ 扫描完成！共遍历了 {total} 只股票，发现 {len(results)} 只处于高胜率买入节点。', df
 
 
+def ui_scan_historical_date(target_date: str):
+    if not target_date or not target_date.strip():
+        yield '❌ 请输入有效的日期格式，例如 2024-05-10', pd.DataFrame()
+        return
+        
+    target_date = target_date.strip()
+    yield f'开始扫描 {target_date} 全库买点 (这可能需要几分钟)...请稍候。', pd.DataFrame()
+    
+    data_dir = CONF.history_data.data_dir
+    all_files = [f for f in os.listdir(data_dir) if f.endswith(".csv") and f != "stock-list.csv"]
+    if not all_files:
+        yield '❌ 扫描失败。未找到任何历史数据，请先在“数据同步中心”执行步骤二。', pd.DataFrame()
+        return
+        
+    codes = [f.replace(".csv", "") for f in all_files]
+    results = []
+    total = len(codes)
+    
+    # Run sequentially for Gradio to yield properly without overly complex multiprocess IPC
+    for i, code in enumerate(codes):
+        if i % 20 == 0:
+            yield f'正在扫描 {target_date} 历史买点，进度: {i}/{total} ({code})...', pd.DataFrame()
+        try:
+            res = scan_today_signal(code, target_date=target_date)
+            if res:
+                results.append(res)
+        except Exception as e:
+            logger.debug(f"Error scanning {code} on {target_date}: {e}")
+
+    if not results:
+        yield f'✅ 历史扫描完成。在 {target_date} 全市场没有任何股票触发策略买入信号。', pd.DataFrame()
+        return
+
+    df = pd.DataFrame(results)
+    yield f'✅ 扫描完成！在 {target_date} 遍历了 {total} 只股票，共发现 {len(results)} 只处于高胜率买入节点。', df
+
+
 def ui_run_optimization(rounds, samples, objective):
     yield '开始多轮迭代优化...这可能需要较长时间，请耐心等待。', None
     try:
@@ -242,8 +279,82 @@ def ui_run_optimization(rounds, samples, objective):
         yield f'❌ 优化失败：{e}', None
 
 
+def ui_auto_pilot():
+    yield "🚀 启动 Auto-Pilot 全自动流水线...\n[1/4] 正在拉取和清洗全市场底仓...", None, pd.DataFrame()
+    try:
+        update_stock_list()
+    except Exception as e:
+        yield f"❌ 股票池更新失败停机：{e}", None, pd.DataFrame()
+        return
+
+    yield "✅ 底仓更新完成。\n[2/4] 正在并发增量拉取全市场最新日线数据 (这可能需要 1~2 分钟)...", None, pd.DataFrame()
+    try:
+        update_history_data()
+    except Exception as e:
+        yield f"❌ 历史数据更新失败停机：{e}", None, pd.DataFrame()
+        return
+        
+    yield "✅ 数据更新拉取完成。\n[3/4] 启动 Optuna 每日自适应参数微调 (Fast Walk-Forward)...", None, pd.DataFrame()
+    try:
+        from quant.optimizer import run_optimization, save_results, apply_best_params
+        CONF.optimizer.max_rounds = 3
+        CONF.optimizer.sample_count = 100
+        result = run_optimization()
+        save_results(result)
+        apply_best_params(result)
+        yield "✅ 最优参数推演完成并写入配置。\n[4/4] 正在进行全市场多因子跑批与精准买点扫描...", None, pd.DataFrame()
+    except Exception as e:
+        yield f"⚠️ 自动优化遭遇异常跳过 ({e})。\n[4/4] 正在进行全市场多因子跑批与精准买点扫描...", None, pd.DataFrame()
+
+    try:
+        analyze_all_stocks()
+        
+        # Run scan today signal directly instead of yielding mid-way
+        files = [f for f in os.listdir('.') if f.startswith('selected_stocks_') and f.endswith('.csv')]
+        if not files:
+            yield "✅ Auto-Pilot 闭环运转全部完成！\n今日全市场没有符合综合评级标准的票。", None, pd.DataFrame()
+            return
+            
+        latest_file = max(files)
+        df_stocks = pd.read_csv(latest_file)
+        col_name = 'code' if 'code' in df_stocks.columns else 'Code' if 'Code' in df_stocks.columns else None
+        
+        if not col_name:
+            yield f"✅ Auto-Pilot 闭环运转全部完成！\n但无法读取潜力池底仓进行准买点扫描。", df_stocks, pd.DataFrame()
+            return
+
+        stocks = df_stocks[col_name].dropna().tolist()
+        results = []
+        for code in stocks:
+            try:
+                res = scan_today_signal(code)
+                if res:
+                    results.append(res)
+            except Exception:
+                pass
+                
+        df_scan = pd.DataFrame(results) if results else pd.DataFrame()
+        msg = f"🏁 Auto-Pilot 闭环运转全部完成！ 🏁\n今日评级完成，共扫描出 {len(results)} 只处于高胜率买入节点的精准标的。"
+        yield msg, df_stocks, df_scan
+
+    except Exception as e:
+        yield f"❌ 选股与扫描最后阶段遭遇异常：{e}", None, pd.DataFrame()
+
+
 with gr.Blocks(title="生产级 A 股量化系统", theme=gr.themes.Default()) as demo:
     gr.Markdown("# 📈 自动化量化选股与闭环自演进分析系统")
+    
+    with gr.Tab("🚀 Auto-Pilot 一键全自动进化选股"):
+        gr.Markdown("### 一键触发：【数据同步更新】->【参数自我演进】->【跑批多因子指标】->【扫描出票】")
+        gr.Markdown("这是每日收盘后您**唯一需要点击**的按钮。机器会自动完成过去由人类执行的繁琐四步，直接把精锐的标的端到您面前。")
+        btn_autopilot = gr.Button("🔴 启动 Auto-Pilot 每日闭环", variant="primary", size="lg")
+        txt_ap_log = gr.Textbox(label="中央执行流水线日志", lines=5, interactive=False)
+        
+        with gr.Row():
+            df_ap_analyze = gr.Dataframe(label="📊 今日评级入选底仓池", interactive=False)
+            df_ap_scan = gr.Dataframe(label="🚨 明日可建仓强烈提示 (买点触发)", interactive=False)
+            
+        btn_autopilot.click(fn=ui_auto_pilot, outputs=[txt_ap_log, df_ap_analyze, df_ap_scan])
 
     with gr.Tab("1️⃣ 数据同步与底仓构建"):
         gr.Markdown("### 步骤一：获取并清洗基础股票池")
@@ -299,6 +410,20 @@ with gr.Blocks(title="生产级 A 股量化系统", theme=gr.themes.Default()) a
         txt_opt_log = gr.Textbox(label="演进运行状态", lines=2, interactive=False)
         df_opt_history = gr.Dataframe(label="📈 历次参数变异爬山记录 (评估报告)", interactive=False)
         btn_optimize.click(fn=ui_run_optimization, inputs=[sl_rounds, sl_samples, sl_objective], outputs=[txt_opt_log, df_opt_history])
+
+    with gr.Tab("5️⃣ 历史信号回溯扫描"):
+        gr.Markdown("### 让时间倒流，测试策略在过去某一天的实盘表现")
+        gr.Markdown("输入历史上任意一个交易日（例如大跌、大涨或盘整的日子），引擎会回到那一天，按照那天的 K 线给您输出“如果在那一天使用本系统你会买哪些股票”。")
+        gr.Markdown("然后您可以拿着这些当时的输出代码，对照后面的走势去进行极其客观的实盘验证推敲。注意，结果的csv文件属于临时缓存，不会被上传。")
+        
+        with gr.Row():
+            txt_target_date = gr.Textbox(label="目标扫描日期 (YYYY-MM-DD)", placeholder="例如: 2024-05-10 或 2023-10-23", scale=3)
+            btn_scan_historical = gr.Button("🕒 逆转时空扫描历史买点", variant="primary", scale=1)
+            
+        txt_history_scan_log = gr.Textbox(label="运行状态", lines=2, interactive=False)
+        df_history_scan_result = gr.Dataframe(label="📊 穿越至选取日期的预言买点结果", interactive=False)
+        
+        btn_scan_historical.click(fn=ui_scan_historical_date, inputs=txt_target_date, outputs=[txt_history_scan_log, df_history_scan_result])
 
 
 if __name__ == "__main__":

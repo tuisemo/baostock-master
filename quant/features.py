@@ -176,14 +176,30 @@ def extract_features(df: pd.DataFrame) -> pd.DataFrame:
     # 提取有用的特征列
     feature_cols = [c for c in df.columns if c.startswith('feat_')]
     
+    # 10. 截面/相对分位特征 (Self-Relative Rank / Percentiles)
+    # Since we process stocks individually, true cross-sectional rank across all stocks is not feasible here.
+    # Instead, we calculate the rolling percentile of RSI and Momentum relative to the stock's own recent 252-day history.
+    # This gives the AI a sense of "is this unusually high/low for *this* stock?".
+    if 'feat_rsi_val' in df.columns:
+        df['feat_rsi_rank_252'] = df['feat_rsi_val'].rolling(window=252, min_periods=60).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+        
+    if 'feat_pct_chg_20' in df.columns:
+        df['feat_mom_rank_252'] = df['feat_pct_chg_20'].rolling(window=252, min_periods=60).apply(lambda x: pd.Series(x).rank(pct=True).iloc[-1], raw=False)
+        
+    # Fill NAs for these new rolling ranks with 0.5 (median)
+    rank_cols = ['feat_rsi_rank_252', 'feat_mom_rank_252']
+    for c in rank_cols:
+        if c in df.columns:
+            df[c] = df[c].fillna(0.5)
+    
     return df
 
-def create_targets(df: pd.DataFrame, n_forward_days: int = 5, target_pct: float = 0.05, stop_loss_atr_mult: float = 1.5) -> pd.DataFrame:
+def create_targets(df: pd.DataFrame, n_forward_days: int = 5, target_atr_mult: float = 2.0, stop_loss_atr_mult: float = 1.5) -> pd.DataFrame:
     """
     构建预测目标 (Target Y) - 路径依赖版本：
     如果买单在当天收盘买入，未来 n_forward_days 内：
     - 如果先跌破 (当天收盘价 - stop_loss_atr_mult * 当天ATR)，标记为失败 (0)
-    - 如果在没有跌破止损线的前提下，最高价触及了 (当天收盘价 * (1 + target_pct))，标记为成功 (1)
+    - 如果在没有跌破止损线的前提下，最高价触及了 (当天收盘价 + target_atr_mult * 当天ATR)，标记为成功 (1)
     - 其他情况 (既没止赢也没止损)，标记为失败 (0) 以鼓励高效资金周转。
     """
     df = df.copy()
@@ -194,8 +210,10 @@ def create_targets(df: pd.DataFrame, n_forward_days: int = 5, target_pct: float 
     atr_cols = [c for c in df.columns if c.startswith('ATRr_')]
     
     if not atr_cols:
-        # 降级回老逻辑
-        return _fallback_create_targets(df, n_forward_days, target_pct, close_col, high_col)
+        logger = __import__('quant.logger').logger
+        logger.warning("No ATR column found, falling back to fixed 5% target.")
+        # 降级回老逻辑 (fallback to fixed 5% if ATR is missing)
+        return _fallback_create_targets(df, n_forward_days, 0.05, close_col, high_col)
         
     atr_col = atr_cols[0]
     
@@ -211,8 +229,11 @@ def create_targets(df: pd.DataFrame, n_forward_days: int = 5, target_pct: float 
     # 由于 n_forward_days 很小 (比如5)，可以使用一个微循环来对每个样本盘点未来几天轨迹
     for i in range(n - n_forward_days):
         entry_price = close_series[i]
-        initial_sl = entry_price - stop_loss_atr_mult * atr_series[i]
-        target_price = entry_price * (1.0 + target_pct)
+        curr_atr = atr_series[i]
+        
+        # 动态止损与止盈位 (Dynamic Target & Stop based on Volatility)
+        initial_sl = entry_price - stop_loss_atr_mult * curr_atr
+        target_price = entry_price + target_atr_mult * curr_atr
         
         is_success = 0
         

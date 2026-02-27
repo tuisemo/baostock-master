@@ -65,6 +65,9 @@ class StrategyParams:
     # --- Phase 9: AI Model Gate ---
     ai_prob_threshold: float = 0.35
 
+    # --- Position Sizing ---
+    position_size: float = 0.1
+
     def to_dict(self) -> dict[str, int | float]:
         return asdict(self)
 
@@ -110,7 +113,7 @@ class StrategyParams:
                 "negative_bias_pct", "rsi_oversold", "trail_atr_mult",
                 "take_profit_pct", "breakeven_trigger", "breakeven_buffer",
                 "w_pullback_ma", "w_macd_cross", "w_vol_up", "w_rsi_rebound", "w_green_candle",
-                "bbands_lower_bias", "rsi_oversold_extreme", "ai_prob_threshold"
+                "bbands_lower_bias", "rsi_oversold_extreme", "ai_prob_threshold", "position_size"
             ):
                 val = getattr(strategy_data, name, None)
                 if val is not None:

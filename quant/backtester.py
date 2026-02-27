@@ -282,7 +282,7 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                             return  # AI 预测未来不佳，拒绝开仓
             # ============================================
 
-            self.buy()
+            self.buy(size=p.position_size)
             if signal_trend_breakout:
                 self.current_stop_loss = price - 2.5 * self.atr[-1]
                 self.current_trade_type = "right"
@@ -374,7 +374,7 @@ def run_backtest(
 
 
 def scan_today_signal(
-    code: str, params: StrategyParams | None = None
+    code: str, params: StrategyParams | None = None, target_date: str | None = None
 ) -> dict | None:
     params = _resolve_params(params)
     file_path = os.path.join(CONF.history_data.data_dir, f"{code}.csv")
@@ -382,6 +382,13 @@ def scan_today_signal(
         return None
 
     df = pd.read_csv(file_path)
+    
+    if target_date is not None:
+        if "date" in df.columns:
+            df = df[df["date"] <= target_date].copy()
+        elif "Date" in df.columns:
+            df = df[df["Date"] <= target_date].copy()
+            
     if df.empty or len(df) < 50:
         return None
 

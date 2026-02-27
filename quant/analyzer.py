@@ -137,6 +137,11 @@ def score_stock(df: pd.DataFrame, params: StrategyParams | None = None) -> dict:
 
     latest = df.iloc[-1]
     prev = df.iloc[-2] if len(df) > 1 else latest
+    
+    # 20-day momentum for ranking if available
+    mom_20 = 0.0
+    if len(df) >= 20:
+        mom_20 = (latest["close"] - df.iloc[-20]["close"]) / df.iloc[-20]["close"]
 
     sma_s = f"SMA_{ma_short}"
     sma_l = f"SMA_{ma_long}"
@@ -187,6 +192,8 @@ def score_stock(df: pd.DataFrame, params: StrategyParams | None = None) -> dict:
             "volume": volume_score,
             "close": latest["close"],
             "stop_loss": round(stop_loss, 2),
+            "rsi": round(latest[rsi_col], 2),
+            "mom_20": round(mom_20, 4),
             "date": (
                 latest["date"].strftime("%Y-%m-%d")
                 if pd.api.types.is_datetime64_any_dtype(latest["date"])
@@ -242,6 +249,13 @@ def analyze_all_stocks() -> None:
 
     if results:
         res_df = pd.DataFrame(results)
+        
+        # Add True Cross-Sectional Ranking for today's snapshot
+        if 'rsi' in res_df.columns:
+            res_df['rsi_rank'] = res_df['rsi'].rank(pct=True)
+        if 'mom_20' in res_df.columns:
+            res_df['mom_rank'] = res_df['mom_20'].rank(pct=True)
+            
         res_df = res_df.sort_values("total_score", ascending=False)
 
         date_str = datetime.now().strftime("%Y%m%d")
