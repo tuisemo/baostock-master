@@ -265,14 +265,16 @@ class EnsembleLGBM:
     def fit(self, X_train, y_train, X_eval=None, y_eval=None):
         """Train multiple LightGBM models with different hyperparameters."""
         logger.info(f"Training ensemble of {self.n_models} LightGBM models...")
-        
+
         self.feature_names = X_train.columns.tolist()
-        
+
+        lgb_train = lgb.Dataset(X_train, y_train)
+
         if X_eval is not None and y_eval is not None:
-            lgb_eval = lgb.Dataset(X_eval, y_eval, reference=lgb.Dataset(X_train, y_train))
-            eval_sets = [lgb.Dataset(X_train, y_train), lgb_eval]
+            lgb_eval = lgb.Dataset(X_eval, y_eval, reference=lgb_train)
+            eval_sets = [lgb_train, lgb_eval]
         else:
-            eval_sets = [lgb.Dataset(X_train, y_train)]
+            eval_sets = [lgb_train]
         
         # Class distribution for imbalance handling
         pos_count = y_train.sum() if hasattr(y_train, 'sum') else 0

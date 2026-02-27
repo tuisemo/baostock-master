@@ -161,7 +161,6 @@ def _scan_single(args):
         return None
 
 def cmd_scan_date(args: argparse.Namespace):
-    import time
     from concurrent.futures import ProcessPoolExecutor, as_completed
     from quant.config import CONF
     

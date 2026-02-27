@@ -27,7 +27,9 @@ def setup_logger(name: str = "quant") -> logging.Logger:
     # File Handler
     log_file = CONF.log.file
     if log_file:
-        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        log_dir = os.path.dirname(log_file)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
         fh = logging.FileHandler(log_file, encoding='utf-8')
         fh.setLevel(level)
         fh.setFormatter(formatter)

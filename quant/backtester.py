@@ -181,8 +181,9 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
             p = self._p
             c = self._cols
             def _get_col(col_name):
+                # Use self.data instead of self.data.df for backtesting library compatibility
                 return self.data.df[col_name].to_numpy() if col_name in self.data.df.columns else self.data.df["Close"].to_numpy()
-                
+
             self.sma_s = self.I(_get_col, c["sma_s"], name="sma_s")
             self.sma_l = self.I(_get_col, c["sma_l"], name="sma_l")
             self.macd_h = self.I(_get_col, c["macd_h"], name="macd_h")
@@ -475,6 +476,7 @@ def run_backtest(
         return None
 
     strategy_cls = create_strategy(params)
+    # Default slippage if not configured
     slippage = getattr(CONF.strategy, "slippage_pct", 0.002)
     bt = Backtest(
         df,
@@ -553,11 +555,13 @@ def scan_today_signal(
     idx_df = get_market_index()
     if idx_df is not None and current_date_str is not None:
         try:
+            # Handle both string and datetime date formats
             current_date_ts = pd.to_datetime(current_date_str)
             idx_loc = idx_df.index.get_indexer([current_date_ts], method='pad')[0]
-            if idx_loc != -1:
+            if idx_loc != -1 and idx_loc < len(idx_df):
                 market_uptrend = bool(idx_df.iloc[idx_loc]["market_uptrend"])
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Market trend check failed: {e}")
             pass
 
     # if not market_uptrend:

@@ -28,7 +28,9 @@ def _resolve(params: StrategyParams | None, name: str, conf_path: str | None = N
         for part in conf_path.split("."):
             obj = getattr(obj, part)
         return obj
-    obj = CONF.analyzer
+    obj = getattr(CONF, 'analyzer', None)
+    if obj is None:
+        raise AttributeError(f"Configuration 'analyzer' not found in CONF")
     return getattr(obj, name)
 
 
@@ -82,10 +84,22 @@ def calculate_indicators(df: pd.DataFrame, params: StrategyParams | None = None)
 
 def _add_volume_slope(df: pd.DataFrame, window: int = 5) -> None:
     """Add normalized linear-regression slope of volume over `window` bars."""
+    if df.empty or len(df) < window:
+        df["vol_slope"] = 0.0
+        return
+
+    if "volume" not in df.columns:
+        df["vol_slope"] = 0.0
+        return
+
     vol = df["volume"].values.astype(float)
     x = np.arange(window, dtype=float)
     x_mean = x.mean()
     x_var = ((x - x_mean) ** 2).sum()
+
+    if x_var == 0:
+        df["vol_slope"] = 0.0
+        return
 
     slopes = np.full(len(vol), np.nan)
     for i in range(window - 1, len(vol)):
@@ -102,10 +116,17 @@ def _add_volume_slope(df: pd.DataFrame, window: int = 5) -> None:
 
 def _add_momentum_leads(df: pd.DataFrame) -> None:
     """Add short-term momentum lead indicators and divergence."""
+    if df.empty or "close" not in df.columns:
+        df["momentum_3"] = 0.0
+        df["momentum_5"] = 0.0
+        df["momentum_10"] = 0.0
+        df["momentum_divergence"] = 0.0
+        return
+
     close = df["close"]
-    df["momentum_3"] = close.pct_change(3)
-    df["momentum_5"] = close.pct_change(5)
-    df["momentum_10"] = close.pct_change(10)
+    df["momentum_3"] = close.pct_change(3).fillna(0)
+    df["momentum_5"] = close.pct_change(5).fillna(0)
+    df["momentum_10"] = close.pct_change(10).fillna(0)
     df["momentum_divergence"] = df["momentum_3"] - df["momentum_10"]
 
 
@@ -137,11 +158,14 @@ def score_stock(df: pd.DataFrame, params: StrategyParams | None = None) -> dict:
 
     latest = df.iloc[-1]
     prev = df.iloc[-2] if len(df) > 1 else latest
-    
+
     # 20-day momentum for ranking if available
     mom_20 = 0.0
-    if len(df) >= 20:
-        mom_20 = (latest["close"] - df.iloc[-20]["close"]) / df.iloc[-20]["close"]
+    try:
+        if len(df) >= 20:
+            mom_20 = (latest["close"] - df.iloc[-20]["close"]) / df.iloc[-20]["close"]
+    except (IndexError, KeyError, ZeroDivisionError):
+        mom_20 = 0.0
 
     sma_s = f"SMA_{ma_short}"
     sma_l = f"SMA_{ma_long}"
@@ -151,31 +175,40 @@ def score_stock(df: pd.DataFrame, params: StrategyParams | None = None) -> dict:
     obv_col = "OBV"
     atr_col = f"ATRr_{atr_length}"
 
-    req_cols = [sma_s, sma_l, macd_h, rsi_col, bb_lower, obv_col, atr_col]
+    req_cols = [sma_s, sma_l, macd_h, rsi_col, bb_lower, obv_col, atr_col, "low", "close", "volume"]
     if not all(col in df.columns for col in req_cols):
         return {"total_score": 0.0}
 
     try:
         trend_score = 0.0
-        if latest[sma_s] > latest[sma_l]:
-            trend_score += 0.5
-        if latest[macd_h] > 0 and prev[macd_h] <= 0:
-            trend_score += 0.5
-        elif latest[macd_h] > 0:
-            trend_score += 0.3
+        if pd.notna(latest[sma_s]) and pd.notna(latest[sma_l]):
+            if latest[sma_s] > latest[sma_l]:
+                trend_score += 0.5
+        if pd.notna(latest[macd_h]) and pd.notna(prev[macd_h]):
+            if latest[macd_h] > 0 and prev[macd_h] <= 0:
+                trend_score += 0.5
+            elif latest[macd_h] > 0:
+                trend_score += 0.3
 
         reversion_score = 0.0
-        if latest[rsi_col] <= rsi_buy_threshold:
-            reversion_score += 0.5
-        if latest["low"] <= latest[bb_lower] or prev["low"] <= prev[bb_lower]:
-            if latest["close"] > latest[bb_lower]:
+        if pd.notna(latest[rsi_col]):
+            if latest[rsi_col] <= rsi_buy_threshold:
                 reversion_score += 0.5
+        if (pd.notna(latest["low"]) and pd.notna(latest[bb_lower]) and
+            pd.notna(prev["low"]) and pd.notna(prev[bb_lower])):
+            if latest["low"] <= latest[bb_lower] or prev["low"] <= prev[bb_lower]:
+                if pd.notna(latest["close"]) and pd.notna(latest[bb_lower]):
+                    if latest["close"] > latest[bb_lower]:
+                        reversion_score += 0.5
 
         volume_score = 0.0
-        if latest[obv_col] > prev[obv_col]:
-            volume_score += 0.5
-        if latest["close"] > prev["close"] and latest["volume"] > prev["volume"] * 1.5:
-            volume_score += 0.5
+        if pd.notna(latest[obv_col]) and pd.notna(prev[obv_col]):
+            if latest[obv_col] > prev[obv_col]:
+                volume_score += 0.5
+        if (pd.notna(latest["close"]) and pd.notna(prev["close"]) and
+            pd.notna(latest["volume"]) and pd.notna(prev["volume"])):
+            if latest["close"] > prev["close"] and latest["volume"] > prev["volume"] * 1.5:
+                volume_score += 0.5
 
         total_score = (
             trend_score * w_trend
@@ -183,7 +216,10 @@ def score_stock(df: pd.DataFrame, params: StrategyParams | None = None) -> dict:
             + volume_score * w_volume
         )
 
-        stop_loss = latest["close"] - (atr_multiplier * latest[atr_col])
+        if pd.notna(latest["close"]) and pd.notna(latest[atr_col]):
+            stop_loss = latest["close"] - (atr_multiplier * latest[atr_col])
+        else:
+            stop_loss = latest["close"] if pd.notna(latest["close"]) else 0.0
 
         return {
             "total_score": round(total_score, 3),
@@ -237,22 +273,40 @@ def classify_market_state(index_df: pd.DataFrame, lookback_days: int = 60) -> st
         return "sideways"
 
     # Use latest data
-    recent = index_df.tail(lookback_days)
-    
+    recent = index_df.tail(lookback_days).copy()
+
+    # Validate required column
+    if 'close' not in recent.columns:
+        return "sideways"
+
     # Calculate moving averages
     ma20 = recent['close'].rolling(window=20).mean()
     ma60 = recent['close'].rolling(window=60).mean()
-    
+
+    # Check if MA60 has valid value
+    if pd.isna(ma60.iloc[-1]) or pd.isna(ma20.iloc[-1]):
+        return "sideways"
+
     # Trend strength (distance between MA20 and MA60)
-    trend_strength = (ma20.iloc[-1] - ma60.iloc[-1]) / ma60.iloc[-1]
-    
+    try:
+        trend_strength = (ma20.iloc[-1] - ma60.iloc[-1]) / ma60.iloc[-1]
+    except ZeroDivisionError:
+        return "sideways"
+
     # Volatility (20-day return standard deviation)
     returns = recent['close'].pct_change().dropna()
+    if len(returns) < 20:
+        return "sideways"
     volatility = returns.tail(20).std()
-    
+
     # Rate of change (20-day return)
-    roc_20 = (recent['close'].iloc[-1] - recent['close'].iloc[-20]) / recent['close'].iloc[-20]
-    
+    if len(recent) < 20:
+        return "sideways"
+    try:
+        roc_20 = (recent['close'].iloc[-1] - recent['close'].iloc[-20]) / recent['close'].iloc[-20]
+    except ZeroDivisionError:
+        return "sideways"
+
     # Classification logic
     if trend_strength > 0.02 and volatility < 0.02 and roc_20 > 0.05:
         return "strong_bull"
@@ -275,9 +329,14 @@ def get_dynamic_params(base_params: StrategyParams, market_state: str) -> Strate
     from dataclasses import replace
     try:
         params = replace(base_params)
-    except:
-        params = StrategyParams(**base_params.to_dict())
-    
+    except Exception:
+        # Fallback: try to convert to dict and recreate
+        try:
+            params = StrategyParams(**base_params.__dict__)
+        except Exception as e:
+            logger.error(f"Failed to create params copy: {e}")
+            raise
+
     # Market state adjustments
     state_adjustments = {
         'strong_bull': {
@@ -312,7 +371,7 @@ def get_dynamic_params(base_params: StrategyParams, market_state: str) -> Strate
             'take_profit_pct': -0.002,  # Decrease by 0.2%
         },
     }
-    
+
     # Apply adjustments
     adjustments = state_adjustments.get(market_state, {})
     for key, delta in adjustments.items():
@@ -321,14 +380,14 @@ def get_dynamic_params(base_params: StrategyParams, market_state: str) -> Strate
             if isinstance(current_value, float):
                 # Add delta (or multiply for position_size)
                 if key == 'position_size':
-                    params.__setattr__(key, min(0.25, max(0.02, current_value * delta)))
+                    setattr(params, key, min(0.25, max(0.02, current_value * delta)))
                 elif key in ['ai_prob_threshold', 'take_profit_pct']:
-                    params.__setattr__(key, current_value + delta)
+                    setattr(params, key, current_value + delta)
                 else:
-                    params.__setattr__(key, current_value + delta)
+                    setattr(params, key, current_value + delta)
             elif isinstance(current_value, int):
-                params.__setattr__(key, current_value + int(delta))
-    
+                setattr(params, key, current_value + int(delta))
+
     return params
 
 
@@ -382,11 +441,11 @@ def calculate_sector_rotation_signals(df: pd.DataFrame) -> pd.DataFrame:
     Calculate sector rotation signals based on stock codes.
     Group stocks by exchange and market cap, then calculate relative strength.
     """
-    sector_data = []
-    
-    if df.empty:
+    if df.empty or 'code' not in df.columns:
         return pd.DataFrame()
-    
+
+    sector_data = []
+
     # Group by sector (using stock code prefix)
     def get_sector(code: str) -> str:
         if code.startswith("sh.6"):
@@ -397,46 +456,54 @@ def calculate_sector_rotation_signals(df: pd.DataFrame) -> pd.DataFrame:
             return "shenzhen_chi_next"
         else:
             return "other"
-    
+
     # Add sector to dataframe temporarily
+    df = df.copy()
     df['sector'] = df['code'].apply(get_sector)
-    
+
     # Calculate sector performance metrics
     for sector in df['sector'].unique():
         sector_stocks = df[df['sector'] == sector]
-        
+
         if len(sector_stocks) > 0:
             # Average metrics for the sector
-            avg_mom = sector_stocks.get('mom_20', pd.Series([0])).mean()
-            avg_rsi = sector_stocks.get('rsi', pd.Series([50])).mean()
-            avg_score = sector_stocks.get('total_score', pd.Series([0])).mean()
-            
-            # Store sector data
-            for code in sector_stocks['code']:
+            avg_mom = sector_stocks['mom_20'].mean() if 'mom_20' in sector_stocks.columns else 0.0
+            avg_rsi = sector_stocks['rsi'].mean() if 'rsi' in sector_stocks.columns else 50.0
+            avg_score = sector_stocks['total_score'].mean() if 'total_score' in sector_stocks.columns else 0.0
+
+            # Store sector data (keep total_score for relative strength calculation)
+            for _, stock in sector_stocks.iterrows():
                 sector_data.append({
-                    'code': code,
+                    'code': stock.get('code', ''),
+                    'total_score': stock.get('total_score', 0),
                     'sector': sector,
                     'sector_avg_mom': avg_mom,
                     'sector_avg_rsi': avg_rsi,
                     'sector_avg_score': avg_score,
                 })
-    
+
+    if not sector_data:
+        return pd.DataFrame()
+
     # Create sector signals dataframe
     sector_df = pd.DataFrame(sector_data)
-    
+
     # Calculate relative strength within sector
     sector_df['stock_sector_relative_strength'] = (
         sector_df['total_score'] - sector_df['sector_avg_score']
     )
-    
+
+    # Drop total_score from sector signals to avoid conflict with original data
+    sector_df = sector_df.drop(columns=['total_score'], errors='ignore')
+
     # Identify top performing sectors
-    if not sector_df.empty:
+    if not sector_df.empty and 'sector_avg_score' in sector_df.columns:
         sector_performance = sector_df.groupby('sector')['sector_avg_score'].mean().sort_values(ascending=False)
         top_sectors = sector_performance.head(2).index.tolist()
         bottom_sectors = sector_performance.tail(2).index.tolist()
-        
+
         sector_df['sector_rotation_signal'] = sector_df['sector'].apply(
             lambda x: 1 if x in top_sectors else (-1 if x in bottom_sectors else 0)
         )
-    
+
     return sector_df.drop(columns=['sector'], errors='ignore')

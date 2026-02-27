@@ -616,29 +616,28 @@ with gr.Blocks(
     gr.Markdown("# 🚀 生产级 A 股量化选股与闭环自演进分析系统 (AI增强版)")
     
     # Add system status dashboard
-    with gr.Row():
-        with gr.Column(scale=1):
-            gr.Markdown("### 🖥️ 系统状态")
-            status_data = gr.HTML("""
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 8px; color: white;">
-                    <div style="font-size: 12px; opacity: 0.9;">AI 模型状态</div>
-                    <div style="font-size: 18px; font-weight: 600;">🟢 就绪</div>
-                </div>
-                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 8px; color: white;">
-                    <div style="font-size: 12px; opacity: 0.9;">优化引擎</div>
-                    <div style="font-size: 18px; font-weight: 600;">🟢 就绪</div>
-                </div>
-                <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 15px; border-radius: 8px; color: white;">
-                    <div style="font-size: 12px; opacity: 0.9;">数据同步</div>
-                    <div style="font-size: 18px; font-weight: 600;">🟢 就绪</div>
-                </div>
-                <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 15px; border-radius: 8px; color: white;">
-                    <div style="font-size: 12px; opacity: 0.9;">市场监控</div>
-                    <div style="font-size: 18px; font-weight: 600;">🟢 就绪</div>
-                </div>
+    with gr.Column(scale=1):
+        gr.Markdown("### 🖥️ 系统状态")
+        status_data = gr.HTML("""
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 8px; color: white;">
+                <div style="font-size: 12px; opacity: 0.9;">AI 模型状态</div>
+                <div style="font-size: 18px; font-weight: 600;">🟢 就绪</div>
             </div>
-            """)
+            <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 8px; color: white;">
+                <div style="font-size: 12px; opacity: 0.9;">优化引擎</div>
+                <div style="font-size: 18px; font-weight: 600;">🟢 就绪</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 15px; border-radius: 8px; color: white;">
+                <div style="font-size: 12px; opacity: 0.9;">数据同步</div>
+                <div style="font-size: 18px; font-weight: 600;">🟢 就绪</div>
+            </div>
+            <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 15px; border-radius: 8px; color: white;">
+                <div style="font-size: 12px; opacity: 0.9;">市场监控</div>
+                <div style="font-size: 18px; font-weight: 600;">🟢 就绪</div>
+            </div>
+        </div>
+        """)
         with gr.Column(scale=2):
             gr.Markdown("### 📊 今日市场概况")
             market_overview = gr.HTML("""
@@ -673,12 +672,10 @@ with gr.Blocks(
             btn_autopilot = gr.Button("🔴 启动 Auto-Pilot 每日闭环", variant="primary", size="lg")
             status_indicator = gr.HTML("<div style='text-align: center; padding: 10px;'><span style='background: #f0f0f0; padding: 8px 15px; border-radius: 20px;'>等待启动...</span></div>")
             
-        txt_ap_log = gr.Textbox(label="📋 中央执行流水线日志", lines=5, interactive=False)
-        
         with gr.Row():
             with gr.Column(scale=1):
+                txt_ap_log = gr.Textbox(label="📋 中央执行流水线日志", lines=5, interactive=False)
                 txt_market_state = gr.Textbox(label="🌍 市场状态感知", lines=2, interactive=False)
-                txt_ap_log = gr.Textbox(label="📋 中央执行流水线日志", lines=4, interactive=False)
             with gr.Column(scale=2):
                 df_ap_analyze = gr.Dataframe(label="📊 今日评级入选底仓池 (含形态特征)", interactive=False)
         
