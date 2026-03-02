@@ -136,8 +136,8 @@ def extract_features(df: pd.DataFrame) -> pd.DataFrame:
     df['feat_bb_width'] = (bbu - bbl) / (close_series + 1e-8)
 
     # 8. 量能特征 (Volume/Liquidity)
-    df['feat_vol_pct_chg_1'] = df[vol_col].pct_change(1)
-    df['feat_vol_pct_chg_5'] = df[vol_col].pct_change(5)
+    df['feat_vol_pct_chg_1'] = df[vol_col].pct_change(1, fill_method=None)
+    df['feat_vol_pct_chg_5'] = df[vol_col].pct_change(5, fill_method=None)
     vol_ma_5 = df[vol_col].rolling(window=5).mean()
     df['feat_vol_ratio_5'] = df[vol_col] / (vol_ma_5 + 1e-8)
     

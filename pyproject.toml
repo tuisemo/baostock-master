@@ -21,6 +21,13 @@ dependencies = [
     # Performance optimization
     "numba>=0.60.0",
     "joblib>=1.4.0",
+    # Multi-model ensemble (new dependencies)
+    "xgboost>=2.0.0",
+    "catboost>=1.2.0",
+    # Performance monitoring (new dependencies)
+    "psutil>=5.9.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.12.0",
     # GPU monitoring (optional)
     "pynvml>=0.9.0",
 ]

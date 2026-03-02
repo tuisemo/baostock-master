@@ -270,3 +270,116 @@ def compute_rolling_stats_numba(
             skews[i] = skew_val
 
     return means, stds, skews
+
+
+@jit(nopython=True, parallel=True)
+def compute_enhanced_features_numba(
+    close_arr: np.ndarray,
+    vol_arr: np.ndarray,
+    window_short: int = 5,
+    window_long: int = 20
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    使用 numba 加速计算增强版特征
+
+    Args:
+        close_arr: 收盘价数组
+        vol_arr: 成交量数组
+        window_short: 短期窗口
+        window_long: 长期窗口
+
+    Returns:
+        (mom_acceleration, mom_persistence, volatility_change) 三个数组
+    """
+    n = len(close_arr)
+    mom_acc = np.full(n, np.nan)
+    mom_persist = np.full(n, np.nan)
+    vol_change = np.full(n, np.nan)
+
+    if n < window_long:
+        return mom_acc, mom_persist, vol_change
+
+    # 计算价格动量
+    mom_5 = np.full(n, np.nan)
+    for i in range(1, n):
+        mom_5[i] = (close_arr[i] - close_arr[i - window_short]) / close_arr[i - window_short]
+
+    # 动量加速度（动量的一阶导数）
+    for i in range(2, n):
+        if not np.isnan(mom_5[i - 1]) and not np.isnan(mom_5[i]):
+            mom_acc[i] = mom_5[i] - mom_5[i - 1]
+
+    # 动量持续性（动量的标准差）
+    for i in range(window_short - 1, n):
+        valid_count = 0
+        sum_mom = 0.0
+        sum_sq = 0.0
+        
+        for j in range(i - window_short + 1, i + 1):
+            if not np.isnan(mom_5[j]):
+                valid_count += 1
+                sum_mom += mom_5[j]
+        
+        if valid_count >= 3:
+            mean_mom = sum_mom / valid_count
+            for j in range(i - window_short + 1, i + 1):
+                if not np.isnan(mom_5[j]):
+                    sum_sq += (mom_5[j] - mean_mom) ** 2
+            mom_persist[i] = np.sqrt(sum_sq / valid_count)
+
+    # 波动率变化率
+    vol_20 = np.full(n, np.nan)
+    for i in range(window_long - 1, n):
+        sum_ret = 0.0
+        sum_sq = 0.0
+        valid_count = 0
+        
+        for j in range(i - window_long + 1, i + 1):
+            if j > 0:
+                ret = (close_arr[j] - close_arr[j - 1]) / close_arr[j - 1]
+                sum_ret += ret
+                sum_sq += ret * ret
+                valid_count += 1
+        
+        if valid_count > 0:
+            mean_ret = sum_ret / valid_count
+            vol_20[i] = np.sqrt((sum_sq / valid_count) - (mean_ret ** 2))
+
+    # 波动率变化率（5 天波动率的变化）
+    for i in range(window_long + 4, n):
+        if not np.isnan(vol_20[i - 5]) and not np.isnan(vol_20[i]):
+            vol_change[i] = (vol_20[i] - vol_20[i - 5]) / (abs(vol_20[i - 5]) + 1e-8)
+
+    return mom_acc, mom_persist, vol_change
+
+
+@jit(nopython=True, parallel=True)
+def compute_cross_sectional_features_numba(
+    stock_returns: np.ndarray,
+    market_returns: np.ndarray,
+    sector_returns: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    使用 numba 加速计算跨截面特征
+
+    Args:
+        stock_returns: 个股收益率数组
+        market_returns: 市场收益率数组
+        sector_returns: 行业收益率数组
+
+    Returns:
+        (market_relative_strength, sector_relative_strength) 两个数组
+    """
+    n = len(stock_returns)
+    market_rel = np.full(n, 0.0)
+    sector_rel = np.full(n, 0.0)
+
+    for i in range(n):
+        if not np.isnan(stock_returns[i]):
+            if i < len(market_returns) and not np.isnan(market_returns[i]):
+                market_rel[i] = stock_returns[i] - market_returns[i]
+            
+            if i < len(sector_returns) and not np.isnan(sector_returns[i]):
+                sector_rel[i] = stock_returns[i] - sector_returns[i]
+
+    return market_rel, sector_rel

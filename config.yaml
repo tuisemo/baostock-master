@@ -31,25 +31,27 @@ analyzer:
   atr_length: 12
   atr_multiplier: 3.0
 strategy:
-  vol_up_ratio: 1.2000000000000002
-  rsi_cooled_max: 60
-  pullback_ma_tolerance: 1.015
-  negative_bias_pct: 0.8600000000000001
+  vol_up_ratio: 1.55
+  rsi_cooled_max: 55
+  pullback_ma_tolerance: 1.005
+  negative_bias_pct: 0.86
   rsi_oversold: 30
-  trail_atr_mult: 1.2
-  take_profit_pct: 0.06
+  trail_atr_mult: 2.3
+  take_profit_pct: 0.08
   breakeven_trigger: 0.04
   breakeven_buffer: 1.007
-  w_pullback_ma: 2.0
+  w_pullback_ma: 2.5
   w_macd_cross: 0.5
   w_vol_up: 3.0
-  w_rsi_rebound: 1.5
+  w_rsi_rebound: 2.0
   w_green_candle: 3.0
 optimizer:
   sample_count: 200
-  max_rounds: 5
+  max_rounds: 10
   convergence_threshold: 0.005
   walk_forward_splits: 5
   train_ratio: 0.7
-  objective: sharpe_adj
+  objective: sharpe_pure
+  regularization_strength: 0.1
+  walk_forward_folds: 3
   results_dir: data/optimize_results

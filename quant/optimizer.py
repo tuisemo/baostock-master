@@ -11,313 +11,337 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 import yaml
+import optuna
+import multiprocessing
 
 from quant.backtester import batch_backtest
 from quant.config import CONF
 from quant.logger import logger
-from quant.strategy_params import PARAM_SPACE, StrategyParams
+from quant.strategy_params import CORE_PARAM_SPACE, StrategyParams
 
 warnings.filterwarnings("ignore")
 
 
-def compute_objective(df_results: pd.DataFrame, objective: str) -> float:
-    if df_results is None or df_results.empty:
-        return -999.0
+class EarlyStoppingCallback:
+    """
+    Optuna 早停回调
+    当连续 N 次试验没有显著提升时，提前终止优化
+    """
 
-    if objective == "sharpe_adj":
+    def __init__(self, patience: int = 30, min_delta: float = 0.001, check_interval: int = 10):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.check_interval = check_interval
+        self.best_score = None
+        self.best_trial = None
+        self.no_improve_count = 0
+        self.is_best_improved = False
+
+    def __call__(self, study: optuna.Study, trial: optuna.Trial):
+        """
+        每次试验后调用
+
+        Args:
+            study: Optuna 学习对象
+            trial: 当前试验对象
+        """
+        current_score = study.best_value
+
+        # 首次试验，初始化
+        if self.best_score is None:
+            self.best_score = current_score
+            self.best_trial = trial.number
+            return
+
+        # 检查是否有显著提升
+        is_improved = current_score - self.best_score > self.min_delta
+
+        if is_improved:
+            self.best_score = current_score
+            self.best_trial = trial.number
+            self.no_improve_count = 0
+            self.is_best_improved = True
+            logger.info(
+                f"[EarlyStop] Best score improved: {self.best_score:.6f} "
+                f"(Trial #{trial.number})"
+            )
+        else:
+            self.no_improve_count += 1
+            self.is_best_improved = False
+
+        # 每 check_interval 次检查是否需要早停
+        if trial.number % self.check_interval == 0:
+            logger.info(
+                f"[EarlyStop] Progress: Trial #{trial.number} | Best Score: {self.best_score:.6f} | "
+                f"No Improvement: {self.no_improve_count}/{self.patience}"
+            )
+
+        # 检查是否达到早停条件
+        if self.no_improve_count >= self.patience:
+            logger.info(
+                f"[EarlyStop] Early stopping triggered: No significant improvement for {self.patience} trials. "
+                f"Best score: {self.best_score:.6f} (Trial #{self.best_trial})"
+            )
+            logger.info(f"[EarlyStop] Total trials: {trial.number + 1}")
+            study.stop()
+
+
+def compute_objective(df_results: pd.DataFrame, objective: str, params: StrategyParams | None = None) -> float:
+    """
+    Compute the objective score for a given set of backtest results.
+    Includes regularization to prevent parameters from drifting too far into extreme zones.
+    """
+    if df_results is None or df_results.empty:
+        return 0.0  # Neutral score when AI filters all signals (not catastrophic)
+
+    # Base score selection
+    if objective == "sharpe_pure":
+        # Pure arithmetic mean of Sharpe Ratios across stocks
+        raw_score = float(df_results["sharpe"].fillna(0.0).mean())
+    elif objective == "sharpe_adj":
+        # Legacy weighted sharpe including stability and drawdown
         sharpe = df_results["sharpe"].fillna(0.0)
         mean_sharpe = sharpe.mean()
-        # Stability penalty: penalize high variance in Sharpe across stocks
         std_sharpe = sharpe.std() if len(sharpe) > 1 else 0.0
         stability_discount = max(0.2, 1.0 - (std_sharpe / (abs(mean_sharpe) + 1e-5)) * 0.2)
-        
         mean_dd = df_results["max_drawdown"].mean()
-        total = len(df_results)
         count_profitable = (df_results["return_pct"] > 0).sum()
-        ratio = count_profitable / total if total > 0 else 0.0
-        
-        return float(mean_sharpe * stability_discount * (1 - abs(mean_dd) / 100) * np.sqrt(ratio))
+        ratio = count_profitable / len(df_results) if len(df_results) > 0 else 0.0
+        raw_score = float(mean_sharpe * stability_discount * (1 - abs(mean_dd) / 100) * np.sqrt(ratio))
     elif objective == "return":
-        return float(df_results["return_pct"].mean())
-    elif objective == "win_rate":
-        return float(df_results["win_rate"].mean())
+        raw_score = float(df_results["return_pct"].mean())
     else:
-        return -999.0
+        raw_score = -999.0
+
+    # Add L2 Regularization Penalty (Anti-Overfitting)
+    # Penalize params that are too far from their space center
+    penalty = 0.0
+    if params is not None and getattr(CONF.optimizer, "regularization_strength", 0.1) > 0:
+        reg_strength = CONF.optimizer.regularization_strength
+        p_dict = params.to_dict()
+        for name, (lo, hi, _) in CORE_PARAM_SPACE.items():
+            if name in p_dict:
+                center = (lo + hi) / 2
+                scale = (hi - lo) / 2
+                normalized_val = (p_dict[name] - center) / (scale + 1e-8)
+                penalty += (normalized_val ** 2)
+        raw_score -= reg_strength * penalty
+
+    return raw_score
 
 
-def sample_stock_codes(n: int, seed: int | None = None, stratify_by: str = "market_cap") -> list[str]:
+def walk_forward_cv(
+    codes: list[str], 
+    params: StrategyParams, 
+    n_folds: int = 3, 
+    train_ratio: float = 0.7,
+    objective_name: str = "sharpe_pure"
+) -> float:
     """
-    Sample stock codes with optional stratification for better representation.
-    
-    Args:
-        n: Number of codes to sample
-        seed: Random seed for reproducibility
-        stratify_by: Stratification strategy - 'market_cap', 'volatility', 'sector', or None (random)
+    Perform multi-fold Walk-Forward Validation.
+    Splits the timeline into multiple overlapping or sequential windows.
+    Returns the average Test Score across all folds.
     """
+    # 1. Get dates from a representative stock
     data_dir = CONF.history_data.data_dir
-    all_files = os.listdir(data_dir)
-    codes: list[str] = []
-    for f in all_files:
-        if not f.endswith(".csv"):
-            continue
-        if f == "stock-list.csv":
-            continue
-        name = f[:-4]
-        if name.startswith("sh.6") or name.startswith("sz.00") or name.startswith("sz.30"):
-            codes.append(name)
-
-    if seed is not None:
-        rng = random.Random(seed)
-    else:
-        rng = random.Random()
-
-    n = min(n, len(codes))
-    
-    # If no stratification, use simple random sampling
-    if stratify_by is None or stratify_by == "random":
-        return rng.sample(codes, n)
-    
-    # Stratified sampling based on market characteristics
-    logger.info(f"Using stratified sampling by {stratify_by}...")
-    
-    # Group stocks by characteristics
-    stratified_groups = _stratify_stocks(codes, data_dir, stratify_by)
-    
-    # Sample from each group proportionally
-    selected_codes = []
-    total_groups = len(stratified_groups)
-    
-    for group_name, group_codes in stratified_groups.items():
-        group_size = max(1, int(n / total_groups))
-        sample_size = min(group_size, len(group_codes))
-        if sample_size > 0:
-            selected_codes.extend(rng.sample(group_codes, sample_size))
-    
-    # If we need more codes to reach n, fill randomly
-    if len(selected_codes) < n:
-        remaining = n - len(selected_codes)
-        available = [c for c in codes if c not in selected_codes]
-        if available:
-            selected_codes.extend(rng.sample(available, min(remaining, len(available))))
-    
-    logger.info(f"Stratified sampling completed: {len(selected_codes)} codes from {total_groups} groups")
-    
-    return selected_codes[:n]
-
-def _stratify_stocks(codes: list[str], data_dir: str, stratify_by: str) -> dict[str, list[str]]:
-    """
-    Stratify stocks based on specified criteria.
-    """
-    stratified_groups = {}
-    
-    for code in codes:
-        try:
-            file_path = os.path.join(data_dir, f"{code}.csv")
-            if not os.path.exists(file_path):
-                continue
-                
-            # Read last row for recent characteristics
-            df = pd.read_csv(file_path, nrows=100)  # Read recent data
-            if df.empty:
-                continue
-            
-            last_row = df.iloc[-1]
-            
-            if stratify_by == "market_cap":
-                # Stratify by market cap (if available in data)
-                if 'market_cap' in last_row:
-                    cap = last_row['market_cap']
-                    if cap > 100:  # Large cap
-                        group = "large_cap"
-                    elif cap > 30:  # Mid cap
-                        group = "mid_cap"
-                    else:  # Small cap
-                        group = "small_cap"
-                else:
-                    # Fallback: use price as proxy
-                    close = last_row.get('close', last_row.get('Close', 0))
-                    if close > 50:
-                        group = "large_cap"
-                    elif close > 10:
-                        group = "mid_cap"
-                    else:
-                        group = "small_cap"
-                        
-            elif stratify_by == "volatility":
-                # Stratify by recent volatility
-                if len(df) >= 20:
-                    recent_returns = df['close'].pct_change().tail(20).std() if 'close' in df.columns else 0
-                    if recent_returns > 0.05:
-                        group = "high_volatility"
-                    elif recent_returns > 0.02:
-                        group = "medium_volatility"
-                    else:
-                        group = "low_volatility"
-                else:
-                    group = "medium_volatility"
-                    
-            elif stratify_by == "sector":
-                # Stratify by sector (using stock code prefix as proxy)
-                if code.startswith("sh.6"):
-                    group = "shanghai_main"
-                elif code.startswith("sz.00"):
-                    group = "shenzhen_main"
-                elif code.startswith("sz.30"):
-                    group = "shenzhen_chi_next"
-                else:
-                    group = "other"
-                    
-            else:
-                group = "default"
-            
-            if group not in stratified_groups:
-                stratified_groups[group] = []
-            stratified_groups[group].append(code)
-            
-        except Exception as e:
-            logger.debug(f"Error stratifying {code}: {e}")
-            continue
-    
-    return stratified_groups
-
-
-def get_train_test_split_dates(codes: list[str], train_ratio: float) -> str | None:
-    data_dir = CONF.history_data.data_dir
-    if not codes:
-        return None
-    
     sample_file = os.path.join(data_dir, f"{codes[0]}.csv")
     if not os.path.exists(sample_file):
-        return None
-        
-    df = pd.read_csv(sample_file)
-    if "date" not in df.columns:
-        return None
-        
-    dates = pd.to_datetime(df["date"]).sort_values().dropna()
-    if len(dates) < 50:
-        return None
-        
-    split_idx = int(len(dates) * train_ratio)
-    split_date = dates.iloc[split_idx]
-    if isinstance(split_date, pd.Timestamp):
-        return split_date.strftime('%Y-%m-%d')
-    return str(split_date)
-
-
-def walk_forward_evaluate(
-    params: StrategyParams,
-    codes: list[str],
-    n_splits: int,
-    train_ratio: float,
-    objective: str,
-    train_end_date: str | None = None,
-) -> tuple[float, float]:
-    df_train = batch_backtest(codes, params, end_date=train_end_date)
-    train_score = compute_objective(df_train, objective)
+        return -999.0
     
-    df_test = batch_backtest(codes, params, start_date=train_end_date)
-    test_score = compute_objective(df_test, objective)
+    df_dates = pd.read_csv(sample_file, usecols=["date"])
+    dates = pd.to_datetime(df_dates["date"]).sort_values().unique()
+    if len(dates) < 100:
+        return -999.0
+
+    fold_test_scores = []
+    valid_folds = 0
+    total_len = len(dates)
     
-    return train_score, test_score
+    # Simple rolling window walk-forward
+    # Fold 1: [0% -> 40%] train, [40% -> 60%] test
+    # Fold 2: [0% -> 60%] train, [60% -> 80%] test
+    # Fold 3: [0% -> 80%] train, [80% -> 100%] test
+    for i in range(n_folds):
+        pivot_ratio = 0.4 + (i * 0.2) # 0.4, 0.6, 0.8
+        test_end_ratio = pivot_ratio + 0.2 # 0.6, 0.8, 1.0
+        
+        train_end_date = dates[int(total_len * pivot_ratio)].strftime('%Y-%m-%d')
+        test_end_date = dates[int(total_len * test_end_ratio) - 1].strftime('%Y-%m-%d')
+        
+        # We optimize based on TEST score of historical windows to find robust params
+        df_fold_test = batch_backtest(
+            codes, params, 
+            start_date=train_end_date, 
+            end_date=test_end_date
+        )
+        # Pass params=None to avoid per-fold regularization (applied once in objective_function)
+        score = compute_objective(df_fold_test, objective_name, params=None)
+        
+        if score != 0.0:  # Only count folds with actual trades
+            fold_test_scores.append(score)
+            valid_folds += 1
+        
+    if valid_folds == 0:
+        return 0.0  # No folds had any trades
+    return float(np.mean(fold_test_scores))
 
 
-import optuna
-
-def objective_function(trial: optuna.Trial, codes_train: list[str], train_end_date: str) -> float:
+def objective_function(trial: optuna.Trial, codes: list[str]) -> float:
     opt_cfg = CONF.optimizer
-    objective = opt_cfg.objective
-    n_splits = opt_cfg.walk_forward_splits
-    train_ratio = opt_cfg.train_ratio
-
-    # 1. Suggest parameters from PARAM_SPACE
-    candidate: dict[str, float] = {}
-    for pname, (lo, hi, step) in PARAM_SPACE.items():
+    
+    # 1. Suggest parameters ONLY from CORE_PARAM_SPACE to reduce dimensionality
+    candidate_dict = StrategyParams().to_dict() # Start with defaults
+    for pname, (lo, hi, step) in CORE_PARAM_SPACE.items():
         if isinstance(lo, int) and isinstance(hi, int) and isinstance(step, int):
-            candidate[pname] = trial.suggest_int(pname, lo, hi, step=step)
+            candidate_dict[pname] = trial.suggest_int(pname, lo, hi, step=step)
         else:
-            candidate[pname] = trial.suggest_float(pname, lo, hi, step=step)
+            candidate_dict[pname] = trial.suggest_float(pname, lo, hi, step=step)
 
-    # 2. Constraints and Normalizations
-    w_t = candidate["weight_trend"]
-    w_r = candidate["weight_reversion"]
-    w_v = candidate["weight_volume"]
-    w_sum = w_t + w_r + w_v
-    if w_sum > 0:
-        candidate["weight_trend"] = round(w_t / w_sum, 4)
-        candidate["weight_reversion"] = round(w_r / w_sum, 4)
-        candidate["weight_volume"] = round(w_v / w_sum, 4)
+    # 2. Map to StrategyParams object
+    nb_params = StrategyParams.from_dict(candidate_dict)
 
-    if candidate["macd_fast"] >= candidate["macd_slow"]:
-        candidate["macd_fast"] = candidate["macd_slow"] - int(PARAM_SPACE["macd_fast"][2])
+    # 3. Two-Stage Evaluation (Hyperband Pruning)
+    # Stage 1: Fast evaluation with 1 fold
+    logger.debug(f"[Hyperband] Trial #{trial.number}: Stage 1 - 1 fold quick evaluation")
+    score_stage1 = walk_forward_cv(
+        codes, nb_params,
+        n_folds=1,
+        objective_name=opt_cfg.objective
+    )
 
-    if candidate["ma_short"] >= candidate["ma_long"]:
-        candidate["ma_short"] = candidate["ma_long"] - int(PARAM_SPACE["ma_short"][2])
+    # Report intermediate result to Hyperband pruner
+    trial.report(score_stage1, step=1)
 
-    if candidate["rsi_oversold"] >= candidate["rsi_cooled_max"]:
-        candidate["rsi_oversold"] = candidate["rsi_cooled_max"] - PARAM_SPACE["rsi_oversold"][2]
+    # Check if trial should be pruned
+    if trial.should_prune():
+        logger.debug(f"[Hyperband] Trial #{trial.number}: Pruned at stage 1 (score: {score_stage1:.6f})")
+        raise optuna.TrialPruned()
 
-    # Map directly back and evaluate Train-only for objective search
-    nb_params = StrategyParams.from_dict(candidate)
+    # Stage 2: Full evaluation with 3 folds (only if not pruned)
+    n_folds = getattr(opt_cfg, "walk_forward_folds", 3)
+    logger.debug(f"[Hyperband] Trial #{trial.number}: Stage 2 - {n_folds} folds full evaluation")
+    final_score = walk_forward_cv(
+        codes, nb_params,
+        n_folds=n_folds,
+        objective_name=opt_cfg.objective
+    )
     
-    df_train = batch_backtest(codes_train, nb_params, end_date=train_end_date)
-    train_score = compute_objective(df_train, objective)
-    # Store candidate dict to trial so we can reconstruct OOS easily later
+    # Apply L2 regularization penalty ONCE (not per-fold)
+    if getattr(CONF.optimizer, "regularization_strength", 0.1) > 0:
+        reg_strength = CONF.optimizer.regularization_strength
+        p_dict = nb_params.to_dict()
+        penalty = 0.0
+        for name, (lo, hi, _) in CORE_PARAM_SPACE.items():
+            if name in p_dict:
+                center = (lo + hi) / 2
+                scale = (hi - lo) / 2
+                normalized_val = (p_dict[name] - center) / (scale + 1e-8)
+                penalty += (normalized_val ** 2)
+        final_score -= reg_strength * penalty
+
+    # Store for later retrieval
     trial.set_user_attr("params_dict", nb_params.to_dict())
-    
-    return float(train_score)
+    return float(final_score)
+
+
+def get_all_dates(codes: list[str]) -> pd.DatetimeIndex:
+    data_dir = CONF.history_data.data_dir
+    sample_file = os.path.join(data_dir, f"{codes[0]}.csv")
+    df = pd.read_csv(sample_file)
+    return pd.to_datetime(df["date"]).sort_values().unique()
+
 
 def run_optimization(callback: Callable | None = None) -> dict:
     opt_cfg = CONF.optimizer
-    # max_rounds is repurposed as n_trials for Optuna
-    n_trials = opt_cfg.max_rounds * 10
+    # Increase trials count for 8D space
+    n_trials = opt_cfg.max_rounds * 40 
     sample_count = opt_cfg.sample_count
     
-    logger.info("=== Optuna 贝叶斯策略引擎启动 (Phase 3) ===")
-    logger.info(f"目标函数: {opt_cfg.objective} | 最大试错: {n_trials} | 采样: {sample_count}")
+    logger.info("=== Optuna 抗过拟合策略引擎启动 (Phase 4) ===")
+    logger.info(f"核心维度: {len(CORE_PARAM_SPACE)} | 目标: {opt_cfg.objective} | 试验总数: {n_trials}")
 
-    codes_r0 = sample_stock_codes(sample_count, seed=0)
-    train_end_date = get_train_test_split_dates(codes_r0, opt_cfg.train_ratio)
-    
-    logger.info(f"训练(Train)/测试(OOS) 时间横切点: {train_end_date}")
+    # 1. Sample stocks
+    codes = sample_stock_codes(sample_count, seed=42) # Fixed seed for consistency
 
+    # 1.5 Configure Parallelization
+    cpu_cores = multiprocessing.cpu_count()
+    n_parallel_jobs = min(cpu_cores - 1, 12)  # 保留一个核心，最多12个并行（保守进阶）
+    logger.info(f"🚀 启用并行优化: {n_parallel_jobs} 个并行进程 (CPU核心数: {cpu_cores})")
+
+    # 2. Configuration
     study = optuna.create_study(
         direction="maximize",
-        pruner=optuna.pruners.MedianPruner(n_warmup_steps=5)
+        sampler=optuna.samplers.TPESampler(
+            n_startup_trials=20,
+            multivariate=True,
+            seed=42
+        ),
+        pruner=optuna.pruners.HyperbandPruner(
+            min_resource=1,
+            max_resource=3,
+            reduction_factor=3
+        )
     )
-    
-    # Run bayesian optimization ONLY on Train sets
+
+    # 2.5 Configure Early Stopping
+    early_stop_callback = EarlyStoppingCallback(
+        patience=30,
+        min_delta=0.001,
+        check_interval=10
+    )
+    logger.info(f"[EarlyStop] patience={early_stop_callback.patience}")
+
+    # 3. Run Optimization (with parallelization)
     study.optimize(
-        lambda t: objective_function(t, codes_r0, train_end_date),
+        lambda t: objective_function(t, codes),
         n_trials=n_trials,
-        n_jobs=1,  # Keep single threaded due to Backtesting internal DF overrides
-        catch=(Exception,)
+        n_jobs=n_parallel_jobs,  # 启用并行化
+        catch=(Exception,),
+        callbacks=[early_stop_callback]
     )
     
+    # 4. Extract best trial safely
+    completed_trials = [t for t in study.trials if t.state == optuna.trial.TrialState.COMPLETE]
+    if not completed_trials:
+        logger.error("所有试验均失败或被剪枝，无法获取最优参数。")
+        return {"best_params": StrategyParams().to_dict(), "best_score": 0.0, "test_score": 0.0,
+                "baseline_score": 0.0, "rounds_completed": n_trials, "history": []}
+
     best_trial = study.best_trial
-    best_train_score = best_trial.value
-    best_params_dict = best_trial.user_attrs.get("params_dict", {})
-    best_params = StrategyParams.from_dict(best_params_dict)
+    logger.info(f"=== 优化结束 | 最佳阶段得分: {best_trial.value:.6f} ===")
 
-    logger.info(f"=== Optuna 调参完结 ===")
-    logger.info(f"历史最佳样本内得分 (Train Score): {best_train_score:.6f}")
+
+    # 4. Final Final Evaluation on OOS (Out of Sample)
+    best_params = StrategyParams.from_dict(best_trial.user_attrs["params_dict"])
+    dates = get_all_dates(codes)
+    oos_start_date = dates[int(len(dates) * opt_cfg.train_ratio)].strftime('%Y-%m-%d')
     
-    # Now run strict One-Off Test/OOS Evaluation
-    df_test = batch_backtest(codes_r0, best_params, start_date=train_end_date)
-    best_test_score = compute_objective(df_test, opt_cfg.objective)
-    logger.info(f"真实验本外盲测得分 (Test/OOS Score): {best_test_score:.6f}")
+    logger.info(f"正在进行最终 OOS 盲测 (从 {oos_start_date} 开始)...")
+    df_oos = batch_backtest(codes, best_params, start_date=oos_start_date)
+    oos_score = compute_objective(df_oos, opt_cfg.objective)
+    
+    logger.info(f"最终样本外盲测得分: {oos_score:.6f}")
 
-    results: dict[str, typing.Any] = {
+    results = {
         "best_params": best_params.to_dict(),
-        "best_score": best_train_score,
-        "test_score": best_test_score,
+        "best_score": best_trial.value,
+        "test_score": oos_score,
         "baseline_score": 0.0,
-        "history": [], # Legacy mock to avoid breaking downstream
         "rounds_completed": n_trials,
+        "history": []
     }
 
     save_results(results)
     return results
+
+
+def sample_stock_codes(n: int, seed: int | None = None) -> list[str]:
+    data_dir = CONF.history_data.data_dir
+    all_files = [f for f in os.listdir(data_dir) if f.endswith(".csv") and f != "stock-list.csv"]
+    codes = [f[:-4] for f in all_files if f.startswith("sh.6") or f.startswith("sz.00") or f.startswith("sz.30")]
+    
+    rng = random.Random(seed)
+    return rng.sample(codes, min(n, len(codes)))
 
 
 def save_results(results: dict, output_dir: str | None = None) -> str:
@@ -331,15 +355,8 @@ def save_results(results: dict, output_dir: str | None = None) -> str:
     sp.to_yaml(params_path)
 
     report_path = os.path.join(result_dir, "optimization_report.json")
-    report = {
-        "best_score": results["best_score"],
-        "baseline_score": results["baseline_score"],
-        "rounds_completed": results["rounds_completed"],
-        "history": results["history"],
-        "timestamp": ts,
-    }
     with open(report_path, "w", encoding="utf-8") as f:
-        json.dump(report, f, ensure_ascii=False, indent=2)
+        json.dump(results, f, ensure_ascii=False, indent=2)
 
     logger.info(f"优化结果已保存: {result_dir}")
     return result_dir
@@ -351,45 +368,32 @@ def apply_best_params(results: dict) -> None:
         cfg_data = yaml.safe_load(f) or {}
 
     bp = results["best_params"]
-
-    cfg_data["analyzer"] = {
-        "weights": {
-            "trend": bp["weight_trend"],
-            "reversion": bp["weight_reversion"],
-            "volume": bp["weight_volume"],
-        },
-        "ma_short": bp["ma_short"],
-        "ma_long": bp["ma_long"],
-        "macd_fast": bp["macd_fast"],
-        "macd_slow": bp["macd_slow"],
-        "macd_signal": bp["macd_signal"],
-        "rsi_length": bp["rsi_length"],
-        "rsi_buy_threshold": bp["rsi_buy_threshold"],
-        "rsi_sell_threshold": bp["rsi_sell_threshold"],
-        "bbands_length": bp["bbands_length"],
-        "bbands_std": bp["bbands_std"],
-        "atr_length": bp["atr_length"],
-        "atr_multiplier": bp["atr_multiplier"],
-    }
-
-    cfg_data["strategy"] = {
-        "vol_up_ratio": bp["vol_up_ratio"],
-        "rsi_cooled_max": bp["rsi_cooled_max"],
-        "pullback_ma_tolerance": bp["pullback_ma_tolerance"],
-        "negative_bias_pct": bp["negative_bias_pct"],
-        "rsi_oversold": bp["rsi_oversold"],
-        "trail_atr_mult": bp["trail_atr_mult"],
-        "take_profit_pct": bp["take_profit_pct"],
-        "breakeven_trigger": bp["breakeven_trigger"],
-        "breakeven_buffer": bp["breakeven_buffer"],
-        "w_pullback_ma": bp["w_pullback_ma"],
-        "w_macd_cross": bp["w_macd_cross"],
-        "w_vol_up": bp["w_vol_up"],
-        "w_rsi_rebound": bp["w_rsi_rebound"],
-        "w_green_candle": bp["w_green_candle"],
-    }
+    
+    # Update analyzer weights and strategy params
+    if "analyzer" not in cfg_data: cfg_data["analyzer"] = {}
+    if "strategy" not in cfg_data: cfg_data["strategy"] = {}
+    
+    # Only update what we optimized (from CORE_PARAM_SPACE keys)
+    for key in bp:
+        if key in CORE_PARAM_SPACE:
+            # Route to either analyzer or strategy based on where it lives in config.yaml
+            if key.startswith("w_") or key in ["vol_up_ratio", "rsi_cooled_max", "pullback_ma_tolerance", "trail_atr_mult", "take_profit_pct", "rsi_oversold"]:
+                # Most go to strategy in this project's config structure
+                cfg_data["strategy"][key] = bp[key]
 
     with open(config_path, "w", encoding="utf-8") as f:
         yaml.dump(cfg_data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 
     logger.info(f"最优参数已写回 {config_path}")
+
+
+if __name__ == "__main__":
+    """Main entry point for running optimization."""
+    try:
+        run_optimization()
+    except KeyboardInterrupt:
+        logger.info("\n[STOP] Optimization interrupted by user.")
+    except Exception as e:
+        logger.error(f"[ERROR] Optimization failed: {e}")
+        raise
+

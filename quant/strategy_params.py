@@ -138,6 +138,55 @@ class StrategyParams:
         return cls(**kwargs)
 
 
+# ── Core parameters: only these are searched during optimization ──
+# Selected because they directly control trade entry/exit decisions.
+# Indicator window lengths (MA, MACD, RSI, BB, ATR) keep academic defaults.
+CORE_PARAM_SPACE: dict[str, tuple[float, float, float]] = {
+    # (min, max, step)
+    # --- Entry Conditions ---
+    "vol_up_ratio": (1.1, 1.8, 0.05),
+    "rsi_cooled_max": (45, 65, 5),
+    "pullback_ma_tolerance": (1.00, 1.05, 0.005),
+    "rsi_oversold": (25, 45, 5),
+    # --- Exit Conditions ---
+    "trail_atr_mult": (1.0, 2.5, 0.1),
+    "take_profit_pct": (0.03, 0.12, 0.01),
+    # --- Signal Scoring Weights ---
+    "w_pullback_ma": (0.5, 5.0, 0.5),
+    "w_rsi_rebound": (0.5, 5.0, 0.5),
+}
+
+
+# ── Enhanced Core parameters (15 dimensions for enhanced optimization) ──
+# 扩展的核心参数空间，用于增强版优化器
+ENHANCED_CORE_PARAM_SPACE: dict[str, tuple[float, float, float]] = {
+    # === Entry Conditions (6 dims) ===
+    "vol_up_ratio": (1.1, 1.8, 0.05),
+    "rsi_cooled_max": (45, 65, 5),
+    "pullback_ma_tolerance": (1.00, 1.05, 0.005),
+    "negative_bias_pct": (0.80, 0.98, 0.01),
+    "rsi_oversold": (25, 45, 5),
+    "bbands_lower_bias": (0.90, 1.10, 0.01),
+    
+    # === Exit Conditions (4 dims) ===
+    "trail_atr_mult": (1.0, 2.5, 0.1),
+    "take_profit_pct": (0.03, 0.12, 0.01),
+    "breakeven_trigger": (0.02, 0.06, 0.005),
+    "max_hold_days": (5, 25, 2),
+    
+    # === Signal Scoring Weights (3 dims) ===
+    "w_pullback_ma": (0.5, 5.0, 0.5),
+    "w_rsi_rebound": (0.5, 5.0, 0.5),
+    "w_vol_up": (0.5, 3.0, 0.5),
+    
+    # === AI Gate (1 dim) ===
+    "ai_prob_threshold": (0.1, 0.5, 0.05),
+    
+    # === Position Sizing (1 dim) ===
+    "position_size": (0.05, 0.20, 0.01),
+}
+
+# ── Full parameter space (legacy, kept for reference / advanced mode) ──
 PARAM_SPACE: dict[str, tuple[float, float, float]] = {
     # (min, max, step)
     "ma_short": (3, 10, 1),

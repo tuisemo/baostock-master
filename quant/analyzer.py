@@ -13,10 +13,33 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from quant.config import CONF
 from quant.logger import logger
 
+# Lazy import to avoid circular dependency
+def get_scan_func():
+    from quant.backtester import scan_today_signal
+    return scan_today_signal
+
+# 导入增强版市场状态分类和自适应参数调整
 try:
-    from quant.strategy_params import StrategyParams
+    from quant.market_classifier import (
+        classify_market_state_enhanced,
+        analyze_market_regime,
+        get_market_state_transitions
+    )
+    from quant.adaptive_strategy import (
+        get_dynamic_params_enhanced,
+        smooth_param_transition,
+        get_param_transition_matrix
+    )
+    
+    # 将增强版函数作为默认函数（向后兼容）
+    classify_market_state = classify_market_state_enhanced
+    get_dynamic_params = get_dynamic_params_enhanced
+    
+    ENHANCED_MARKET_CLASSIFIER = True
 except ImportError:
-    StrategyParams = None
+    # 如果导入失败，使用旧版函数
+    ENHANCED_MARKET_CLASSIFIER = False
+    logger.warning("Enhanced market classifier not available, using fallback")
 
 
 def _resolve(params: StrategyParams | None, name: str, conf_path: str | None = None):
@@ -130,131 +153,16 @@ def _add_momentum_leads(df: pd.DataFrame) -> None:
     df["momentum_divergence"] = df["momentum_3"] - df["momentum_10"]
 
 
-def score_stock(df: pd.DataFrame, params: StrategyParams | None = None) -> dict:
-    """Score a stock on trend / reversion / volume factors."""
-    ma_short = _resolve(params, "ma_short")
-    ma_long = _resolve(params, "ma_long")
-    macd_fast = _resolve(params, "macd_fast")
-    macd_slow = _resolve(params, "macd_slow")
-    macd_signal = _resolve(params, "macd_signal")
-    rsi_length = _resolve(params, "rsi_length")
-    rsi_buy_threshold = _resolve(params, "rsi_buy_threshold")
-    bbands_length = _resolve(params, "bbands_length")
-    bbands_std = _resolve(params, "bbands_std")
-    atr_length = _resolve(params, "atr_length")
-    atr_multiplier = _resolve(params, "atr_multiplier")
-
-    if params is not None:
-        w_trend = params.weight_trend
-        w_reversion = params.weight_reversion
-        w_volume = params.weight_volume
-    else:
-        w_trend = CONF.analyzer.weights.trend
-        w_reversion = CONF.analyzer.weights.reversion
-        w_volume = CONF.analyzer.weights.volume
-
-    if df.empty or len(df) < ma_long:
-        return {"total_score": 0.0}
-
-    latest = df.iloc[-1]
-    prev = df.iloc[-2] if len(df) > 1 else latest
-
-    # 20-day momentum for ranking if available
-    mom_20 = 0.0
-    try:
-        if len(df) >= 20:
-            mom_20 = (latest["close"] - df.iloc[-20]["close"]) / df.iloc[-20]["close"]
-    except (IndexError, KeyError, ZeroDivisionError):
-        mom_20 = 0.0
-
-    sma_s = f"SMA_{ma_short}"
-    sma_l = f"SMA_{ma_long}"
-    macd_h = f"MACDh_{macd_fast}_{macd_slow}_{macd_signal}"
-    rsi_col = f"RSI_{rsi_length}"
-    bb_lower = f"BBL_{bbands_length}_{bbands_std}"
-    obv_col = "OBV"
-    atr_col = f"ATRr_{atr_length}"
-
-    req_cols = [sma_s, sma_l, macd_h, rsi_col, bb_lower, obv_col, atr_col, "low", "close", "volume"]
-    if not all(col in df.columns for col in req_cols):
-        return {"total_score": 0.0}
-
-    try:
-        trend_score = 0.0
-        if pd.notna(latest[sma_s]) and pd.notna(latest[sma_l]):
-            if latest[sma_s] > latest[sma_l]:
-                trend_score += 0.5
-        if pd.notna(latest[macd_h]) and pd.notna(prev[macd_h]):
-            if latest[macd_h] > 0 and prev[macd_h] <= 0:
-                trend_score += 0.5
-            elif latest[macd_h] > 0:
-                trend_score += 0.3
-
-        reversion_score = 0.0
-        if pd.notna(latest[rsi_col]):
-            if latest[rsi_col] <= rsi_buy_threshold:
-                reversion_score += 0.5
-        if (pd.notna(latest["low"]) and pd.notna(latest[bb_lower]) and
-            pd.notna(prev["low"]) and pd.notna(prev[bb_lower])):
-            if latest["low"] <= latest[bb_lower] or prev["low"] <= prev[bb_lower]:
-                if pd.notna(latest["close"]) and pd.notna(latest[bb_lower]):
-                    if latest["close"] > latest[bb_lower]:
-                        reversion_score += 0.5
-
-        volume_score = 0.0
-        if pd.notna(latest[obv_col]) and pd.notna(prev[obv_col]):
-            if latest[obv_col] > prev[obv_col]:
-                volume_score += 0.5
-        if (pd.notna(latest["close"]) and pd.notna(prev["close"]) and
-            pd.notna(latest["volume"]) and pd.notna(prev["volume"])):
-            if latest["close"] > prev["close"] and latest["volume"] > prev["volume"] * 1.5:
-                volume_score += 0.5
-
-        total_score = (
-            trend_score * w_trend
-            + reversion_score * w_reversion
-            + volume_score * w_volume
-        )
-
-        if pd.notna(latest["close"]) and pd.notna(latest[atr_col]):
-            stop_loss = latest["close"] - (atr_multiplier * latest[atr_col])
-        else:
-            stop_loss = latest["close"] if pd.notna(latest["close"]) else 0.0
-
-        return {
-            "total_score": round(total_score, 3),
-            "trend": trend_score,
-            "reversion": reversion_score,
-            "volume": volume_score,
-            "close": latest["close"],
-            "stop_loss": round(stop_loss, 2),
-            "rsi": round(latest[rsi_col], 2),
-            "mom_20": round(mom_20, 4),
-            "date": (
-                latest["date"].strftime("%Y-%m-%d")
-                if pd.api.types.is_datetime64_any_dtype(latest["date"])
-                else latest["date"]
-            ),
-        }
-    except Exception:
-        return {"total_score": 0.0}
 
 
 def _analyze_single_file(file_path: str) -> dict | None:
     """Helper function to process a single stock file for parallel execution."""
     try:
-        df = pd.read_csv(file_path)
-        if df.empty:
-            return None
-
         code = os.path.basename(file_path).replace(".csv", "")
-        df = calculate_indicators(df)
-        score_data = score_stock(df)
-
-        if score_data.get("total_score", 0) >= 0.15:
-            res = {"code": code}
-            res.update(score_data)
-            return res
+        # Unified signal entry point (shared with backtester)
+        scan_func = get_scan_func()
+        res = scan_func(code)
+        return res
     except Exception as e:
         logger.debug(f"处理文件异常 {file_path}: {e}")
     return None

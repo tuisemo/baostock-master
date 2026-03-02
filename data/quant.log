@@ -271,3 +271,768 @@ KeyError: 'total_score'
 2026-02-27 22:07:18 [INFO] quant: 开始对 1069 支股票执行多因子综合分析...
 2026-02-27 22:07:57 [INFO] quant: 分析完成。共有 937 支股票满足评分阈值。
 2026-02-27 22:07:57 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260227.csv
+2026-02-27 22:32:31 [INFO] quant: 开始对 1069 支股票执行多因子综合分析...
+2026-02-27 22:33:11 [INFO] quant: 分析完成。共有 937 支股票满足评分阈值。
+2026-02-27 22:33:11 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260227.csv
+2026-02-27 22:33:17 [INFO] quant: Scanning progress: 0/937 (sz.300634)
+2026-02-27 22:33:47 [INFO] quant: Scanning progress: 100/937 (sz.002139)
+2026-02-27 22:34:17 [INFO] quant: Scanning progress: 200/937 (sz.300790)
+2026-02-27 22:34:53 [INFO] quant: Scanning progress: 300/937 (sz.002831)
+2026-02-27 22:35:02 [INFO] quant: Scanning progress: 400/937 (sh.603682)
+2026-02-27 22:35:12 [INFO] quant: Scanning progress: 500/937 (sz.001286)
+2026-02-27 22:35:22 [INFO] quant: Scanning progress: 600/937 (sz.002237)
+2026-02-27 22:35:32 [INFO] quant: Scanning progress: 700/937 (sz.000683)
+2026-02-27 22:35:42 [INFO] quant: Scanning progress: 800/937 (sh.600183)
+2026-02-27 22:35:55 [INFO] quant: Scanning progress: 900/937 (sh.600362)
+2026-02-27 22:41:13 [INFO] quant: Using stratified sampling by market_cap...
+2026-02-27 22:41:17 [INFO] quant: Stratified sampling completed: 200 codes from 3 groups
+2026-02-27 22:41:17 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-27 22:41:17 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-27 22:41:17 [INFO] quant: Using stratified sampling by market_cap...
+2026-02-27 22:41:19 [INFO] quant: Stratified sampling completed: 200 codes from 3 groups
+2026-02-27 22:41:19 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-05-06
+2026-02-27 23:22:31 [INFO] quant: 已清空所有缓存: C:\Users\FADEDI~1\AppData\Local\Temp\tmpyjb4s4yq
+2026-02-27 23:22:32 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-27 23:22:32 [INFO] quant: Target distribution: Positive 498, Negative 502. Ratio: 1:1.01
+2026-02-27 23:22:32 [INFO] quant: Chronological split: Train 795 rows, Test 195 rows (purged 10 rows)
+2026-02-27 23:22:32 [INFO] quant: Starting LightGBM training...
+2026-02-27 23:22:32 [INFO] quant: Model AUC on Test Set: 0.5860
+2026-02-27 23:22:32 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.55      0.48      0.51        99
+           1       0.52      0.58      0.55        96
+
+    accuracy                           0.53       195
+   macro avg       0.53      0.53      0.53       195
+weighted avg       0.53      0.53      0.53       195
+
+2026-02-27 23:22:32 [INFO] quant: Top 10 Important Features:
+feat_0     129.460099
+feat_13     99.187140
+feat_9      97.379779
+feat_14     89.100431
+feat_12     75.705939
+feat_1      49.709191
+feat_3      49.059180
+feat_18     46.330261
+feat_17     45.278610
+feat_11     38.841120
+dtype: float64
+2026-02-27 23:22:32 [INFO] quant: Model saved to C:\Users\FADEDI~1\AppData\Local\Temp\tmp686xb5qr\test_model.txt
+2026-02-27 23:29:22 [INFO] quant: 已清空所有缓存: C:\Users\FADEDI~1\AppData\Local\Temp\tmp7mrmfrz0
+2026-02-27 23:29:22 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-27 23:29:22 [INFO] quant: Target distribution: Positive 498, Negative 502. Ratio: 1:1.01
+2026-02-27 23:29:22 [INFO] quant: Chronological split: Train 795 rows, Test 195 rows (purged 10 rows)
+2026-02-27 23:29:22 [INFO] quant: Starting LightGBM training...
+2026-02-27 23:29:22 [INFO] quant: Model AUC on Test Set: 0.5860
+2026-02-27 23:29:22 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.55      0.48      0.51        99
+           1       0.52      0.58      0.55        96
+
+    accuracy                           0.53       195
+   macro avg       0.53      0.53      0.53       195
+weighted avg       0.53      0.53      0.53       195
+
+2026-02-27 23:29:22 [INFO] quant: Top 10 Important Features:
+feat_0     129.460099
+feat_13     99.187140
+feat_9      97.379779
+feat_14     89.100431
+feat_12     75.705939
+feat_1      49.709191
+feat_3      49.059180
+feat_18     46.330261
+feat_17     45.278610
+feat_11     38.841120
+dtype: float64
+2026-02-27 23:29:22 [INFO] quant: Model saved to C:\Users\FADEDI~1\AppData\Local\Temp\tmp31oth11s\test_model.txt
+2026-02-27 23:33:28 [INFO] quant: 已清空所有缓存: C:\Users\FADEDI~1\AppData\Local\Temp\tmp_46pmzvu
+2026-02-27 23:33:29 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-27 23:33:29 [INFO] quant: Target distribution: Positive 498, Negative 502. Ratio: 1:1.01
+2026-02-27 23:33:29 [INFO] quant: Chronological split: Train 795 rows, Test 195 rows (purged 10 rows)
+2026-02-27 23:33:29 [INFO] quant: Starting LightGBM training...
+2026-02-27 23:33:29 [INFO] quant: Model AUC on Test Set: 0.5860
+2026-02-27 23:33:29 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.55      0.48      0.51        99
+           1       0.52      0.58      0.55        96
+
+    accuracy                           0.53       195
+   macro avg       0.53      0.53      0.53       195
+weighted avg       0.53      0.53      0.53       195
+
+2026-02-27 23:33:29 [INFO] quant: Top 10 Important Features:
+feat_0     129.460099
+feat_13     99.187140
+feat_9      97.379779
+feat_14     89.100431
+feat_12     75.705939
+feat_1      49.709191
+feat_3      49.059180
+feat_18     46.330261
+feat_17     45.278610
+feat_11     38.841120
+dtype: float64
+2026-02-27 23:33:29 [INFO] quant: Model saved to C:\Users\FADEDI~1\AppData\Local\Temp\tmpao6jpts4\test_model.txt
+2026-02-27 23:36:01 [INFO] quant: ============================================================
+2026-02-27 23:36:01 [INFO] quant: 开始测试并行化数据集构建
+2026-02-27 23:36:01 [INFO] quant: ============================================================
+2026-02-27 23:36:01 [INFO] quant: 
+【串行版本】
+2026-02-27 23:36:01 [INFO] quant: Building dataset from historical data...
+2026-02-27 23:36:01 [ERROR] quant: Failed to build dataset. Valid data empty.
+2026-02-27 23:36:01 [INFO] quant: 串行版本完成: 0.00s, 0 行
+2026-02-27 23:36:01 [INFO] quant: 
+【并行版本】
+2026-02-27 23:36:01 [INFO] quant: Building dataset from historical data (parallel)...
+2026-02-27 23:36:01 [INFO] quant: Using 2 workers to process 3 files
+2026-02-27 23:36:02 [ERROR] quant: Failed to build dataset. Valid data empty.
+2026-02-27 23:36:02 [INFO] quant: 并行版本完成: 1.07s, 0 行
+2026-02-27 23:36:02 [INFO] quant: 
+【对比结果】
+2026-02-27 23:36:02 [INFO] quant: 串行: 0 行
+2026-02-27 23:36:02 [INFO] quant: 并行: 0 行
+2026-02-27 23:36:02 [INFO] quant: ✅ 行数一致
+2026-02-27 23:36:02 [INFO] quant: 加速比: 0.00x
+2026-02-27 23:36:02 [INFO] quant: 
+============================================================
+2026-02-27 23:36:02 [INFO] quant: 测试完成
+2026-02-27 23:36:02 [INFO] quant: ============================================================
+2026-02-27 23:36:35 [INFO] quant: ============================================================
+2026-02-27 23:36:35 [INFO] quant: 开始测试并行化数据集构建
+2026-02-27 23:36:35 [INFO] quant: ============================================================
+2026-02-27 23:36:55 [INFO] quant: ============================================================
+2026-02-27 23:36:55 [INFO] quant: 开始测试并行化数据集构建
+2026-02-27 23:36:55 [INFO] quant: ============================================================
+2026-02-27 23:39:34 [INFO] quant: ============================================================
+2026-02-27 23:39:34 [INFO] quant: 开始测试并行化数据集构建
+2026-02-27 23:39:34 [INFO] quant: ============================================================
+2026-02-27 23:39:55 [INFO] quant: ============================================================
+2026-02-27 23:39:55 [INFO] quant: 开始测试并行化数据集构建
+2026-02-27 23:39:55 [INFO] quant: ============================================================
+2026-02-27 23:40:24 [INFO] quant: ============================================================
+2026-02-27 23:40:24 [INFO] quant: 开始测试并行化数据集构建
+2026-02-27 23:40:24 [INFO] quant: ============================================================
+2026-02-27 23:40:24 [INFO] quant: 
+【串行版本】
+2026-02-27 23:40:24 [INFO] quant: Building dataset from historical data...
+2026-02-27 23:40:25 [INFO] quant: Dataset built successfully. Total rows: 510. Features: 41
+2026-02-27 23:40:25 [INFO] quant: 串行版本完成: 1.15s, 510 行
+2026-02-27 23:40:25 [INFO] quant: 
+【并行版本】
+2026-02-27 23:40:25 [INFO] quant: Building dataset from historical data (parallel)...
+2026-02-27 23:40:25 [INFO] quant: Using 2 workers to process 3 files
+2026-02-27 23:40:27 [ERROR] quant: Failed to build dataset. Valid data empty.
+2026-02-27 23:40:27 [INFO] quant: 并行版本完成: 2.03s, 0 行
+2026-02-27 23:40:27 [INFO] quant: 
+【对比结果】
+2026-02-27 23:40:27 [INFO] quant: 串行: 510 行
+2026-02-27 23:40:27 [INFO] quant: 并行: 0 行
+2026-02-27 23:40:27 [ERROR] quant: ❌ 行数不一致: 串行 510 vs 并行 0
+2026-02-27 23:40:27 [INFO] quant: 加速比: 0.57x
+2026-02-27 23:40:27 [INFO] quant: 
+============================================================
+2026-02-27 23:40:27 [INFO] quant: 测试完成
+2026-02-27 23:40:27 [INFO] quant: ============================================================
+2026-02-27 23:41:10 [INFO] quant: ============================================================
+2026-02-27 23:41:10 [INFO] quant: 开始测试并行化数据集构建
+2026-02-27 23:41:10 [INFO] quant: ============================================================
+2026-02-27 23:41:10 [INFO] quant: 
+【串行版本】
+2026-02-27 23:41:10 [INFO] quant: Building dataset from historical data...
+2026-02-27 23:41:11 [INFO] quant: Dataset built successfully. Total rows: 510. Features: 41
+2026-02-27 23:41:11 [INFO] quant: 串行版本完成: 1.09s, 510 行
+2026-02-27 23:41:11 [INFO] quant: 
+【并行版本】
+2026-02-27 23:41:11 [INFO] quant: Building dataset from historical data (parallel)...
+2026-02-27 23:41:11 [INFO] quant: Using 2 workers to process 3 files
+2026-02-27 23:41:13 [ERROR] quant: Error processing C:\Users\FADEDI~1\AppData\Local\Temp\tmphfytbv4y\test0.csv: name 'create_multi_class_targets' is not defined
+2026-02-27 23:41:13 [ERROR] quant: Traceback (most recent call last):
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\quant\trainer.py", line 205, in _process_single_file
+    df = create_multi_class_targets(df, n_forward_days=n_forward_days,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'create_multi_class_targets' is not defined
+
+2026-02-27 23:41:13 [ERROR] quant: Error processing C:\Users\FADEDI~1\AppData\Local\Temp\tmphfytbv4y\test2.csv: name 'create_multi_class_targets' is not defined
+2026-02-27 23:41:13 [ERROR] quant: Traceback (most recent call last):
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\quant\trainer.py", line 205, in _process_single_file
+    df = create_multi_class_targets(df, n_forward_days=n_forward_days,
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'create_multi_class_targets' is not defined
+
+2026-02-27 23:41:13 [ERROR] quant: Failed to build dataset. Valid data empty.
+2026-02-27 23:41:13 [INFO] quant: 并行版本完成: 1.87s, 0 行
+2026-02-27 23:41:13 [INFO] quant: 
+【对比结果】
+2026-02-27 23:41:13 [INFO] quant: 串行: 510 行
+2026-02-27 23:41:13 [INFO] quant: 并行: 0 行
+2026-02-27 23:41:13 [ERROR] quant: ❌ 行数不一致: 串行 510 vs 并行 0
+2026-02-27 23:41:13 [INFO] quant: 加速比: 0.58x
+2026-02-27 23:41:13 [INFO] quant: 
+============================================================
+2026-02-27 23:41:13 [INFO] quant: 测试完成
+2026-02-27 23:41:13 [INFO] quant: ============================================================
+2026-02-27 23:41:51 [INFO] quant: ============================================================
+2026-02-27 23:41:51 [INFO] quant: 开始测试并行化数据集构建
+2026-02-27 23:41:51 [INFO] quant: ============================================================
+2026-02-27 23:41:51 [INFO] quant: 
+【串行版本】
+2026-02-27 23:41:51 [INFO] quant: Building dataset from historical data...
+2026-02-27 23:41:53 [INFO] quant: Dataset built successfully. Total rows: 510. Features: 41
+2026-02-27 23:41:53 [INFO] quant: 串行版本完成: 1.09s, 510 行
+2026-02-27 23:41:53 [INFO] quant: 
+【并行版本】
+2026-02-27 23:41:53 [INFO] quant: Building dataset from historical data (parallel)...
+2026-02-27 23:41:53 [INFO] quant: Using 2 workers to process 3 files
+2026-02-27 23:41:55 [INFO] quant: Dataset built successfully (parallel). Total rows: 510. Features: 41
+2026-02-27 23:41:55 [INFO] quant: 并行版本完成: 2.15s, 510 行
+2026-02-27 23:41:55 [INFO] quant: 
+【对比结果】
+2026-02-27 23:41:55 [INFO] quant: 串行: 510 行
+2026-02-27 23:41:55 [INFO] quant: 并行: 510 行
+2026-02-27 23:41:55 [INFO] quant: ✅ 行数一致
+2026-02-27 23:41:55 [INFO] quant: 加速比: 0.50x
+2026-02-27 23:41:55 [INFO] quant: 
+============================================================
+2026-02-27 23:41:55 [INFO] quant: 测试完成
+2026-02-27 23:41:55 [INFO] quant: ============================================================
+2026-02-27 23:45:54 [INFO] quant: Using stratified sampling by market_cap...
+2026-02-27 23:45:58 [INFO] quant: Stratified sampling completed: 200 codes from 3 groups
+2026-02-27 23:45:58 [INFO] quant: === Optuna 贝叶斯策略引擎启动 (Phase 3) ===
+2026-02-27 23:45:58 [INFO] quant: 目标函数: sharpe_adj | 最大试错: 50 | 采样: 200
+2026-02-27 23:45:58 [INFO] quant: Using stratified sampling by market_cap...
+2026-02-27 23:45:59 [INFO] quant: Stratified sampling completed: 200 codes from 3 groups
+2026-02-27 23:45:59 [INFO] quant: 训练(Train)/测试(OOS) 时间横切点: 2025-05-06
+2026-02-28 00:23:56 [INFO] quant: === Optuna 调参完结 ===
+2026-02-28 00:23:56 [INFO] quant: 历史最佳样本内得分 (Train Score): 0.063258
+2026-02-28 00:24:43 [INFO] quant: 真实验本外盲测得分 (Test/OOS Score): -0.020022
+2026-02-28 00:24:43 [INFO] quant: 优化结果已保存: data/optimize_results\20260228_002443
+2026-02-28 00:24:43 [INFO] quant: 优化结果已保存: data/optimize_results\20260228_002443
+2026-02-28 10:52:08 [INFO] quant: 开始对 1069 支股票执行多因子综合分析...
+2026-02-28 10:52:42 [INFO] quant: 分析完成。共有 937 支股票满足评分阈值。
+2026-02-28 10:52:42 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260228.csv
+2026-02-28 11:49:46 [INFO] quant: === Optuna 抗过拟合策略引擎启动 (Phase 4) ===
+2026-02-28 11:49:46 [INFO] quant: 核心维度: 8 | 目标: sharpe_pure | 试验总数: 400
+2026-02-28 11:51:28 [INFO] quant: Process interrupted by user.
+2026-02-28 11:51:32 [INFO] quant: === Optuna 抗过拟合策略引擎启动 (Phase 4) ===
+2026-02-28 11:51:32 [INFO] quant: 核心维度: 8 | 目标: sharpe_pure | 试验总数: 400
+2026-02-28 12:29:01 [INFO] quant: Process interrupted by user.
+2026-02-28 12:32:15 [INFO] quant: === Optuna 抗过拟合策略引擎启动 (Phase 4) ===
+2026-02-28 12:32:15 [INFO] quant: 核心维度: 8 | 目标: sharpe_pure | 试验总数: 400
+2026-02-28 12:32:15 [INFO] quant: 🚀 启用并行优化: 8 个并行进程 (CPU核心数: 20)
+2026-02-28 15:33:00 [INFO] quant: 开始对 1069 支股票执行多因子综合分析...
+2026-02-28 15:33:21 [INFO] quant: 分析完成。共有 131 支股票满足评分阈值。
+2026-02-28 15:33:21 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260228.csv
+2026-02-28 15:36:04 [INFO] quant: 批量回测: 10 只股票 (seed=123)
+2026-02-28 15:38:59 [INFO] quant: 批量回测: 200 只股票 (seed=42)
+2026-02-28 15:39:54 [INFO] quant: 批量回测: 200 只股票 (seed=99)
+2026-02-28 15:55:38 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-02-28 15:55:38 [INFO] quant: Building dataset from historical data...
+2026-02-28 15:57:13 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-02-28 15:57:13 [INFO] quant: Building dataset from historical data...
+2026-02-28 16:00:01 [INFO] quant: Dataset built successfully. Total rows: 666024. Features: 41
+2026-02-28 16:00:02 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-02-28 16:00:02 [INFO] quant: Target distribution: Positive 136915, Negative 529109. Ratio: 1:3.86
+2026-02-28 16:00:02 [INFO] quant: Chronological split: Train 532814 rows, Test 133200 rows (purged 10 rows)
+2026-02-28 16:00:02 [INFO] quant: Starting LightGBM training...
+2026-02-28 16:00:08 [INFO] quant: Model AUC on Test Set: 0.5807
+2026-02-28 16:00:08 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.75      1.00      0.86    100276
+           1       0.00      0.00      0.00     32924
+
+    accuracy                           0.75    133200
+   macro avg       0.38      0.50      0.43    133200
+weighted avg       0.57      0.75      0.65    133200
+
+2026-02-28 16:00:08 [INFO] quant: Top 10 Important Features:
+feat_market_pct_1      215588.294750
+feat_market_pct_20     152638.625454
+feat_market_pct_10     134475.158234
+feat_market_bias_20    106880.666748
+feat_market_pct_5       97014.126610
+feat_rsi_val            66401.827152
+feat_pct_chg_1          18865.004364
+feat_vol_ratio_5        13991.589592
+feat_bb_width            9975.564445
+feat_pct_chg_20          9619.074486
+dtype: float64
+2026-02-28 16:00:08 [INFO] quant: Model saved to models/alpha_lgbm.txt
+2026-02-28 16:01:34 [INFO] quant: 批量回测: 200 只股票 (seed=42)
+2026-02-28 16:01:35 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-02-28 16:03:20 [INFO] quant: 批量回测: 200 只股票 (seed=99)
+2026-02-28 16:03:21 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-02-28 16:16:19 [INFO] quant: === Optuna 抗过拟合策略引擎启动 (Phase 4) ===
+2026-02-28 16:16:19 [INFO] quant: 核心维度: 8 | 目标: sharpe_pure | 试验总数: 400
+2026-02-28 16:16:19 [INFO] quant: 🚀 启用并行优化: 8 个并行进程 (CPU核心数: 20)
+2026-02-28 16:16:19 [INFO] quant: [Hyperband] 剪枝器已启用: HyperbandPruner
+2026-02-28 16:16:19 [INFO] quant:   - min_resource: 1 (1折快速评估)
+2026-02-28 16:16:19 [INFO] quant:   - max_resource: 3 (3折完整评估)
+2026-02-28 16:16:19 [INFO] quant:   - reduction_factor: 3 (每轮保留 1/3)
+2026-02-28 16:16:19 [INFO] quant: [EarlyStop] 早停已启用: patience=30, min_delta=0.001, check_interval=10
+2026-02-28 16:16:26 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-02-28 16:42:08 [INFO] quant: [EarlyStop] Best score improved: -332.848158 (Trial #2)
+2026-02-28 16:42:12 [INFO] quant: [EarlyStop] Best score improved: 0.069856 (Trial #3)
+2026-02-28 16:42:12 [ERROR] quant: A fatal error occurred.
+Traceback (most recent call last):
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 284, in <module>
+    main()
+    ~~~~^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 268, in main
+    cmd_optimize(args)
+    ~~~~~~~~~~~~^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 46, in cmd_optimize
+    result = run_optimization()
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\quant\optimizer.py", line 281, in run_optimization
+    study.optimize(
+    ~~~~~~~~~~~~~~^
+        lambda t: objective_function(t, codes),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        callbacks=[early_stop_callback]  # 添加早停回调
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\study.py", line 490, in optimize
+    _optimize(
+    ~~~~~~~~~^
+        study=self,
+        ^^^^^^^^^^^
+    ...<7 lines>...
+        show_progress_bar=show_progress_bar,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\_optimize.py", line 105, in _optimize
+    f.result()
+    ~~~~~~~~^^
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\concurrent\futures\thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\_optimize.py", line 177, in _optimize_sequential
+    callback(study, copy.deepcopy(frozen_trial))
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\quant\optimizer.py", line 48, in __call__
+    current_score = study.best_value
+                    ^^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\study.py", line 134, in best_value
+    best_value = self.best_trial.value
+                 ^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\study.py", line 156, in best_trial
+    return self._get_best_trial(deepcopy=True)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\study.py", line 308, in _get_best_trial
+    best_trial = self._storage.get_best_trial(self._study_id)
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\storages\_in_memory.py", line 251, in get_best_trial
+    raise ValueError("No trials are completed yet.")
+ValueError: No trials are completed yet.
+2026-02-28 16:49:05 [INFO] quant: === Optuna 抗过拟合策略引擎启动 (Phase 4) ===
+2026-02-28 16:49:05 [INFO] quant: 核心维度: 8 | 目标: sharpe_pure | 试验总数: 400
+2026-02-28 16:49:05 [INFO] quant: 🚀 启用并行优化: 8 个并行进程 (CPU核心数: 20)
+2026-02-28 16:49:05 [INFO] quant: [Hyperband] 剪枝器已启用: HyperbandPruner
+2026-02-28 16:49:05 [INFO] quant:   - min_resource: 1 (1折快速评估)
+2026-02-28 16:49:05 [INFO] quant:   - max_resource: 3 (3折完整评估)
+2026-02-28 16:49:05 [INFO] quant:   - reduction_factor: 3 (每轮保留 1/3)
+2026-02-28 16:49:05 [INFO] quant: [EarlyStop] 早停已启用: patience=30, min_delta=0.001, check_interval=10
+2026-02-28 16:49:13 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-02-28 17:06:37 [INFO] quant: [EarlyStop] Progress: Trial #0 | Best Score: 0.300615 | No Improvement: 2/30
+2026-02-28 17:06:37 [ERROR] quant: A fatal error occurred.
+Traceback (most recent call last):
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 284, in <module>
+    main()
+    ~~~~^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 268, in main
+    cmd_optimize(args)
+    ~~~~~~~~~~~~^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 46, in cmd_optimize
+    result = run_optimization()
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\quant\optimizer.py", line 301, in run_optimization
+    study.optimize(
+    ~~~~~~~~~~~~~~^
+        lambda t: objective_function(t, codes),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        callbacks=[early_stop_callback]  # 添加早停回调
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\study.py", line 490, in optimize
+    _optimize(
+    ~~~~~~~~~^
+        study=self,
+        ^^^^^^^^^^^
+    ...<7 lines>...
+        show_progress_bar=show_progress_bar,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\_optimize.py", line 105, in _optimize
+    f.result()
+    ~~~~~~~~^^
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 449, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\concurrent\futures\_base.py", line 401, in __get_result
+    raise self._exception
+  File "C:\Users\fadedinks\AppData\Roaming\uv\python\cpython-3.13.3-windows-x86_64-none\Lib\concurrent\futures\thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\_optimize.py", line 177, in _optimize_sequential
+    callback(study, copy.deepcopy(frozen_trial))
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\quant\optimizer.py", line 48, in __call__
+    current_score = study.best_value
+                    ^^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\study.py", line 134, in best_value
+    best_value = self.best_trial.value
+                 ^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\study.py", line 156, in best_trial
+    return self._get_best_trial(deepcopy=True)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\study\study.py", line 308, in _get_best_trial
+    best_trial = self._storage.get_best_trial(self._study_id)
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\optuna\storages\_in_memory.py", line 251, in get_best_trial
+    raise ValueError("No trials are completed yet.")
+ValueError: No trials are completed yet.
+2026-02-28 17:07:34 [INFO] quant: === Optuna 抗过拟合策略引擎启动 (Phase 4) ===
+2026-02-28 17:07:34 [INFO] quant: 核心维度: 8 | 目标: sharpe_pure | 试验总数: 400
+2026-02-28 17:07:34 [INFO] quant: [EarlyStop] patience=30
+2026-02-28 17:07:35 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-02-28 17:40:57 [INFO] quant: [EarlyStop] Best score improved: 0.198252 (Trial #10)
+2026-02-28 17:40:57 [INFO] quant: [EarlyStop] Progress: Trial #10 | Best Score: 0.198252 | No Improvement: 0/30
+2026-02-28 17:48:48 [INFO] quant: [EarlyStop] Best score improved: 0.233334 (Trial #11)
+2026-02-28 19:00:49 [INFO] quant: [EarlyStop] Progress: Trial #20 | Best Score: 0.233334 | No Improvement: 9/30
+2026-02-28 19:09:24 [INFO] quant: [EarlyStop] Best score improved: 0.281412 (Trial #23)
+2026-02-28 19:30:11 [INFO] quant: [EarlyStop] Best score improved: 0.374301 (Trial #27)
+2026-02-28 19:52:34 [INFO] quant: [EarlyStop] Progress: Trial #30 | Best Score: 0.374301 | No Improvement: 3/30
+2026-02-28 20:28:33 [INFO] quant: [EarlyStop] Best score improved: 0.421615 (Trial #40)
+2026-02-28 20:28:33 [INFO] quant: [EarlyStop] Progress: Trial #40 | Best Score: 0.421615 | No Improvement: 0/30
+2026-02-28 21:05:49 [INFO] quant: [EarlyStop] Progress: Trial #50 | Best Score: 0.421615 | No Improvement: 10/30
+2026-02-28 21:42:41 [INFO] quant: [EarlyStop] Progress: Trial #60 | Best Score: 0.421615 | No Improvement: 20/30
+2026-02-28 21:54:06 [INFO] quant: Process interrupted by user.
+2026-02-28 21:56:35 [INFO] quant: 批量回测: 200 只股票 (seed=42)
+2026-02-28 21:56:37 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-02-28 22:00:35 [INFO] quant: === Optuna 抗过拟合策略引擎启动 (Phase 4) ===
+2026-02-28 22:00:35 [INFO] quant: 核心维度: 8 | 目标: sharpe_pure | 试验总数: 400
+2026-02-28 22:00:35 [INFO] quant: 🚀 启用并行优化: 12 个并行进程 (CPU核心数: 20)
+2026-02-28 22:00:35 [INFO] quant: [EarlyStop] patience=30
+2026-02-28 22:01:12 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-02-28 22:02:14 [INFO] quant: 批量回测: 200 只股票 (seed=99)
+2026-02-28 22:02:16 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-02-28 22:03:15 [INFO] quant: === Optuna 抗过拟合策略引擎启动 (Phase 4) ===
+2026-02-28 22:03:15 [INFO] quant: 核心维度: 8 | 目标: sharpe_pure | 试验总数: 400
+2026-02-28 22:03:15 [INFO] quant: 🚀 启用并行优化: 12 个并行进程 (CPU核心数: 20)
+2026-02-28 22:03:15 [INFO] quant: [EarlyStop] patience=30
+2026-02-28 22:03:49 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-02-28 22:04:26 [INFO] quant: Process interrupted by user.
+2026-02-28 22:52:24 [INFO] quant: [EarlyStop] Best score improved: 0.081200 (Trial #11)
+2026-02-28 22:52:27 [INFO] quant: [EarlyStop] Best score improved: 0.163436 (Trial #9)
+2026-02-28 22:52:30 [INFO] quant: [EarlyStop] Progress: Trial #10 | Best Score: 0.163436 | No Improvement: 1/30
+2026-02-28 22:54:50 [INFO] quant: [EarlyStop] Best score improved: 0.240028 (Trial #0)
+2026-02-28 22:54:50 [INFO] quant: [EarlyStop] Progress: Trial #0 | Best Score: 0.240028 | No Improvement: 0/30
+2026-02-28 22:54:51 [INFO] quant: [EarlyStop] Best score improved: 0.334292 (Trial #2)
+2026-02-28 22:54:51 [ERROR] quant: [ERROR] Optimization failed: No trials are completed yet.
+2026-03-01 18:20:13 [INFO] quant: ================================================================================
+2026-03-01 18:20:13 [INFO] quant: 量化交易系统自动化运行启动（修复版）
+2026-03-01 18:20:13 [INFO] quant: 配置: 数据更新=False, 模型训练=True, 回测=True, 参数优化=True
+2026-03-01 18:20:13 [INFO] quant: 样本数量: 50, 优化试验次数: 20
+2026-03-01 18:20:13 [INFO] quant: ================================================================================
+2026-03-01 18:20:13 [INFO] quant: 
+================================================================================
+2026-03-01 18:20:13 [INFO] quant: Step 1: 数据更新和准备
+2026-03-01 18:20:13 [INFO] quant: ================================================================================
+2026-03-01 18:20:13 [INFO] quant: 跳过数据更新
+2026-03-01 18:20:13 [INFO] quant: 
+================================================================================
+2026-03-01 18:20:13 [INFO] quant: Step 2: 股票列表更新（可选）
+2026-03-01 18:20:13 [INFO] quant: ================================================================================
+2026-03-01 18:20:13 [INFO] quant: 跳过股票列表更新（已在上一步完成）
+2026-03-01 18:20:13 [INFO] quant: 
+================================================================================
+2026-03-01 18:20:13 [INFO] quant: Step 3: 特征工程和特征提取
+2026-03-01 18:20:13 [INFO] quant: ================================================================================
+2026-03-01 18:20:13 [INFO] quant: 采样 50 只股票进行特征提取...
+2026-03-01 18:20:15 [INFO] quant:   进度: 10/50
+2026-03-01 18:20:16 [INFO] quant:   进度: 20/50
+2026-03-01 18:20:17 [INFO] quant:   进度: 30/50
+2026-03-01 18:20:18 [INFO] quant:   进度: 40/50
+2026-03-01 18:20:19 [INFO] quant:   进度: 50/50
+2026-03-01 18:20:19 [INFO] quant: 特征提取完成: 成功 50, 失败 0, 平均 50.0 维特征/股票
+2026-03-01 18:20:19 [INFO] quant: 
+================================================================================
+2026-03-01 18:20:19 [INFO] quant: Step 4: 数据集构建和预处理
+2026-03-01 18:20:19 [INFO] quant: ================================================================================
+2026-03-01 18:20:19 [INFO] quant: 开始构建数据集...
+2026-03-01 18:20:19 [INFO] quant: 缓存未命中，开始构建数据集...
+2026-03-01 18:20:19 [INFO] quant: Building dataset from historical data (parallel)...
+2026-03-01 18:20:19 [INFO] quant: Using 19 workers to process 1069 files
+2026-03-01 18:21:00 [INFO] quant: Dataset built successfully (parallel). Total rows: 666024. Features: 41
+2026-03-01 18:21:01 [INFO] quant: 数据集构建完成，耗时: 41.88s，已缓存
+2026-03-01 18:21:01 [INFO] quant: 数据集构建完成: 666024 行
+2026-03-01 18:21:01 [INFO] quant: 数据集切分完成: 训练集 532819 样本, 验证集 133205 样本
+2026-03-01 18:21:01 [INFO] quant: 数据集构建完成: 训练样本 532819, 验证样本 133205, 特征数 41
+2026-03-01 18:21:01 [INFO] quant: ✅ 数据集准备完成
+2026-03-01 18:21:01 [INFO] quant: 
+================================================================================
+2026-03-01 18:21:01 [INFO] quant: Step 5: 模型训练（多模型集成）
+2026-03-01 18:21:01 [INFO] quant: ================================================================================
+2026-03-01 18:21:01 [INFO] quant: 开始构建数据集...
+2026-03-01 18:21:01 [INFO] quant: 从缓存加载数据集: 666024 行, 41 个特征
+2026-03-01 18:21:01 [INFO] quant: 数据集构建完成: 666024 行
+2026-03-01 18:21:02 [INFO] quant: 数据集切分完成: 训练集 532819 样本, 验证集 133205 样本
+2026-03-01 18:21:02 [INFO] quant: 开始训练模型...
+2026-03-01 18:21:02 [ERROR] quant: ❌ 模型训练失败: 'numpy.ndarray' object has no attribute 'columns'
+2026-03-01 18:21:02 [INFO] quant: 
+================================================================================
+2026-03-01 18:21:02 [INFO] quant: Step 6: 回测验证（简化版）
+2026-03-01 18:21:02 [INFO] quant: ================================================================================
+2026-03-01 18:21:02 [INFO] quant: 开始回测验证: 50 只股票...
+2026-03-01 18:21:02 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-01 18:21:05 [INFO] quant:   进度: 10/50
+2026-03-01 18:21:09 [INFO] quant:   进度: 20/50
+2026-03-01 18:21:12 [INFO] quant:   进度: 30/50
+2026-03-01 18:21:15 [INFO] quant:   进度: 40/50
+2026-03-01 18:21:18 [INFO] quant:   进度: 50/50
+2026-03-01 18:21:18 [INFO] quant: ✅ 回测完成: 成功 50, 失败 0, 平均收益 1.21%, 平均夏普 0.44
+2026-03-01 18:21:18 [INFO] quant: 
+================================================================================
+2026-03-01 18:21:18 [INFO] quant: Step 7: 生成总结报告
+2026-03-01 18:21:18 [INFO] quant: ================================================================================
+2026-03-01 18:21:18 [INFO] quant: ✅ 报告已保存至: data/auto_reports\auto_report_simple_20260301_182118.md
+2026-03-01 18:21:18 [INFO] quant: ✅ 结果数据已保存至: data/auto_reports\auto_results_simple_20260301_182118.json
+2026-03-01 18:21:18 [INFO] quant: 
+================================================================================
+2026-03-01 18:21:18 [INFO] quant: 自动化运行总结
+2026-03-01 18:21:18 [INFO] quant: ================================================================================
+2026-03-01 18:21:18 [INFO] quant:   Step 1 (数据更新): N/A 个数据文件
+2026-03-01 18:21:18 [INFO] quant:   Step 3 (特征提取): 50.0 维特征/股票
+2026-03-01 18:21:18 [INFO] quant:   Step 4 (数据集): 532819 训练样本
+2026-03-01 18:21:18 [INFO] quant:   Step 5 (模型训练): AUC=N/A
+2026-03-01 18:21:18 [INFO] quant:   Step 6 (回测): 收益=1.21%
+2026-03-01 18:21:18 [INFO] quant: 
+✅ 所有任务执行完成！
+2026-03-01 18:21:18 [INFO] quant: 自动化运行完成，总耗时: 1.08 分钟
+2026-03-01 19:19:24 [INFO] quant: 开始性能监控...
+2026-03-01 19:19:24 [INFO] quant: ================================================================================
+2026-03-01 19:19:24 [INFO] quant: 量化交易系统自动化运行启动
+2026-03-01 19:19:24 [INFO] quant: 配置: 数据更新=False, 模型训练=True, 回测=True, 参数优化=True
+2026-03-01 19:19:24 [INFO] quant: 样本数量: 100, 优化试验次数: 50
+2026-03-01 19:19:24 [INFO] quant: ================================================================================
+2026-03-01 19:19:24 [INFO] quant: 
+================================================================================
+2026-03-01 19:19:24 [INFO] quant: Milestone 1: 数据更新和准备
+2026-03-01 19:19:24 [INFO] quant: ================================================================================
+2026-03-01 19:19:24 [INFO] quant: 跳过数据更新
+2026-03-01 19:19:24 [INFO] quant: 
+================================================================================
+2026-03-01 19:19:24 [INFO] quant: Milestone 2: 特征工程和特征提取
+2026-03-01 19:19:24 [INFO] quant: ================================================================================
+2026-03-01 19:19:24 [INFO] quant: 采样 100 只股票进行特征提取...
+2026-03-01 19:19:34 [INFO] quant: 特征提取完成: 平均 50.0 维特征/股票
+2026-03-01 19:19:34 [INFO] quant: 
+================================================================================
+2026-03-01 19:19:34 [INFO] quant: Milestone 3: 数据集构建和预处理
+2026-03-01 19:19:34 [INFO] quant: ================================================================================
+2026-03-01 19:19:34 [INFO] quant: 开始加载/构建数据集...
+2026-03-01 19:19:34 [INFO] quant: 从缓存加载数据集: 666024 行, 41 个特征
+2026-03-01 19:19:34 [INFO] quant: 数据集加载完成: 666024 行
+2026-03-01 19:19:35 [INFO] quant: 数据集切分完成: 训练集 532819 样本, 验证集 133205 样本
+2026-03-01 19:19:35 [INFO] quant: 数据集构建完成: 训练样本 532819, 验证样本 133205, 特征数 41
+2026-03-01 19:19:35 [INFO] quant: 
+================================================================================
+2026-03-01 19:19:35 [INFO] quant: Milestone 4: 模型训练（多模型集成）
+2026-03-01 19:19:35 [INFO] quant: ================================================================================
+2026-03-01 19:19:35 [INFO] quant: 开始加载/构建数据集...
+2026-03-01 19:19:35 [INFO] quant: 从缓存加载数据集: 666024 行, 41 个特征
+2026-03-01 19:19:35 [INFO] quant: 数据集加载完成: 666024 行
+2026-03-01 19:19:35 [INFO] quant: 数据集切分完成: 训练集 532819 样本, 验证集 133205 样本
+2026-03-01 19:19:35 [INFO] quant: 开始训练多模型集成...
+2026-03-01 19:19:35 [ERROR] quant: 自动化运行失败: 'numpy.ndarray' object has no attribute 'columns'
+Traceback (most recent call last):
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\run_automation.py", line 95, in run
+    self.milestone_4_model_training()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\run_automation.py", line 239, in milestone_4_model_training
+    ensemble.fit(X_train, y_train, X_eval, y_eval)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\quant\ensemble_trainer.py", line 108, in fit
+    self.feature_names = X_train.columns.tolist()
+                         ^^^^^^^^^^^^^^^
+AttributeError: 'numpy.ndarray' object has no attribute 'columns'
+2026-03-01 19:19:35 [INFO] quant: 性能监控结束，总耗时: 10.62 秒
+2026-03-01 19:19:35 [INFO] quant: 自动化运行完成，总耗时: 0.18 分钟
+2026-03-01 23:08:01 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-03-01 23:08:01 [INFO] quant: Building dataset from historical data...
+2026-03-01 23:14:51 [INFO] quant: Dataset built successfully. Total rows: 666024. Features: 41
+2026-03-01 23:14:51 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-03-01 23:14:51 [INFO] quant: Target distribution: Positive 136915, Negative 529109. Ratio: 1:3.86
+2026-03-01 23:14:51 [INFO] quant: Initial split - Train pos ratio: 0.189, Test pos ratio: 0.219
+2026-03-01 23:14:51 [INFO] quant: Using windowed balanced sampling for better class balance
+2026-03-01 23:14:54 [INFO] quant: Balanced split - Train pos ratio: 0.195, Test pos ratio: 0.196
+2026-03-01 23:14:54 [INFO] quant: Train size: 852400, Test size: 213100
+2026-03-01 23:14:54 [INFO] quant: Chronological split: Train 852384 rows, Test 213090 rows (purged 20 rows)
+2026-03-01 23:14:54 [INFO] quant: Starting LightGBM training with Focal Loss for class imbalance...
+2026-03-01 23:14:54 [ERROR] quant: A fatal error occurred.
+Traceback (most recent call last):
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 284, in <module>
+    main()
+    ~~~~^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 272, in main
+    cmd_train_ai()
+    ~~~~~~~~~~~~^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 114, in cmd_train_ai
+    train_model(df, model_path="models/alpha_lgbm.txt")
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\quant\trainer.py", line 550, in train_model
+    gbm = lgb.train(
+        params,
+    ...<8 lines>...
+        ]
+    )
+TypeError: train() got an unexpected keyword argument 'fobj'
+2026-03-01 23:43:41 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-03-01 23:43:41 [INFO] quant: Building dataset from historical data...
+2026-03-01 23:47:40 [INFO] quant: Dataset built successfully. Total rows: 666024. Features: 41
+2026-03-01 23:47:40 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-03-01 23:47:41 [INFO] quant: Target distribution: Positive 136915, Negative 529109. Ratio: 1:3.86
+2026-03-01 23:47:41 [INFO] quant: Initial split - Train pos ratio: 0.189, Test pos ratio: 0.219
+2026-03-01 23:47:41 [INFO] quant: Using windowed balanced sampling for better class balance
+2026-03-01 23:47:42 [INFO] quant: Balanced split - Train pos ratio: 0.195, Test pos ratio: 0.196
+2026-03-01 23:47:42 [INFO] quant: Train size: 852400, Test size: 213100
+2026-03-01 23:47:42 [INFO] quant: Chronological split: Train 852384 rows, Test 213090 rows (purged 20 rows)
+2026-03-01 23:47:42 [INFO] quant: Starting LightGBM training with Focal Loss for class imbalance...
+2026-03-01 23:47:42 [ERROR] quant: A fatal error occurred.
+Traceback (most recent call last):
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 284, in <module>
+    main()
+    ~~~~^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 272, in main
+    cmd_train_ai()
+    ~~~~~~~~~~~~^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\main.py", line 114, in cmd_train_ai
+    train_model(df, model_path="models/alpha_lgbm.txt")
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\quant\trainer.py", line 551, in train_model
+    gbm = lgb.train(
+        params,
+    ...<6 lines>...
+        ]
+    )
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\lightgbm\engine.py", line 297, in train
+    booster = Booster(params=params, train_set=train_set)
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\lightgbm\basic.py", line 3656, in __init__
+    train_set.construct()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\lightgbm\basic.py", line 2590, in construct
+    self._lazy_init(
+    ~~~~~~~~~~~~~~~^
+        data=self.data,
+        ^^^^^^^^^^^^^^^
+    ...<9 lines>...
+        position=self.position,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\lightgbm\basic.py", line 2163, in _lazy_init
+    params_str = _param_dict_to_str(params)
+  File "D:\WorkSpace\CoffeeTalk\baostock-master\.venv\Lib\site-packages\lightgbm\basic.py", line 554, in _param_dict_to_str
+    raise TypeError(f"Unknown type of parameter:{key}, got:{type(val).__name__}")
+TypeError: Unknown type of parameter:feval, got:function
+2026-03-02 00:01:42 [INFO] quant: 启动 AI 模型离线训练管道 (Phase 8)...
+2026-03-02 00:01:42 [INFO] quant: Building dataset from historical data...
+2026-03-02 00:04:45 [INFO] quant: Dataset built successfully. Total rows: 666024. Features: 41
+2026-03-02 00:04:45 [INFO] quant: Initializing LightGBM model training pipeline...
+2026-03-02 00:04:46 [INFO] quant: Target distribution: Positive 136915, Negative 529109. Ratio: 1:3.86
+2026-03-02 00:04:46 [INFO] quant: Initial split - Train pos ratio: 0.189, Test pos ratio: 0.219
+2026-03-02 00:04:46 [INFO] quant: Using windowed balanced sampling for better class balance
+2026-03-02 00:04:47 [INFO] quant: Balanced split - Train pos ratio: 0.195, Test pos ratio: 0.196
+2026-03-02 00:04:47 [INFO] quant: Train size: 852400, Test size: 213100
+2026-03-02 00:04:47 [INFO] quant: Chronological split: Train 852384 rows, Test 213090 rows (purged 20 rows)
+2026-03-02 00:04:47 [INFO] quant: Starting LightGBM training with Focal Loss for class imbalance...
+2026-03-02 00:07:59 [INFO] quant: Model AUC on Test Set: 0.8495
+2026-03-02 00:07:59 [INFO] quant: Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.82      1.00      0.90    171424
+           1       0.98      0.11      0.19     41666
+
+    accuracy                           0.83    213090
+   macro avg       0.90      0.55      0.55    213090
+weighted avg       0.85      0.83      0.76    213090
+
+2026-03-02 00:07:59 [INFO] quant: Top 10 Important Features:
+feat_market_pct_5       34510.911164
+feat_market_pct_1       32749.636244
+feat_market_pct_20      26545.137252
+feat_market_pct_10      24726.419102
+feat_market_bias_20     23254.316314
+feat_rsi_val             9738.835625
+feat_atr_ratio           8544.198438
+feat_realized_vol_20     8238.132237
+feat_macd_norm           7560.845058
+feat_atr_mom_5           7454.062556
+dtype: float64
+2026-03-02 00:07:59 [INFO] quant: Feature importance visualization saved to models\feature_importance.png
+2026-03-02 00:07:59 [INFO] quant: Feature importance CSV saved to models\feature_importance.csv
+2026-03-02 00:07:59 [INFO] quant: Model saved to models/alpha_lgbm.txt
+2026-03-02 22:01:10 [INFO] quant: Starting stock list update process.
+2026-03-02 22:01:11 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-03-02 22:01:11 [INFO] quant: 尝试查询日期: 2026-03-02 (第 1 次)
+2026-03-02 22:01:37 [INFO] quant: 成功获取到 7127 条记录 (查询日期: 2026-03-02)
+2026-03-02 22:01:37 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 6352
+2026-03-02 22:01:37 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-03-02 22:01:59 [INFO] quant: Filtered 1903 micro-cap stocks (< 30.0 亿).
+2026-03-02 22:01:59 [INFO] quant: Filtered 567 zombie stocks (< 10000.0 万).
+2026-03-02 22:01:59 [INFO] quant: Filtered 86 potential manipulated stocks (turnover > 20.0%).
+2026-03-02 22:01:59 [INFO] quant: Filtered 301 highly inactive stocks (turnover < 1.0%).
+2026-03-02 22:01:59 [INFO] quant: Filtered 2094 stocks failing PE/PB fundamentals.
+2026-03-02 22:01:59 [INFO] quant: Final high-value stock count: 1401
+2026-03-02 22:01:59 [INFO] quant: Saved high-value stock list to data\stock-list.csv
+2026-03-02 22:02:00 [INFO] quant: Loaded 1402 stocks to update historical data (including market index).
+2026-03-02 22:02:02 [INFO] quant: 第一轮：串行拉取全量数据...
+2026-03-02 22:38:53 [INFO] quant: 第一轮完成: 365 new, 1037 updated, 0 empty, 0 skipped, 0 errors.
+2026-03-02 22:38:53 [INFO] quant: ===== 数据更新完毕 =====
+  成功下载/更新: 1402 只
+  无新数据 (empty): 0 只
+  已是最新 (skip): 0 只
+  最终失败: 0 只
+2026-03-02 22:38:53 [INFO] quant: === Optuna 抗过拟合策略引擎启动 (Phase 4) ===
+2026-03-02 22:38:53 [INFO] quant: 核心维度: 8 | 目标: sharpe_pure | 试验总数: 120
+2026-03-02 22:38:53 [INFO] quant: 🚀 启用并行优化: 12 个并行进程 (CPU核心数: 20)
+2026-03-02 22:38:53 [INFO] quant: [EarlyStop] patience=30
+2026-03-02 22:39:59 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:19:15 [INFO] quant: [EarlyStop] Best score improved: 0.980394 (Trial #11)
+2026-03-02 23:19:19 [INFO] quant: [EarlyStop] Best score improved: 1.009037 (Trial #9)
+2026-03-02 23:19:20 [INFO] quant: [EarlyStop] Best score improved: 1.033247 (Trial #3)
+2026-03-02 23:19:22 [INFO] quant: [EarlyStop] Best score improved: 1.093886 (Trial #2)
+2026-03-02 23:19:22 [INFO] quant: 开始对 1434 支股票执行多因子综合分析...
+2026-03-02 23:20:06 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:06 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:07 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:07 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:07 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:07 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:07 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:08 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:08 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:08 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:08 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:08 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:09 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:09 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:09 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:10 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:12 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:13 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:13 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:16 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (41 features)
+2026-03-02 23:20:36 [INFO] quant: 分析完成。共有 0 支股票满足评分阈值。
+2026-03-02 23:20:36 [INFO] quant: 今日没有匹配到强势标的，建议空仓观望。

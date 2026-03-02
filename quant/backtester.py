@@ -340,6 +340,14 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                 p=p,
             )
 
+            # --- Unified Scoring Logic (Extracted from analyzer.py logic for consistency) ---
+            # Even if we use binary signals for backtesting, we calculate a 'total_score' 
+            # for cross-sectional ranking that matches what's seen in the 'selected_stocks' CSV.
+            total_score = 0.0
+            if signal_pullback: total_score += 0.4
+            if signal_rebound: total_score += 0.4
+            if signal_trend_breakout: total_score += 0.5
+            
             has_rule_signal = signal_pullback or signal_rebound or signal_trend_breakout
             if not has_rule_signal:
                 return
@@ -358,49 +366,42 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
                             return  # AI 预测未来不佳，拒绝开仓
             # ============================================
 
-            # Position Sizing (Dynamic based on AI confidence, volatility, and market state)
-            if ai_model is not None and hasattr(p, 'atr_risk_per_trade') and p.atr_risk_per_trade > 0 and self.atr[-1] > 0:
-                # Get AI confidence
+            # 3-Tier AI Position Sizing & Friction Defense
+            if ai_model is not None:
+                # 1. Get AI confidence
                 feat_cols = [c for c in self.data.df.columns if c.startswith('feat_')]
-                ai_confidence = 0.5  # Default moderate confidence
+                ai_confidence = 0.5
                 if feat_cols:
                     bar_idx = len(self.data.Close) - 1
                     feat_row = self.data.df.iloc[bar_idx][feat_cols]
                     if not feat_row.isna().any():
                         ai_confidence = float(ai_model.predict(feat_row.values.reshape(1, -1))[0])
+
+                # 2. [Refined] Tiered Confidence Factor (Step-wise logic)
+                if ai_confidence >= 0.65:
+                    confidence_factor = 1.0    # High confidence: Full tier
+                elif ai_confidence >= 0.45:
+                    confidence_factor = 0.5    # Neutral: Half tier
+                else:
+                    return  # [Anti-Overfitting] Trigger Meltdown/Block below 0.45
                 
-                # Volatility adjustment (higher volatility = smaller position)
-                vol_ratio = self.atr[-1] / price
-                volatility_factor = 1.0 / (1.0 + vol_ratio * 10)
-                
-                # Market state factor (already applied to dynamic params)
-                # Strong bull = 1.3x, Weak bull = 1.1x, Sideways = 1.0x, Weak bear = 0.8x, Strong bear = 0.6x
-                
-                # Trade type factor (right side = slightly larger position)
-                trade_type_factor = 1.1 if (signal_pullback or signal_rebound) else 1.0
-                
-                # Calculate base position size
-                risk_amt = self.equity * p.atr_risk_per_trade
-                risk_per_share = 2.0 * self.atr[-1]
-                shares = risk_amt / risk_per_share
-                fractional_size = min(0.99, (shares * price) / self.equity)
-                
-                # Apply dynamic factors
-                confidence_factor = ai_confidence / 0.5  # Normalize around 0.5 threshold
-                dynamic_size = fractional_size * confidence_factor * volatility_factor * trade_type_factor
-                
-                # Clamp position size to reasonable range (2% to 25% of equity)
-                pos_size = max(0.02, min(0.25, dynamic_size))
-            elif hasattr(p, 'atr_risk_per_trade') and p.atr_risk_per_trade > 0 and self.atr[-1] > 0:
-                # Fallback to standard ATR-based sizing
-                risk_amt = self.equity * p.atr_risk_per_trade
-                risk_per_share = 2.0 * self.atr[-1]
-                shares = risk_amt / risk_per_share
-                fractional_size = min(0.99, (shares * price) / self.equity)
-                pos_size = max(0.01, min(0.99, fractional_size))
+                # 3. Base sizing (ATR-risk based if enabled)
+                if hasattr(p, 'atr_risk_per_trade') and p.atr_risk_per_trade > 0 and self.atr[-1] > 0:
+                    risk_amt = self.equity * p.atr_risk_per_trade
+                    risk_per_share = 2.0 * self.atr[-1]
+                    shares = risk_amt / risk_per_share
+                    fractional_size = min(0.99, (shares * price) / self.equity)
+                    pos_size = fractional_size * confidence_factor
+                else:
+                    pos_size = p.position_size * confidence_factor
             else:
-                # Fallback to fixed ratio
                 pos_size = p.position_size
+
+            # 4. [Friction Defense] Minimum Trade Value Check (A-share 5 RMB rule)
+            target_value = self.equity * pos_size
+            if target_value < 5000:
+                # Cost of 5 RMB on < 5000 RMB is > 0.1%, which kills small-cap strategy edge
+                return
 
             self.buy(size=pos_size)
             if signal_trend_breakout:
@@ -478,11 +479,12 @@ def run_backtest(
     strategy_cls = create_strategy(params)
     # Default slippage if not configured
     slippage = getattr(CONF.strategy, "slippage_pct", 0.002)
+    # Realistic A-share commission: 0.1% (includes Stamp Duty 0.05% + Broker 0.03% + Misc)
     bt = Backtest(
         df,
         strategy_cls,
         cash=100_000,
-        commission=0.0002 + slippage,
+        commission=0.001,
         trade_on_close=True,
         exclusive_orders=True,
     )
@@ -614,14 +616,26 @@ def scan_today_signal(
                     return None  # AI 预测未来不佳，残酷否决 (对齐回测逻辑)
     # ============================================
 
+    # Calculate extra fields for analyzer compatibility (Sector rotation / Ranking)
+    mom_20 = 0.0
+    if len(df) >= 20:
+        mom_20 = (price - df.iloc[-20]["close"]) / df.iloc[-20]["close"]
+    
+    total_score = 0.0
+    if signal_pullback: total_score += 0.4
+    if signal_rebound: total_score += 0.4
+    if signal_trend_breakout: total_score += 0.5
+
     return {
-        "代码": code,
-        "触发日期": str(row_1["date"]).split(" ")[0] if "date" in row_1 else "",
-        "现价": round(float(price), 2),
-        "信号类型": signal_type,
-        "RSI指标": round(float(rsi_val), 2),
-        "量能倍数": round(float(vol_1 / vol_2) if vol_2 > 0 else 0.0, 2),
-        "AI胜率预测": round(act_prob, 4),
+        "code": code,
+        "date": str(row_1["date"]).split(" ")[0] if "date" in row_1 else "",
+        "close": round(float(price), 2),
+        "total_score": round(total_score, 3),
+        "signal_type": signal_type,
+        "rsi": round(float(rsi_val), 2),
+        "mom_20": round(float(mom_20), 4),
+        "volume_ratio": round(float(vol_1 / vol_2) if vol_2 > 0 else 0.0, 2),
+        "ai_prob": round(act_prob, 4),
     }
 
 

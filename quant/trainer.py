@@ -14,6 +14,164 @@ from quant.numba_accelerator import get_numba_status
 from tqdm import tqdm
 import time
 
+def focal_loss_lgb(y_pred, dataset):
+    """
+    Focal Loss implementation for LightGBM to handle class imbalance.
+    Focal Loss = -alpha * (1 - p_t)^gamma * log(p_t)
+
+    Args:
+        y_pred: predicted probabilities
+        dataset: LightGBM dataset
+
+    Returns:
+        gradients and hessians
+    """
+    y_true = dataset.get_label()
+    y_pred = 1.0 / (1.0 + np.exp(-y_pred))  # sigmoid
+
+    # Focal Loss parameters
+    alpha = 0.75  # weight for positive class
+    gamma = 2.0   # focusing parameter
+
+    # Calculate p_t
+    p_t = np.where(y_true == 1, y_pred, 1 - y_pred)
+
+    # Calculate focal loss gradient and hessian
+    gradient = alpha * (1 - p_t) ** gamma * (y_pred - y_true)
+    hessian = alpha * (1 - p_t) ** gamma * (y_pred * (1 - y_pred))
+
+    return gradient, hessian
+
+
+def focal_loss_eval(y_pred, dataset):
+    """
+    Evaluation metric for Focal Loss.
+
+    Args:
+        y_pred: predicted probabilities
+        dataset: LightGBM dataset
+
+    Returns:
+        metric name, value, is_higher_better
+    """
+    y_true = dataset.get_label()
+    y_pred = 1.0 / (1.0 + np.exp(-y_pred))  # sigmoid
+
+    # Calculate binary cross-entropy focal loss
+    alpha = 0.75
+    gamma = 2.0
+
+    p_t = np.where(y_true == 1, y_pred, 1 - y_pred)
+    focal_loss = -alpha * ((1 - p_t) ** gamma) * np.log(p_t + 1e-8)
+    avg_loss = np.mean(focal_loss)
+
+    return 'focal_loss', avg_loss, False  # lower is better
+
+
+def balanced_temporal_split(X, y, train_ratio=0.8, min_class_ratio=0.3):
+    """
+    Implement balanced temporal split to ensure both classes are well-represented
+    while maintaining temporal order.
+
+    Args:
+        X: Feature DataFrame
+        y: Target Series
+        train_ratio: Proportion of data for training
+        min_class_ratio: Minimum ratio of minority class in each split
+
+    Returns:
+        X_train, y_train, X_test, y_test
+    """
+    n_samples = len(X)
+
+    # Find natural split point
+    split_idx = int(n_samples * train_ratio)
+
+    # Check class distribution in train and test sets
+    y_train = y.iloc[:split_idx]
+    y_test = y.iloc[split_idx:]
+
+    train_pos_ratio = y_train.sum() / len(y_train) if len(y_train) > 0 else 0
+    test_pos_ratio = y_test.sum() / len(y_test) if len(y_test) > 0 else 0
+
+    logger.info(f"Initial split - Train pos ratio: {train_pos_ratio:.3f}, Test pos ratio: {test_pos_ratio:.3f}")
+
+    # If both splits have reasonable class balance, use simple split
+    if (train_pos_ratio >= min_class_ratio and test_pos_ratio >= min_class_ratio and
+        train_pos_ratio <= 1 - min_class_ratio and test_pos_ratio <= 1 - min_class_ratio):
+        X_train = X.iloc[:split_idx]
+        y_train = y.iloc[:split_idx]
+        X_test = X.iloc[split_idx:]
+        y_test = y.iloc[split_idx:]
+        logger.info("Using simple temporal split (classes well-balanced)")
+        return X_train, y_train, X_test, y_test
+
+    # Otherwise, use windowed sampling to balance classes
+    logger.info("Using windowed balanced sampling for better class balance")
+
+    # Divide data into windows and sample from each window
+    window_size = 100  # days per window
+    stride = 50  # overlap between windows
+
+    train_samples_X = []
+    train_samples_y = []
+    test_samples_X = []
+    test_samples_y = []
+
+    for i in range(0, n_samples - window_size + 1, stride):
+        window_start = i
+        window_end = i + window_size
+
+        # Split this window based on overall split ratio
+        window_train_end = window_start + int(window_size * train_ratio)
+
+        # Add to train set
+        if window_train_end <= n_samples:
+            window_X_train = X.iloc[window_start:window_train_end]
+            window_y_train = y.iloc[window_start:window_train_end]
+            train_samples_X.append(window_X_train)
+            train_samples_y.append(window_y_train)
+
+        # Add to test set
+        if window_train_end < window_end and window_end <= n_samples:
+            window_X_test = X.iloc[window_train_end:window_end]
+            window_y_test = y.iloc[window_train_end:window_end]
+            test_samples_X.append(window_X_test)
+            test_samples_y.append(window_y_test)
+
+    # Concatenate all samples
+    if train_samples_X:
+        X_train = pd.concat(train_samples_X, axis=0)
+        y_train = pd.concat(train_samples_y, axis=0)
+    else:
+        X_train = X.iloc[:split_idx]
+        y_train = y.iloc[:split_idx]
+
+    if test_samples_X:
+        X_test = pd.concat(test_samples_X, axis=0)
+        y_test = pd.concat(test_samples_y, axis=0)
+    else:
+        X_test = X.iloc[split_idx:]
+        y_test = y.iloc[split_idx:]
+
+    # Re-sort by index to maintain temporal order within each split
+    train_idx = X_train.index.argsort()
+    X_train = X_train.iloc[train_idx]
+    y_train = y_train.iloc[train_idx]
+
+    test_idx = X_test.index.argsort()
+    X_test = X_test.iloc[test_idx]
+    y_test = y_test.iloc[test_idx]
+
+    # Verify class balance
+    new_train_pos_ratio = y_train.sum() / len(y_train) if len(y_train) > 0 else 0
+    new_test_pos_ratio = y_test.sum() / len(y_test) if len(y_test) > 0 else 0
+
+    logger.info(f"Balanced split - Train pos ratio: {new_train_pos_ratio:.3f}, Test pos ratio: {new_test_pos_ratio:.3f}")
+    logger.info(f"Train size: {len(X_train)}, Test size: {len(X_test)}")
+
+    return X_train, y_train, X_test, y_test
+
 def build_dataset(data_dir: str, p: StrategyParams, n_forward_days: int = 5, target_atr_mult: float = 2.0, stop_loss_atr_mult: float = 1.5) -> pd.DataFrame:
     """Read all csv files, compute indicators, extract features and targets, and concatenate into one large dataframe."""
     logger.info("Building dataset from historical data...")
@@ -327,28 +485,41 @@ def train_model(df: pd.DataFrame, model_path: str = "models/alpha_lgbm.txt"):
     logger.info(f"Target distribution: Positive {pos_count}, Negative {neg_count}. Ratio: 1:{scale_pos_weight:.2f}")
 
     # Time-series aware split: first 80% train, last 20% test
+    # Use balanced temporal split to ensure both classes are well-represented
     split_idx = int(len(X) * 0.8)
     # Purging: remove n_forward_days rows around the split to prevent label leakage
-    purge_days = 5  # matches default n_forward_days in create_targets
+    # Increased to 10 days (2x prediction window) to prevent lookahead bias
+    purge_days = 10  # 2x default n_forward_days for stricter temporal isolation
     train_end = max(0, split_idx - purge_days)
     test_start = min(len(X), split_idx + purge_days)
-    
-    X_train, y_train = X.iloc[:train_end], y.iloc[:train_end]
-    X_test, y_test = X.iloc[test_start:], y.iloc[test_start:]
+
+    # Apply balanced temporal split
+    X_train_raw, y_train_raw, X_test_raw, y_test_raw = balanced_temporal_split(
+        X.iloc[:split_idx], y.iloc[:split_idx],
+        train_ratio=0.8,
+        min_class_ratio=0.3
+    )
+
+    # Apply purging to both train and test sets
+    X_train = X_train_raw.iloc[:int(len(X_train_raw) * (train_end / split_idx))]
+    y_train = y_train_raw.iloc[:int(len(y_train_raw) * (train_end / split_idx))]
+    X_test = X_test_raw.iloc[int(len(X_test_raw) * (purge_days / len(X_test_raw))):]
+    y_test = y_test_raw.iloc[int(len(y_test_raw) * (purge_days / len(y_test_raw))):]
+
     logger.info(f"Chronological split: Train {len(X_train)} rows, Test {len(X_test)} rows (purged {purge_days * 2} rows)")
-    
+
     lgb_train = lgb.Dataset(X_train, y_train)
     lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
 
-    # 优化后的 LightGBM 参数
+    # 优化后的 LightGBM 参数 - 使用 Focal Loss 处理类别不平衡
     params = {
-        'objective': 'binary',
+        # 不使用默认的 binary objective，改用自定义 Focal Loss
         'metric': 'auc',
         'boosting_type': 'gbdt',
+        'objective': focal_loss_lgb,  # 自定义目标函数（LightGBM 4.0+ 使用 obj）
 
         # 学习率优化
         'learning_rate': 0.03,  # 降低学习率，增加迭代次数
-        'num_boost_round': 1000,  # 增加最大迭代次数（传递给 lgb.train）
 
         # 树结构优化
         'num_leaves': 63,  # 增加叶子节点数，提升模型复杂度
@@ -364,8 +535,8 @@ def train_model(df: pd.DataFrame, model_path: str = "models/alpha_lgbm.txt"):
         'lambda_l1': 0.05,  # 降低 L1 正则化
         'lambda_l2': 0.5,   # 降低 L2 正则化
 
-        # 类别不平衡处理
-        'scale_pos_weight': scale_pos_weight,
+        # Focal Loss 会自动处理类别不平衡，不需要 scale_pos_weight
+        # 'scale_pos_weight': scale_pos_weight,  # 注释掉，由 Focal Loss 处理
 
         # 其他优化
         'drop_rate': 0.1,         # Dropout 防止过拟合
@@ -375,12 +546,13 @@ def train_model(df: pd.DataFrame, model_path: str = "models/alpha_lgbm.txt"):
         'verbose': -1
     }
 
-    logger.info("Starting LightGBM training...")
+    logger.info("Starting LightGBM training with Focal Loss for class imbalance...")
     gbm = lgb.train(
         params,
         lgb_train,
         num_boost_round=1000,  # 增加最大迭代次数
         valid_sets=[lgb_train, lgb_eval],
+        feval=focal_loss_eval,  # 自定义评估函数在 LightGBM 4.0+ 仍需作为参数传递
         callbacks=[
             lgb.early_stopping(stopping_rounds=100),  # 增加早停轮次
             lgb.log_evaluation(period=50)
@@ -399,7 +571,52 @@ def train_model(df: pd.DataFrame, model_path: str = "models/alpha_lgbm.txt"):
     importance = gbm.feature_importance(importance_type='gain')
     feat_imp = pd.Series(importance, index=feature_cols).sort_values(ascending=False)
     logger.info(f"Top 10 Important Features:\n{feat_imp.head(10)}")
-    
+
+    # Feature Importance Visualization
+    try:
+        import matplotlib.pyplot as plt
+        import matplotlib
+        matplotlib.use('Agg')  # Use non-interactive backend
+
+        # Create figure
+        fig, ax = plt.subplots(figsize=(12, 8))
+
+        # Plot top 20 features
+        top_n = min(20, len(feat_imp))
+        top_features = feat_imp.head(top_n)
+
+        # Create horizontal bar chart
+        y_pos = np.arange(top_n)
+        ax.barh(y_pos, top_features.values, align='center', color='skyblue')
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(top_features.index, fontsize=10)
+        ax.invert_yaxis()  # Labels read top-to-bottom
+        ax.set_xlabel('Feature Importance (Gain)', fontsize=12)
+        ax.set_title('Top 20 Important Features - LightGBM Model', fontsize=14, fontweight='bold')
+
+        # Add grid
+        ax.xaxis.grid(True, linestyle='--', alpha=0.7)
+
+        # Adjust layout
+        plt.tight_layout()
+
+        # Save figure
+        viz_path = os.path.join(os.path.dirname(model_path), 'feature_importance.png')
+        plt.savefig(viz_path, dpi=300, bbox_inches='tight')
+        logger.info(f"Feature importance visualization saved to {viz_path}")
+
+        plt.close()
+
+        # Also save feature importance as CSV
+        imp_csv_path = os.path.join(os.path.dirname(model_path), 'feature_importance.csv')
+        feat_imp.to_csv(imp_csv_path)
+        logger.info(f"Feature importance CSV saved to {imp_csv_path}")
+
+    except ImportError:
+        logger.warning("matplotlib not available, skipping feature importance visualization")
+    except Exception as e:
+        logger.warning(f"Failed to create feature importance visualization: {e}")
+
     # Save Model
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     gbm.save_model(model_path)
@@ -434,13 +651,14 @@ def train_multi_class_model(df: pd.DataFrame, model_path: str = "models/alpha_lg
 
     # Time-series aware split
     split_idx = int(len(X) * 0.8)
-    purge_days = 5
+    # Increased to 10 days (2x prediction window) to prevent lookahead bias
+    purge_days = 10
     train_end = max(0, split_idx - purge_days)
     test_start = min(len(X), split_idx + purge_days)
-    
+
     X_train, y_train = X.iloc[:train_end], y.iloc[:train_end]
     X_test, y_test = X.iloc[test_start:], y.iloc[test_start:]
-    logger.info(f"Chronological split: Train {len(X_train)} rows, Test {len(X_test)} rows")
+    logger.info(f"Chronological split: Train {len(X_train)} rows, Test {len(X_test)} rows (purged {purge_days * 2} rows)")
     
     lgb_train = lgb.Dataset(X_train, y_train)
     lgb_eval = lgb.Dataset(X_test, y_test, reference=lgb_train)
@@ -615,3 +833,81 @@ class EnsembleLGBM:
         
         logger.info(f"Ensemble models loaded from {directory}")
         return ensemble
+
+
+def load_processed_dataset(
+    data_dir: str = None,
+    params: StrategyParams = None,
+    n_forward_days: int = 5,
+    target_atr_mult: float = 2.0,
+    stop_loss_atr_mult: float = 1.5,
+    use_cache: bool = True,
+    use_parallel: bool = True,
+    force_rebuild: bool = False
+):
+    """
+    加载处理后的数据集
+    如果数据集不存在，自动构建
+
+    Args:
+        data_dir: 数据目录
+        params: 策略参数
+        n_forward_days: 向前看的天数
+        target_atr_mult: 目标ATR倍数
+        stop_loss_atr_mult: 止损ATR倍数
+        use_cache: 是否使用缓存
+        use_parallel: 是否使用并行化
+        force_rebuild: 是否强制重建
+
+    Returns:
+        tuple: (X_train, y_train, X_eval, y_eval)
+    """
+    # 设置默认值
+    if data_dir is None:
+        data_dir = CONF.history_data.data_dir
+    if params is None:
+        params = StrategyParams()
+
+    logger.info("开始加载/构建数据集...")
+
+    # 构建数据集
+    df = build_dataset_with_cache(
+        data_dir=data_dir,
+        p=params,
+        n_forward_days=n_forward_days,
+        target_atr_mult=target_atr_mult,
+        stop_loss_atr_mult=stop_loss_atr_mult,
+        use_cache=use_cache,
+        use_parallel=use_parallel,
+        force_rebuild=force_rebuild
+    )
+
+    if df.empty:
+        raise Exception("数据集构建失败，数据集为空")
+
+    logger.info(f"数据集加载完成: {len(df)} 行")
+
+    # 准备特征和标签
+    feature_cols = [c for c in df.columns if c.startswith('feat_')]
+    if not feature_cols:
+        raise Exception("没有找到特征列")
+
+    # 准备特征 X
+    X = df[feature_cols].values
+
+    # 准备标签 y（二分类）
+    if 'label_max_ret_5d' in df.columns:
+        y = (df['label_max_ret_5d'] > 0).astype(int).values
+    else:
+        raise Exception("没有找到标签列 'label_max_ret_5d'")
+
+    # 时间序列切分（按日期分割）
+    df = df.sort_index()
+    split_idx = int(len(df) * 0.8)
+    X_train, X_eval = X[:split_idx], X[split_idx:]
+    y_train, y_eval = y[:split_idx], y[split_idx:]
+
+    logger.info(f"数据集切分完成: 训练集 {len(X_train)} 样本, 验证集 {len(X_eval)} 样本")
+
+    return X_train, y_train, X_eval, y_eval
+

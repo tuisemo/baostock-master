@@ -79,6 +79,8 @@ class OptimizerConfig:
     walk_forward_splits: int = 5
     train_ratio: float = 0.7
     objective: str = "sharpe_adj"
+    regularization_strength: float = 0.1
+    walk_forward_folds: int = 3
     results_dir: str = "data/optimize_results"
 
 
@@ -165,6 +167,8 @@ def load_config(config_path: str = "config.yaml") -> AppConfig:
             walk_forward_splits=data.get("optimizer", {}).get("walk_forward_splits", 5),
             train_ratio=data.get("optimizer", {}).get("train_ratio", 0.7),
             objective=data.get("optimizer", {}).get("objective", "sharpe_adj"),
+            regularization_strength=data.get("optimizer", {}).get("regularization_strength", 0.1),
+            walk_forward_folds=data.get("optimizer", {}).get("walk_forward_folds", 1),
             results_dir=data.get("optimizer", {}).get("results_dir", "data/optimize_results")
         ),
     )
