@@ -4,7 +4,7 @@
 """
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 
 from quant.logger import logger
@@ -441,3 +441,265 @@ if __name__ == "__main__":
     risk_report = risk_controller.get_risk_report()
     print(f"\n风险评分: {risk_report['risk_score']}")
     print(f"风险指标: {risk_report['risk_metrics']}")
+
+# ===== Portfolio Risk Controls (Milestone 5) =====
+
+class PortfolioRiskController:
+    """
+    组合风险控制器 (Milestone 5 新增)
+    
+    功能：
+    1. 行业集中度限制 (单行业<30%)
+    2. 相关性风控 (避免高相关股票集中)
+    3. 波动率风控 (组合层面波动率控制)
+    4. 组合 VaR 限制
+    """
+    
+    def __init__(
+        self,
+        max_sector_weight: float = 0.30,  # 单行业最大 30%
+        max_correlation: float = 0.7,  # 最大允许相关性
+        target_portfolio_volatility: float = 0.15,  # 目标组合波动率 15%
+        max_var_95: float = 0.05,  # 95% VaR 限制 5%
+        max_single_position: float = 0.25,  # 单资产最大 25%
+    ):
+        self.max_sector_weight = max_sector_weight
+        self.max_correlation = max_correlation
+        self.target_portfolio_volatility = target_portfolio_volatility
+        self.max_var_95 = max_var_95
+        self.max_single_position = max_single_position
+        
+        self.sector_exposure = {}  # {sector: weight}
+        self.correlation_matrix = None
+        self.portfolio_volatility = 0.0
+        self.portfolio_var = 0.0
+    
+    def update_sector_exposure(
+        self,
+        positions: Dict[str, float],
+        sector_mapping: Dict[str, str],
+    ):
+        """更新行业暴露"""
+        self.sector_exposure = {}
+        for code, weight in positions.items():
+            sector = sector_mapping.get(code, "Other")
+            self.sector_exposure[sector] = self.sector_exposure.get(sector, 0) + weight
+    
+    def check_sector_limits(self) -> Tuple[bool, Dict]:
+        """
+        检查行业集中度限制
+        
+        Returns:
+            (是否通过，详细信息)
+        """
+        max_sector = max(self.sector_exposure.values()) if self.sector_exposure else 0
+        max_sector_name = max(self.sector_exposure, key=self.sector_exposure.get) if self.sector_exposure else "N/A"
+        
+        passed = max_sector <= self.max_sector_weight
+        
+        details = {
+            'max_sector_weight': max_sector,
+            'max_sector_name': max_sector_name,
+            'limit': self.max_sector_weight,
+            'passed': passed,
+            'all_sectors': self.sector_exposure.copy(),
+        }
+        
+        if not passed:
+            logger.warning(
+                f"行业集中度超限：{max_sector_name}={max_sector:.2%} > {self.max_sector_weight:.2%}"
+            )
+        
+        return passed, details
+    
+    def update_correlation_matrix(self, returns_data: pd.DataFrame):
+        """更新相关性矩阵"""
+        if returns_data is not None and len(returns_data) > 20:
+            self.correlation_matrix = returns_data.corr()
+    
+    def check_correlation_risk(
+        self,
+        positions: Dict[str, float],
+    ) -> Tuple[bool, Dict]:
+        """
+        检查相关性风险
+        
+        Returns:
+            (是否通过，详细信息)
+        """
+        if self.correlation_matrix is None:
+            return True, {'status': 'no_data'}
+        
+        codes = list(positions.keys())
+        high_corr_pairs = []
+        
+        for i, code1 in enumerate(codes):
+            for code2 in codes[i+1:]:
+                if code1 in self.correlation_matrix.columns and code2 in self.correlation_matrix.columns:
+                    corr = self.correlation_matrix.loc[code1, code2]
+                    if corr > self.max_correlation:
+                        high_corr_pairs.append((code1, code2, corr))
+        
+        passed = len(high_corr_pairs) == 0
+        
+        details = {
+            'high_correlation_pairs': high_corr_pairs,
+            'max_correlation': max([c[2] for c in high_corr_pairs]) if high_corr_pairs else 0,
+            'limit': self.max_correlation,
+            'passed': passed,
+        }
+        
+        if not passed:
+            logger.warning(f"发现{len(high_corr_pairs)}对高相关股票")
+        
+        return passed, details
+    
+    def update_portfolio_volatility(
+        self,
+        positions: Dict[str, float],
+        cov_matrix: np.ndarray,
+    ):
+        """更新组合波动率"""
+        if len(positions) == 0 or cov_matrix is None or len(cov_matrix) == 0:
+            self.portfolio_volatility = 0.0
+            return
+        
+        weights = np.array([positions.get(i, 0) for i in range(len(cov_matrix))])
+        if np.sum(weights) > 0:
+            self.portfolio_volatility = np.sqrt(weights @ cov_matrix @ weights)
+    
+    def check_volatility_limit(self) -> Tuple[bool, Dict]:
+        """
+        检查组合波动率限制
+        
+        Returns:
+            (是否通过，详细信息)
+        """
+        passed = self.portfolio_volatility <= self.target_portfolio_volatility
+        
+        details = {
+            'portfolio_volatility': self.portfolio_volatility,
+            'target': self.target_portfolio_volatility,
+            'passed': passed,
+        }
+        
+        if not passed:
+            logger.warning(
+                f"组合波动率超限：{self.portfolio_volatility:.2%} > {self.target_portfolio_volatility:.2%}"
+            )
+        
+        return passed, details
+    
+    def update_portfolio_var(self, returns: pd.Series):
+        """更新组合 VaR"""
+        if returns is not None and len(returns) > 20:
+            self.portfolio_var = np.percentile(returns, 5)  # 95% VaR
+    
+    def check_var_limit(self) -> Tuple[bool, Dict]:
+        """
+        检查 VaR 限制
+        
+        Returns:
+            (是否通过，详细信息)
+        """
+        passed = self.portfolio_var >= self.max_var_95  # VaR 是负值，所以用>=
+        
+        details = {
+            'var_95': self.portfolio_var,
+            'limit': self.max_var_95,
+            'passed': passed,
+        }
+        
+        if not passed:
+            logger.warning(f"组合 VaR 超限：{self.portfolio_var:.2%} < {self.max_var_95:.2%}")
+        
+        return passed, details
+    
+    def adjust_positions_for_risk(
+        self,
+        positions: Dict[str, float],
+        sector_mapping: Dict[str, str],
+        cov_matrix: Optional[np.ndarray] = None,
+    ) -> Dict[str, float]:
+        """
+        调整持仓以满足风险限制
+        
+        Args:
+            positions: 原始持仓
+            sector_mapping: 行业映射
+            cov_matrix: 协方差矩阵
+        
+        Returns:
+            调整后的持仓
+        """
+        adjusted = positions.copy()
+        
+        # 1. 行业集中度调整
+        sector_weights = {}
+        for code, weight in positions.items():
+            sector = sector_mapping.get(code, "Other")
+            sector_weights[sector] = sector_weights.get(sector, 0) + weight
+        
+        for sector, total_weight in sector_weights.items():
+            if total_weight > self.max_sector_weight:
+                # 削减该行业所有股票
+                sector_codes = [c for c, s in sector_mapping.items() if s == sector and c in adjusted]
+                reduction_factor = self.max_sector_weight / total_weight
+                for code in sector_codes:
+                    adjusted[code] = adjusted[code] * reduction_factor
+        
+        # 2. 单资产限制调整
+        for code in list(adjusted.keys()):
+            if adjusted[code] > self.max_single_position:
+                adjusted[code] = self.max_single_position
+        
+        # 3. 重新归一化
+        total = sum(adjusted.values())
+        if total > 0 and total != 1.0:
+            adjusted = {k: v / total for k, v in adjusted.items()}
+        
+        return adjusted
+    
+    def get_risk_report(self) -> Dict:
+        """生成组合风险报告"""
+        sector_ok, sector_details = self.check_sector_limits()
+        corr_ok, corr_details = self.check_correlation_risk({})
+        vol_ok, vol_details = self.check_volatility_limit()
+        var_ok, var_details = self.check_var_limit()
+        
+        return {
+            'sector_risk': sector_details,
+            'correlation_risk': corr_details,
+            'volatility_risk': vol_details,
+            'var_risk': var_details,
+            'overall_passed': sector_ok and vol_ok and var_ok,
+            'sector_ok': sector_ok,
+            'volatility_ok': vol_ok,
+            'var_ok': var_ok,
+        }
+
+
+# 全局组合风险控制器实例
+_global_portfolio_risk_controller: Optional[PortfolioRiskController] = None
+
+
+def get_portfolio_risk_controller(
+    max_sector_weight: float = 0.30,
+    max_correlation: float = 0.7,
+    target_portfolio_volatility: float = 0.15,
+    max_var_95: float = 0.05,
+    max_single_position: float = 0.25,
+) -> PortfolioRiskController:
+    """获取全局组合风险控制器实例"""
+    global _global_portfolio_risk_controller
+    
+    if _global_portfolio_risk_controller is None:
+        _global_portfolio_risk_controller = PortfolioRiskController(
+            max_sector_weight=max_sector_weight,
+            max_correlation=max_correlation,
+            target_portfolio_volatility=target_portfolio_volatility,
+            max_var_95=max_var_95,
+            max_single_position=max_single_position,
+        )
+    
+    return _global_portfolio_risk_controller

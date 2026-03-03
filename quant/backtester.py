@@ -8,7 +8,8 @@ import pandas as pd
 from backtesting import Backtest, Strategy
 from tqdm import tqdm
 
-from quant.analyzer import calculate_indicators, classify_market_state, get_dynamic_params
+from quant.analyzer import calculate_indicators, classify_market_state_enhanced as classify_market_state
+from quant.adaptive_strategy import get_dynamic_params_v10 as get_dynamic_params
 from quant.config import CONF
 from quant.logger import logger
 
@@ -16,6 +17,9 @@ from quant.logger import logger
 _AI_MODEL = None
 _AI_MODEL_PATH = "models/alpha_lgbm.txt"
 _AI_MODEL_LOAD_ATTEMPTED = False
+_ENSEMBLE_MODEL = None
+_ENSEMBLE_MODEL_PATH = "models/ensemble_v1"
+_ENSEMBLE_MODEL_LOAD_ATTEMPTED = False
 
 def _get_ai_model():
     """Lazy-load the LightGBM model singleton. Returns None if model is unavailable or corrupted."""
@@ -43,6 +47,25 @@ def _get_ai_model():
         _AI_MODEL = None
 
     return _AI_MODEL
+
+def _get_ensemble_model():
+    """Lazy-load the Ensemble model (LightGBM+XGBoost+CatBoost)."""
+    global _ENSEMBLE_MODEL, _ENSEMBLE_MODEL_LOAD_ATTEMPTED
+    if _ENSEMBLE_MODEL_LOAD_ATTEMPTED:
+        return _ENSEMBLE_MODEL
+    _ENSEMBLE_MODEL_LOAD_ATTEMPTED = True
+    import os
+    if not os.path.exists(_ENSEMBLE_MODEL_PATH):
+        logger.debug(f"Ensemble not found: {_ENSEMBLE_MODEL_PATH}")
+        return None
+    try:
+        from quant.ensemble_trainer import MultiModelEnsemble
+        _ENSEMBLE_MODEL = MultiModelEnsemble.load(_ENSEMBLE_MODEL_PATH)
+        logger.info(f"Ensemble loaded: {_ENSEMBLE_MODEL.models}")
+    except Exception as e:
+        logger.warning(f"Ensemble load failed: {e}")
+        _ENSEMBLE_MODEL = None
+    return _ENSEMBLE_MODEL
 
 if TYPE_CHECKING:
     from quant.strategy_params import StrategyParams

@@ -1,4 +1,4 @@
-"""
+content = '''"""
 Enhanced Market State Classifier v2
 10-class market state with multi-dimensional analysis and adaptive thresholds
 """
@@ -95,3 +95,7 @@ def get_market_state_dimensions(index_df: pd.DataFrame, lookback_days: int = 60)
     return {'trend_strength': trend_strength, 'volatility': volatility, 'momentum_20d': roc_20, 'volume_ratio': volume_ratio}
 
 classify_market_state = classify_market_state_enhanced
+'''
+with open('quant/market_classifier.py', 'w', encoding='utf-8') as f:
+    f.write(content)
+print('Market classifier v2 written successfully')

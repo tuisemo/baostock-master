@@ -11,6 +11,7 @@ from quant.strategy_params import StrategyParams
 from quant.features import extract_features, create_targets, create_multi_class_targets
 from quant.cache_utils import DatasetCache, get_data_hash
 from quant.numba_accelerator import get_numba_status
+from quant.ensemble_trainer import MultiModelEnsemble
 from tqdm import tqdm
 import time
 
@@ -710,6 +711,133 @@ def train_multi_class_model(df: pd.DataFrame, model_path: str = "models/alpha_lg
     logger.info(f"Multi-class model saved to {model_path}")
     
     return gbm
+
+
+def train_ensemble_model(
+    df: pd.DataFrame,
+    model_dir: str = "models/ensemble_v1",
+    ensemble_method: str = "stacking",
+    models: list = None
+):
+    """
+    Train an ensemble model using LightGBM + XGBoost + CatBoost
+    
+    Args:
+        df: Dataset with features and targets
+        model_dir: Directory to save ensemble models
+        ensemble_method: Ensemble method ('simple_avg', 'weighted_avg', 'stacking')
+        models: List of models to use (default: ['lgb', 'xgb', 'cat'])
+    
+    Returns:
+        MultiModelEnsemble: Trained ensemble model
+    """
+    logger.info("Initializing Ensemble Model training pipeline...")
+    
+    if models is None:
+        models = ['lgb', 'xgb', 'cat']
+    
+    feature_cols = [c for c in df.columns if c.startswith('feat_')]
+    target_col = 'label_max_ret_5d'
+    
+    if target_col not in df.columns or not feature_cols:
+        logger.error("Target column or feature columns missing. Cannot train ensemble.")
+        return None
+    
+    # Sort by date to prevent future data leaking
+    if '_sort_date' in df.columns:
+        df = df.sort_values('_sort_date')
+    
+    X = df[feature_cols]
+    y = (df[target_col] > 0).astype(int)
+    
+    # Class imbalance weight
+    pos_count = y.sum()
+    neg_count = len(y) - pos_count
+    scale_pos_weight = neg_count / pos_count if pos_count > 0 else 1.0
+    logger.info(f"Target distribution: Positive {pos_count}, Negative {neg_count}. Ratio: 1:{scale_pos_weight:.2f}")
+    
+    # Time-series aware split
+    split_idx = int(len(X) * 0.8)
+    purge_days = 10
+    train_end = max(0, split_idx - purge_days)
+    test_start = min(len(X), split_idx + purge_days)
+    
+    # Apply balanced temporal split
+    X_train_raw, y_train_raw, X_test_raw, y_test_raw = balanced_temporal_split(
+        X.iloc[:split_idx], y.iloc[:split_idx],
+        train_ratio=0.8,
+        min_class_ratio=0.3
+    )
+    
+    # Apply purging
+    X_train = X_train_raw.iloc[:int(len(X_train_raw) * (train_end / split_idx))]
+    y_train = y_train_raw.iloc[:int(len(y_train_raw) * (train_end / split_idx))]
+    X_test = X_test_raw.iloc[int(len(X_test_raw) * (purge_days / len(X_test_raw))):]
+    y_test = y_test_raw.iloc[int(len(y_test_raw) * (purge_days / len(y_test_raw))):]
+    
+    logger.info(f"Chronological split: Train {len(X_train)} rows, Test {len(X_test)} rows (purged {purge_days * 2} rows)")
+    
+    # Initialize ensemble
+    ensemble = MultiModelEnsemble(
+        models=models,
+        ensemble_method=ensemble_method,
+        random_state=42
+    )
+    
+    # Train ensemble
+    logger.info(f"Training ensemble with {len(models)} models using {ensemble_method} strategy...")
+    ensemble.fit(X_train, y_train, X_test, y_test)
+    
+    # Evaluate ensemble
+    y_pred_prob = ensemble.predict_proba(X_test)
+    y_pred = (y_pred_prob > 0.5).astype(int)
+    
+    auc = roc_auc_score(y_test, y_pred_prob)
+    logger.info(f"Ensemble Model AUC on Test Set: {auc:.4f}")
+    logger.info(f"Classification Report:\n{classification_report(y_test, y_pred)}")
+    
+    # Get individual model performance
+    if ensemble.model_weights:
+        logger.info("Individual Model Performance:")
+        for model_name, weight in ensemble.model_weights.items():
+            logger.info(f"  {model_name}: AUC = {weight:.4f}")
+    
+    # Feature Importance (using best model)
+    try:
+        if ensemble.best_model_name:
+            feat_imp = ensemble.get_feature_importance(ensemble.best_model_name)
+            logger.info(f"Top 10 Important Features (from {ensemble.best_model_name}):\n{feat_imp.head(10)}")
+            
+            # Save feature importance
+            os.makedirs(model_dir, exist_ok=True)
+            imp_csv_path = os.path.join(model_dir, 'feature_importance.csv')
+            feat_imp.to_csv(imp_csv_path)
+            logger.info(f"Feature importance CSV saved to {imp_csv_path}")
+    except Exception as e:
+        logger.warning(f"Failed to get feature importance: {e}")
+    
+    # Save ensemble
+    ensemble.save(model_dir)
+    logger.info(f"Ensemble model saved to {model_dir}")
+    
+    # Save training metadata
+    metadata = {
+        'training_date': pd.Timestamp.now().isoformat(),
+        'train_samples': len(X_train),
+        'test_samples': len(X_test),
+        'test_auc': float(auc),
+        'ensemble_method': ensemble_method,
+        'models_used': models,
+        'best_model': ensemble.best_model_name,
+        'model_weights': {k: float(v) for k, v in ensemble.model_weights.items()}
+    }
+    metadata_path = os.path.join(model_dir, 'training_metadata.json')
+    import json
+    with open(metadata_path, 'w') as f:
+        json.dump(metadata, f, indent=2)
+    logger.info(f"Training metadata saved to {metadata_path}")
+    
+    return ensemble
 
 class EnsembleLGBM:
     """Ensemble of LightGBM models with different parameters for better robustness."""
