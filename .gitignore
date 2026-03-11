@@ -5,8 +5,28 @@ build/
 dist/
 wheels/
 *.egg-info
-.factory
 
 # Virtual environments
 .venv
+.factory
+
+# Temporary outputs
+temp_backtest_chart.html
 historical_scan_*.csv
+selected_stocks_*.csv
+
+# Data files (large, generated at runtime)
+data/*.csv
+data/*.log
+data/cache/
+data/historical/
+
+# Trained models (large binary)
+models/
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db

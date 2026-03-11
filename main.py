@@ -5,21 +5,21 @@ import os
 import random
 import sys
 
-from quant.logger import logger
+from quant.infra.logger import logger
 
 
 def cmd_update_list():
-    from quant.stock_filter import update_stock_list
+    from quant.data.stock_filter import update_stock_list
     update_stock_list()
 
 
 def cmd_update_data():
-    from quant.data_updater import update_history_data
+    from quant.data.data_updater import update_history_data
     update_history_data()
 
 
 def cmd_analyze():
-    from quant.analyzer import analyze_all_stocks
+    from quant.features.features.analyzer import analyze_all_stocks
     analyze_all_stocks()
 
 
@@ -33,8 +33,8 @@ def cmd_ui():
 
 
 def cmd_optimize(args: argparse.Namespace):
-    from quant.config import CONF
-    from quant.optimizer import run_optimization, save_results, apply_best_params
+    from quant.infra.config import CONF
+    from quant.app.optimizer import run_optimization, save_results, apply_best_params
 
     if args.rounds is not None:
         CONF.optimizer.max_rounds = args.rounds
@@ -61,8 +61,8 @@ def cmd_optimize(args: argparse.Namespace):
 
 
 def cmd_batch_test(args: argparse.Namespace):
-    from quant.backtester import batch_backtest
-    from quant.config import CONF
+    from quant.app.backtester import batch_backtest
+    from quant.infra.config import CONF
 
     data_dir = CONF.history_data.data_dir
     all_files = [f for f in os.listdir(data_dir)
@@ -95,9 +95,9 @@ def cmd_batch_test(args: argparse.Namespace):
 
 
 def cmd_train_ai():
-    from quant.trainer import build_dataset, train_model
-    from quant.config import CONF
-    from quant.strategy_params import StrategyParams
+    from quant.core.trainer import build_dataset, train_model
+    from quant.infra.config import CONF
+    from quant.core.strategy_params import StrategyParams
 
     logger.info("启动 AI 模型离线训练管道 (Phase 8)...")
     p = StrategyParams.from_app_config(CONF)
@@ -116,7 +116,7 @@ def cmd_train_ai():
 
 def cmd_auto_pilot():
     import time
-    from quant.logger import logger
+    from quant.infra.logger import logger
     
     logger.info("==================================================")
     logger.info("🚀 启动 Auto-Pilot 全自动量化演进流水线 🚀")
@@ -129,8 +129,8 @@ def cmd_auto_pilot():
     cmd_update_data()
     
     logger.info("[Step 3/4] 启动 Optuna 每日自适应参数微调 (Fast Walk-Forward)...")
-    from quant.config import CONF
-    from quant.optimizer import run_optimization, save_results, apply_best_params
+    from quant.infra.config import CONF
+    from quant.app.optimizer import run_optimization, save_results, apply_best_params
     
     # Fast daily evolution
     CONF.optimizer.max_rounds = 3
@@ -154,7 +154,7 @@ def cmd_auto_pilot():
 
 def _scan_single(args):
     code, target_date = args
-    from quant.backtester import scan_today_signal
+    from quant.app.backtester import scan_today_signal
     try:
         return scan_today_signal(code, target_date=target_date)
     except Exception:
@@ -162,7 +162,7 @@ def _scan_single(args):
 
 def cmd_scan_date(args: argparse.Namespace):
     from concurrent.futures import ProcessPoolExecutor, as_completed
-    from quant.config import CONF
+    from quant.infra.config import CONF
     
     target_date = args.date
     logger.info(f"========== 历史信号回溯扫描: {target_date} ==========")
@@ -189,12 +189,12 @@ def cmd_scan_date(args: argparse.Namespace):
                 results.append(res)
                 
     if not results:
-        logger.info(f"✅ 历史扫描完成：在 {target_date} 未发现任何满足策略要求的买入标的。")
+        logger.info(f"[OK] 历史扫描完成：在 {target_date} 未发现任何满足策略要求的买入标的。")
         return
         
     import pandas as pd
     df = pd.DataFrame(results)
-    print(f"\n✅ {target_date} 共发现 {len(results)} 只高胜率买入节点标的：")
+    print(f"\n[OK] {target_date} 共发现 {len(results)} 只高胜率买入节点标的：")
     print(df.to_string(index=False))
     
     out_file = f"historical_scan_{target_date.replace('-', '')}.csv"

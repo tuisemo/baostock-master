@@ -167,12 +167,12 @@ custom_css = """
 }
 """
 
-from quant.stock_filter import update_stock_list
-from quant.data_updater import update_history_data
-from quant.analyzer import analyze_all_stocks, classify_market_state
-from quant.config import CONF
-from quant.backtester import run_backtest, scan_today_signal
-from quant.logger import logger
+from quant.data.stock_filter import update_stock_list
+from quant.data.data_updater import update_history_data
+from quant.features.features.analyzer import analyze_all_stocks, classify_market_state
+from quant.infra.config import CONF
+from quant.app.backtester import run_backtest, scan_today_signal
+from quant.infra.logger import logger
 
 
 def ui_update_list():
@@ -484,8 +484,8 @@ def ui_scan_historical_date(target_date: str):
 def ui_run_optimization(rounds, samples, objective, stratify_mode):
     yield '🚀 开始多轮迭代优化...这可能需要较长时间，请耐心等待。', None
     try:
-        from quant.config import CONF
-        from quant.optimizer import run_optimization, save_results, sample_stock_codes
+        from quant.infra.config import CONF
+        from quant.app.optimizer import run_optimization, save_results, sample_stock_codes
 
         if rounds:
             CONF.optimizer.max_rounds = rounds
@@ -553,7 +553,7 @@ def ui_auto_pilot():
         
     yield "✅ 数据更新拉取完成。\n[3/5] 启动 Optuna 贝叶斯参数微调 + 分层采样优化...", None, pd.DataFrame()
     try:
-        from quant.optimizer import run_optimization, save_results, apply_best_params
+        from quant.app.optimizer import run_optimization, save_results, apply_best_params
         CONF.optimizer.max_rounds = 3
         CONF.optimizer.sample_count = 100
         result = run_optimization()

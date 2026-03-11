@@ -21,10 +21,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pandas as pd
 import numpy as np
-from quant.config import CONF
-from quant.logger import logger
-from quant.strategy_params import StrategyParams
-from quant.trainer import build_dataset, train_model, balanced_temporal_split
+from quant.infra.config import CONF
+from quant.infra.logger import logger
+from quant.core.strategy_params import StrategyParams
+from quant.core.trainer import build_dataset, train_model, balanced_temporal_split
 
 
 def validate_data_leakage_fix():
@@ -41,7 +41,7 @@ def validate_data_leakage_fix():
         logger.error("没有找到数据文件")
         return False
 
-    from quant.strategy_params import StrategyParams
+    from quant.core.strategy_params import StrategyParams
     p = StrategyParams()
 
     # 构建小数据集用于验证
@@ -92,7 +92,7 @@ def validate_focal_loss():
     logger.info("=" * 60)
 
     try:
-        from quant.trainer import focal_loss_lgb, focal_loss_eval
+        from quant.core.trainer import focal_loss_lgb, focal_loss_eval
         logger.info("✓ Focal Loss函数导入成功")
 
         # 测试Focal Loss函数

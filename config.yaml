@@ -32,11 +32,11 @@ analyzer:
   atr_multiplier: 3.0
 strategy:
   vol_up_ratio: 1.55
-  rsi_cooled_max: 55
-  pullback_ma_tolerance: 1.005
+  rsi_cooled_max: 50
+  pullback_ma_tolerance: 1.015
   negative_bias_pct: 0.86
   rsi_oversold: 30
-  trail_atr_mult: 2.3
+  trail_atr_mult: 1.5
   take_profit_pct: 0.08
   breakeven_trigger: 0.04
   breakeven_buffer: 1.007
@@ -45,6 +45,56 @@ strategy:
   w_vol_up: 3.0
   w_rsi_rebound: 2.0
   w_green_candle: 3.0
+
+  # Signal quality parameters
+  min_hold_days: 2
+  signal_cooldown_days: 3
+
+  # Dynamic AI thresholds for different market states - BALANCED for quality vs quantity
+  market_state_thresholds:
+    strong_bull:
+      ai_threshold: 0.35
+      position_mult: 1.3
+      stop_mult: 2.5
+      trailing_mult: 2.5
+      profit_mult: 1.3
+    weak_bull:
+      ai_threshold: 0.40
+      position_mult: 1.1
+      stop_mult: 2.2
+      trailing_mult: 2.0
+      profit_mult: 1.1
+    sideways:
+      ai_threshold: 0.45
+      position_mult: 1.0
+      stop_mult: 2.0
+      trailing_mult: 1.8
+      profit_mult: 1.0
+    weak_bear:
+      ai_threshold: 0.55
+      position_mult: 0.8
+      stop_mult: 1.6
+      trailing_mult: 1.6
+      profit_mult: 0.8
+    strong_bear:
+      ai_threshold: 0.65
+      position_mult: 0.5
+      stop_mult: 1.4
+      trailing_mult: 1.0
+      profit_mult: 0.5
+  
+  # Signal fusion weights
+  signal_fusion_weights:
+    trend: 0.3
+    reversion: 0.3
+    volume: 0.2
+    pattern: 0.2
+  
+  # Multi-timeframe confirmation
+  multi_timeframe:
+    enabled: true
+    weekly_confirmation: true
+    alignment_threshold: 0.5  # Minimum timeframe alignment score
 optimizer:
   sample_count: 200
   max_rounds: 10
@@ -55,3 +105,82 @@ optimizer:
   regularization_strength: 0.1
   walk_forward_folds: 3
   results_dir: data/optimize_results
+
+# ===== Risk Management Configuration (Milestone 5.2) =====
+risk:
+  # VaR Configuration
+  var:
+    enabled: true
+    confidence_level: 0.95  # 95% VaR
+    max_var_95: 0.05  # Max 5% VaR
+    history_window: 252  # 1 year of data
+    calculation_method: historical  # historical, parametric, cornish_fisher
+    breach_threshold: 3  # Alert after 3 consecutive breaches
+
+  # Drawdown Protection
+  drawdown:
+    max_drawdown_pct: 0.15  # Max 15% drawdown
+    adjustment_levels:
+      - level: 0.05
+        position_factor: 1.0  # 0-5% DD: full position
+      - level: 0.10
+        position_factor: 0.6  # 5-10% DD: reduce to 60%
+      - level: 0.15
+        position_factor: 0.3  # 10-15% DD: reduce to 30%
+      - level: 1.00
+        position_factor: 0.0  # >15% DD: stop trading
+    enable_gradual_recovery: true  # Gradually increase position on recovery
+
+  # Slippage Model Configuration
+  slippage:
+    enabled: true
+    base_slippage:
+      large: 0.0005  # Large cap: 0.05%
+      mid: 0.001     # Mid cap: 0.1%
+      small: 0.002   # Small cap: 0.2%
+      micro: 0.005   # Micro cap: 0.5%
+    volume_impact_factor: 0.0001
+    max_volume_impact: 0.002
+    market_cap_thresholds:
+      large: 100   # > 100B CNY
+      mid: 30      # 30B - 100B CNY
+      small: 5     # 5B - 30B CNY
+      micro: 0     # < 5B CNY
+
+  # Correlation Risk
+  correlation:
+    max_correlation: 0.7  # Base max correlation
+    lookback_window: 60   # Days for correlation calc
+    min_periods: 30       # Minimum data required
+    dynamic_adjustment: true  # Enable dynamic threshold
+    correlation_regime_thresholds:
+      high: 0.7
+      elevated: 0.5
+
+  # Monte Carlo Simulation
+  monte_carlo:
+    enabled: true
+    n_paths: 1000         # Number of simulation paths
+    block_size: 20        # Block size for bootstrap
+    confidence_levels: [0.95, 0.99]
+    stress_scenarios:
+      - market_crash
+      - bear_market
+      - high_volatility
+      - liquidity_crisis
+
+  # Portfolio Risk Limits
+  portfolio:
+    max_sector_weight: 0.30  # Max 30% per sector
+    max_single_position: 0.25  # Max 25% per stock
+    target_portfolio_volatility: 0.15  # Target 15% annual vol
+    max_positions: 10  # Max number of positions
+
+# ===== Risk Report Generation =====
+risk_report:
+  enabled: true
+  output_dir: data/risk_reports
+  report_frequency: daily
+  include_var_trend: true
+  include_correlation_heatmap: true
+  include_stress_test: true

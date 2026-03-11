@@ -16,18 +16,18 @@ from pathlib import Path
 project_dir = Path(__file__).parent
 sys.path.insert(0, str(project_dir))
 
-from quant.config import CONF
-from quant.logger import logger
-from quant.performance_monitor import PerformanceMonitor, OptimizationValidator
-from quant.data_updater import update_history_data
-from quant.stock_filter import update_stock_list
-from quant.features import extract_features
-from quant.features_enhanced import extract_all_features
-from quant.trainer import load_processed_dataset
-from quant.ensemble_trainer import MultiModelEnsemble
-from quant.backtester_optimized import batch_backtest_optimized
-from quant.optimizer_enhanced import run_enhanced_optimization
-from quant.strategy_params import StrategyParams
+from quant.infra.config import CONF
+from quant.infra.logger import logger
+from quant.infra.performance_monitor import PerformanceMonitor, OptimizationValidator
+from quant.data.data_updater import update_history_data
+from quant.data.stock_filter import update_stock_list
+from quant.features.features import extract_features
+from quant.features.features_enhanced import extract_all_features
+from quant.core.trainer import load_processed_dataset
+from quant.core.ensemble_trainer import MultiModelEnsemble
+from quant.app.backtester_optimized import batch_backtest_optimized
+from quant.app.optimizer_enhanced import run_enhanced_optimization
+from quant.core.strategy_params import StrategyParams
 
 
 class AutomationRunner:
@@ -174,7 +174,7 @@ class AutomationRunner:
                 
                 # 计算技术指标
                 params = StrategyParams()
-                from quant.analyzer import calculate_indicators
+                from quant.features.features.analyzer import calculate_indicators
                 df = calculate_indicators(df, params)
                 
                 # 提取所有特征（基础 + 增强）
