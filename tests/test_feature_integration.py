@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import os
 import tempfile
+from pathlib import Path
 
 
 def test_feature_imports():
@@ -95,11 +96,11 @@ def test_cache_utils_init():
     with tempfile.TemporaryDirectory() as tmpdir:
         # Test FeatureCache
         cache = FeatureCache(cache_dir=tmpdir)
-        assert cache.cache_dir == tmpdir
+        assert cache.cache_dir == Path(tmpdir)
 
         # Test MultiLevelCache
         ml_cache = MultiLevelCache(cache_dir=tmpdir)
-        assert ml_cache.cache_dir == tmpdir
+        assert ml_cache.l2_disk.cache_dir == Path(tmpdir)
 
 
 def test_cache_hit_miss():
@@ -109,22 +110,23 @@ def test_cache_hit_miss():
     with tempfile.TemporaryDirectory() as tmpdir:
         cache = FeatureCache(cache_dir=tmpdir)
 
-        # Create test data
-        data = {'test': 'data', 'value': 123}
-        key = 'test_key'
+        stock_code = "test_stock"
 
         # Initially should be a miss
-        assert not cache.exists(key)
+        assert cache.get(stock_code) is None
 
-        # Save data
-        cache.save(key, data)
+        # Save feature dataframe
+        df = pd.DataFrame(
+            {
+                "feat_x": np.arange(5, dtype=np.float32),
+                "feat_y": (np.arange(5, dtype=np.float32) * 2.0),
+            }
+        )
+        assert cache.set(stock_code, df) is True
 
-        # Now should exist
-        assert cache.exists(key)
-
-        # Load data
-        loaded = cache.load(key)
-        assert loaded == data
+        loaded = cache.get(stock_code)
+        assert loaded is not None
+        assert loaded.equals(df)
 
 
 def test_numba_status():
@@ -133,7 +135,8 @@ def test_numba_status():
 
     status = get_numba_status()
     assert isinstance(status, dict)
-    assert 'numba_available' in status
+    assert 'available' in status
+    assert 'jit_enabled' in status
 
 
 def test_feature_memory_optimization():

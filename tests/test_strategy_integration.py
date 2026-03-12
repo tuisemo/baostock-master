@@ -40,7 +40,7 @@ def test_dynamic_params_with_thresholds():
 
     # Create base parameters
     base_params = StrategyParams(
-        ai_threshold=0.35,
+        ai_prob_threshold=0.35,
         vol_up_ratio=1.5,
         rsi_cooled_max=55
     )
@@ -49,8 +49,9 @@ def test_dynamic_params_with_thresholds():
     market_states = ['strong_bull', 'sideways_low_vol', 'strong_bear']
 
     for state in market_states:
-        adjusted = get_dynamic_params_with_thresholds(base_params, state)
-        assert adjusted is not None
+        adjusted_params, thresholds = get_dynamic_params_with_thresholds(base_params, state)
+        assert adjusted_params is not None
+        assert isinstance(thresholds, dict)
 
 
 def test_threshold_variations_by_market_state():
@@ -93,20 +94,23 @@ def test_multi_timeframe_config():
 
 def test_volatility_adjusted_stop():
     """Test volatility-adjusted stop calculation"""
-    from quant.core.adaptive_strategy import calculate_volatility_adjusted_stop
+    from quant.core.adaptive_strategy import calculate_volatility_adjusted_stop, get_market_thresholds
 
     base_stop = 2.0
-    atr_current = 2.5
     atr_history = [2.0] * 25
     market_state = 'sideways_low_vol'
+    base_mult = get_market_thresholds(market_state)["stop_mult"]
 
-    adjusted = calculate_volatility_adjusted_stop(
-        base_stop, atr_current, atr_history, market_state
-    )
+    # High volatility should tighten stops (smaller multiplier).
+    adjusted = calculate_volatility_adjusted_stop(base_stop, 4.0, atr_history, market_state)
 
     assert adjusted > 0
-    # High volatility should tighten stops
-    assert adjusted != base_stop or atr_current == atr_history[-1]
+    assert adjusted < base_mult
+
+    # Low volatility should widen stops slightly (larger multiplier).
+    adjusted_low = calculate_volatility_adjusted_stop(base_stop, 0.8, atr_history, market_state)
+    assert adjusted_low > 0
+    assert adjusted_low > base_mult
 
 
 def test_market_state_thresholds_config():
@@ -132,7 +136,9 @@ def test_signal_scorer():
     """Test SignalScorer initialization if available"""
     try:
         from quant.core.signal_scorer import SignalScorer
-        scorer = SignalScorer()
+        from quant.core.strategy_params import StrategyParams
+
+        scorer = SignalScorer(StrategyParams())
         assert scorer is not None
     except ImportError:
         pytest.skip("SignalScorer not available")

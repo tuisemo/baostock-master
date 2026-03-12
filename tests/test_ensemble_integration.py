@@ -96,12 +96,12 @@ def test_concept_drift_detector():
 
     detector = ConceptDriftDetector(
         window_size=100,
-        threshold=3.0,
-        min_samples=50
+        kl_threshold=0.2,
+        psi_threshold=0.3,
     )
     assert detector.window_size == 100
-    assert detector.threshold == 3.0
-    assert detector.min_samples == 50
+    assert detector.kl_threshold == 0.2
+    assert detector.psi_threshold == 0.3
 
 
 def test_ensemble_prediction_mock():
@@ -127,16 +127,20 @@ def test_ensemble_prediction_mock():
 
 def test_online_learner():
     """Test OnlineLearner initialization"""
-    from quant.core.online_learner import OnlineLearner
+    from quant.core.online_learner import OnlineLearner, ModelVersionManager
 
     with tempfile.TemporaryDirectory() as tmpdir:
+        manager = ModelVersionManager(models_dir=tmpdir)
         learner = OnlineLearner(
-            model_path=tmpdir,
-            learning_rate=0.01,
-            min_samples=100
+            version_manager=manager,
+            update_frequency="weekly",
+            min_incremental_samples=100,
+            performance_threshold=0.01,
+            enable_drift_detection=True,
         )
-        assert learner.learning_rate == 0.01
-        assert learner.min_samples == 100
+        assert learner.update_frequency == "weekly"
+        assert learner.min_incremental_samples == 100
+        assert learner.drift_detector is not None
 
 
 if __name__ == '__main__':
