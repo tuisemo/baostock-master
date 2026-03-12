@@ -7686,3 +7686,6 @@ ModuleNotFoundError: No module named 'quant.features.features.analyzer'; 'quant.
 2026-03-12 18:44:17 [INFO] quant: Running full evaluation over 3 dates...
 2026-03-12 18:44:33 [INFO] quant: Running full evaluation over 3 dates...
 2026-03-12 18:44:49 [INFO] quant: Optimization finished! Best composite score: -0.0800
+2026-03-12 18:49:48 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:49:48 [INFO] quant: 批量回测: 5 只股票 (seed=42)
+2026-03-12 18:49:50 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
