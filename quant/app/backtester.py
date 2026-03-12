@@ -8,7 +8,7 @@ import pandas as pd
 from backtesting import Backtest, Strategy
 from tqdm import tqdm
 
-from quant.features.features.analyzer import calculate_indicators, classify_market_state_enhanced as classify_market_state
+from quant.features.analyzer import calculate_indicators, classify_market_state_enhanced as classify_market_state
 from quant.core.adaptive_strategy import get_dynamic_params_v10 as get_dynamic_params
 from quant.infra.config import CONF
 from quant.infra.logger import logger
