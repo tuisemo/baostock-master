@@ -46,7 +46,13 @@ def validate_data_leakage_fix():
 
     # 构建小数据集用于验证
     logger.info("构建验证数据集...")
-    df = build_dataset(data_dir, p, n_forward_days=5, target_atr_mult=2.0, stop_loss_atr_mult=1.5)
+    df = build_dataset(
+        data_dir,
+        p,
+        n_forward_days=p.ai_forward_days,
+        target_atr_mult=p.ai_target_atr_mult,
+        stop_loss_atr_mult=p.ai_stop_loss_atr_mult,
+    )
 
     if df.empty:
         logger.error("数据集构建失败")
@@ -211,7 +217,13 @@ def train_validated_model():
 
         # 构建数据集
         logger.info("构建完整数据集...")
-        df = build_dataset(data_dir, p, n_forward_days=5, target_atr_mult=2.0, stop_loss_atr_mult=1.5)
+        df = build_dataset(
+            data_dir,
+            p,
+            n_forward_days=p.ai_forward_days,
+            target_atr_mult=p.ai_target_atr_mult,
+            stop_loss_atr_mult=p.ai_stop_loss_atr_mult,
+        )
 
         if df.empty:
             logger.error("数据集构建失败")

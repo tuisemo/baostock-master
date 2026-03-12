@@ -417,8 +417,82 @@ def get_market_index() -> pd.DataFrame | None:
     df_idx.sort_index(inplace=True)
     
     close_col = "close" if "close" in df_idx.columns else "Close"
-    df_idx["MA20"] = df_idx[close_col].rolling(window=20).mean()
-    df_idx["market_uptrend"] = df_idx[close_col] > df_idx["MA20"]
+    close_s = pd.to_numeric(df_idx[close_col], errors="coerce").astype(float)
+
+    # Base trend context
+    ma20 = close_s.rolling(window=20).mean()
+    ma60 = close_s.rolling(window=60).mean()
+    df_idx["MA20"] = ma20
+    df_idx["MA60"] = ma60
+    df_idx["market_uptrend"] = close_s > ma20
+
+    # Precompute a per-date market state to avoid look-ahead bias from "latest-only" classification.
+    try:
+        from quant.core.market_classifier import default_thresholds
+        thr = default_thresholds()
+    except Exception:
+        thr = {
+            "trend_strength_bull": 0.02,
+            "trend_strength_bear": -0.02,
+            "volatility_high": 0.025,
+            "volatility_low": 0.015,
+            "roc_strong": 0.05,
+            "volume_ratio_high": 1.5,
+        }
+
+    trend_strength = (ma20 - ma60) / ma60.replace(0, np.nan)
+    returns = close_s.pct_change()
+    volatility = returns.rolling(window=20).std()
+    roc_20 = close_s.pct_change(20)
+
+    # Momentum acceleration proxy (matches classifier's 60d window logic)
+    mom5 = close_s.pct_change(5)
+    mom5_short = mom5.rolling(window=10).mean()
+    mom5_long = mom5.shift(50).rolling(window=10).mean()
+    mom_acc = mom5_short - mom5_long
+
+    vol_col = "volume" if "volume" in df_idx.columns else ("Volume" if "Volume" in df_idx.columns else None)
+    if vol_col is not None:
+        vol_s = pd.to_numeric(df_idx[vol_col], errors="coerce").astype(float)
+        vol_ma20 = vol_s.rolling(window=20).mean()
+        volume_ratio = vol_s / vol_ma20.replace(0, np.nan)
+    else:
+        volume_ratio = pd.Series(1.0, index=df_idx.index, dtype=float)
+
+    state = pd.Series("sideways_low_vol", index=df_idx.index, dtype=object)
+
+    bull = trend_strength > float(thr.get("trend_strength_bull", 0.02))
+    bear = trend_strength < float(thr.get("trend_strength_bear", -0.02))
+    sideways = ~(bull | bear)
+
+    sideways_high_vol = sideways & (volatility > float(thr.get("volatility_high", 0.025)))
+    state[sideways_high_vol] = "sideways_high_vol"
+    state[sideways & ~sideways_high_vol] = "sideways_low_vol"
+
+    strong_bull_cond = bull & (volatility < float(thr.get("volatility_low", 0.015))) & (roc_20 > float(thr.get("roc_strong", 0.05)))
+    bull_momentum = strong_bull_cond & (mom_acc > 0.001) & (volume_ratio > float(thr.get("volume_ratio_high", 1.5)))
+    bull_volume = strong_bull_cond & ~bull_momentum & (volume_ratio > float(thr.get("volume_ratio_high", 1.5)))
+    strong_bull = strong_bull_cond & ~bull_momentum & ~bull_volume
+    weak_bull = bull & ~strong_bull_cond
+
+    state[weak_bull] = "weak_bull"
+    state[strong_bull] = "strong_bull"
+    state[bull_volume] = "bull_volume"
+    state[bull_momentum] = "bull_momentum"
+
+    strong_bear_cond = bear & ((trend_strength < float(thr.get("trend_strength_bear", -0.02))) | ((trend_strength < -0.01) & (volatility > float(thr.get("volatility_high", 0.025)))))
+    bear_panic = strong_bear_cond & (volume_ratio > float(thr.get("volume_ratio_high", 1.5))) & (volatility > 0.03)
+    bear_momentum = strong_bear_cond & ~bear_panic & (mom_acc < -0.001)
+    strong_bear = strong_bear_cond & ~bear_panic & ~bear_momentum
+    weak_bear = bear & ~strong_bear_cond
+
+    state[weak_bear] = "weak_bear"
+    state[strong_bear] = "strong_bear"
+    state[bear_momentum] = "bear_momentum"
+    state[bear_panic] = "bear_panic"
+
+    df_idx["market_state"] = state
+    df_idx["market_volatility"] = volatility
     
     _MARKET_INDEX_CACHE = df_idx
     return _MARKET_INDEX_CACHE
@@ -461,6 +535,12 @@ def evaluate_buy_signals(
     Returns:
         Tuple of (signal_pullback, signal_rebound, signal_trend_breakout, signal_details)
     """
+    # Optional multi-timeframe controls from config.yaml
+    mt_cfg = getattr(getattr(CONF, "strategy", None), "multi_timeframe", {}) or {}
+    mt_enabled = bool(mt_cfg.get("enabled", True)) if isinstance(mt_cfg, dict) else True
+    weekly_enabled = bool(mt_cfg.get("weekly_confirmation", True)) if isinstance(mt_cfg, dict) else True
+    alignment_threshold = float(mt_cfg.get("alignment_threshold", 0.0)) if isinstance(mt_cfg, dict) else 0.0
+
     macd_golden_cross = macd_h_2 <= 0 and macd_h_1 > 0
     is_green_candle = price > open_p
 
@@ -475,7 +555,7 @@ def evaluate_buy_signals(
 
     # === Multi-Timeframe Confirmation ===
     timeframe_alignment_score = 1.0  # Base score
-    if weekly_data is not None:
+    if mt_enabled and weekly_enabled and weekly_data is not None:
         weekly_uptrend = weekly_data.get('uptrend', True)
         weekly_rsi = weekly_data.get('rsi', 50)
         weekly_macd_positive = weekly_data.get('macd_positive', True)
@@ -491,6 +571,10 @@ def evaluate_buy_signals(
         # Penalize if weekly is strongly bearish
         if not weekly_uptrend and weekly_rsi < 40:
             timeframe_alignment_score -= 0.5
+
+    timeframe_block = False
+    if mt_enabled and weekly_enabled and weekly_data is not None and alignment_threshold > 0:
+        timeframe_block = timeframe_alignment_score < alignment_threshold
 
     # === 左侧交易评估 ===
     is_bb_dip = price < bb_lower_1 * p.bbands_lower_bias
@@ -555,7 +639,21 @@ def evaluate_buy_signals(
 
     # === Signal Fusion Enhancement ===
     # Weighted voting for signal strength
-    weights = {'trend': 0.3, 'reversion': 0.3, 'volume': 0.2, 'pattern': 0.2}
+    weights_cfg = getattr(getattr(CONF, "strategy", None), "signal_fusion_weights", {}) or {}
+    weights = weights_cfg if isinstance(weights_cfg, dict) and weights_cfg else {
+        "trend": 0.3,
+        "reversion": 0.3,
+        "volume": 0.2,
+        "pattern": 0.2,
+    }
+    # Fill missing keys + normalize to sum to 1
+    for k in ("trend", "reversion", "volume", "pattern"):
+        weights.setdefault(k, 0.0)
+    w_sum = float(sum(weights.values()))
+    if w_sum > 0:
+        weights = {k: float(v) / w_sum for k, v in weights.items()}
+    else:
+        weights = {"trend": 0.3, "reversion": 0.3, "volume": 0.2, "pattern": 0.2}
     composite_score = (
         trend_score * weights['trend'] +
         reversion_score * weights['reversion'] +
@@ -571,6 +669,13 @@ def evaluate_buy_signals(
     else:
         signal_strength = 'weak'
 
+    # If weekly alignment is explicitly required and fails, block the signal entirely.
+    if timeframe_block:
+        signal_pullback = False
+        signal_rebound = False
+        signal_trend_breakout = False
+        signal_strength = "weak"
+
     signal_details = {
         'trend_score': trend_score,
         'reversion_score': reversion_score,
@@ -578,6 +683,9 @@ def evaluate_buy_signals(
         'pattern_score': pattern_score,
         'composite_score': composite_score,
         'timeframe_alignment': timeframe_alignment_score,
+        'timeframe_block': timeframe_block,
+        'alignment_threshold': alignment_threshold,
+        'fusion_weights': weights,
         'signal_strength': signal_strength,
     }
 
@@ -735,21 +843,39 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
             self.current_entry_bar = -999  # Track entry bar of current position
 
             # Initialize market state
-            idx_df = get_market_index()
-            if idx_df is not None:
-                self._market_state = classify_market_state(idx_df)
-                self._dynamic_p = get_dynamic_params(self._base_p, self._market_state)
-                logger.debug(f"Market state: {self._market_state}, using dynamic params")
-            else:
-                self._dynamic_p = self._base_p
+            # Cache index data for per-bar market context (avoids look-ahead bias)
+            self._idx_df = get_market_index()
+            self._market_state = "sideways_low_vol"
+            self._dynamic_p = self._base_p
 
         def next(self):
             if pd.isna(self.sma_s[-1]) or pd.isna(self.rsi[-1]) or pd.isna(self.atr[-1]):
                 return
 
-            p = self._dynamic_p  # Use dynamic params
             price = self.data.Close[-1]
             current_bar = len(self.data.Close) - 1
+
+            # Update market context for the current bar (no look-ahead).
+            current_date = self.data.index[-1]
+            market_uptrend = True  # Default if index is unavailable
+            new_market_state = getattr(self, "_market_state", "sideways_low_vol")
+
+            idx_df = getattr(self, "_idx_df", None)
+            if idx_df is None:
+                idx_df = get_market_index()
+                self._idx_df = idx_df
+
+            if idx_df is not None:
+                idx_loc = idx_df.index.get_indexer([current_date], method="pad")[0]
+                if idx_loc != -1:
+                    market_uptrend = bool(idx_df.iloc[idx_loc].get("market_uptrend", True))
+                    new_market_state = str(idx_df.iloc[idx_loc].get("market_state", new_market_state))
+
+            if new_market_state != getattr(self, "_market_state", "sideways_low_vol"):
+                self._market_state = new_market_state
+                self._dynamic_p = get_dynamic_params(self._base_p, self._market_state)
+
+            p = self._dynamic_p  # Use dynamic params
 
             if self.position:
                 # Minimum hold days check
@@ -850,16 +976,7 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
             mom_div_1 = self.mom_div[-1] if self._has_mom_div else 0.0
 
             # ===== 大盘情绪过滤 (Market Regime Filter) =====
-            # 如果大盘在上证指数 20日均线下方，认定为熊市/调整期，彻底拒绝一切买入信号
-            current_date = self.data.index[-1]
-            market_uptrend = True  # Default True if no index found
-            idx_df = get_market_index()
-            if idx_df is not None:
-                # Use 'pad' to get the latest available market data without looking into the future
-                idx_loc = idx_df.index.get_indexer([current_date], method='pad')[0]
-                if idx_loc != -1:
-                    market_uptrend = bool(idx_df.iloc[idx_loc]["market_uptrend"])
-
+            # market_uptrend is already computed for this bar above (no look-ahead).
             # if not market_uptrend:
             #     return
             # ===============================================
@@ -934,24 +1051,28 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
             if use_ensemble:
                 # 使用集成模型获取预测和分歧度
                 feat_cols = [c for c in self.data.df.columns if c.startswith('feat_')]
-                if feat_cols:
-                    bar_idx = len(self.data.Close) - 1
-                    feat_row = self.data.df.iloc[bar_idx][feat_cols]
-                    if not feat_row.isna().any():
-                        X_pred = feat_row.values.reshape(1, -1)
-                        ensemble_proba, disagreement = get_ensemble_prediction_and_disagreement(
-                            pd.DataFrame(X_pred, columns=feat_cols)
-                        )
-                        ai_confidence = ensemble_proba
-                        ensemble_disagreement = disagreement
+                if not feat_cols:
+                    return
+                bar_idx = len(self.data.Close) - 1
+                feat_row = self.data.df.iloc[bar_idx][feat_cols]
+                if feat_row.isna().any():
+                    return
+                X_pred = feat_row.values.reshape(1, -1)
+                ensemble_proba, disagreement = get_ensemble_prediction_and_disagreement(
+                    pd.DataFrame(X_pred, columns=feat_cols)
+                )
+                ai_confidence = ensemble_proba
+                ensemble_disagreement = disagreement
             elif ai_model is not None:
                 # 使用单一AI模型
                 feat_cols = [c for c in self.data.df.columns if c.startswith('feat_')]
-                if feat_cols:
-                    bar_idx = len(self.data.Close) - 1
-                    feat_row = self.data.df.iloc[bar_idx][feat_cols]
-                    if not feat_row.isna().any():
-                        ai_confidence = float(ai_model.predict(feat_row.values.reshape(1, -1))[0])
+                if not feat_cols:
+                    return
+                bar_idx = len(self.data.Close) - 1
+                feat_row = self.data.df.iloc[bar_idx][feat_cols]
+                if feat_row.isna().any():
+                    return
+                ai_confidence = float(ai_model.predict(feat_row.values.reshape(1, -1))[0])
             
             # AI概率门控检查 - Dynamic threshold based on market state
             # Get current market state for dynamic threshold
@@ -981,7 +1102,23 @@ def create_strategy(params: StrategyParams) -> type[Strategy]:
             # 如果置信度档位是block，阻止交易
             if tier == "block":
                 return
-            
+
+            # Expected value (EV) gate (align with scan_today_signal)
+            try:
+                atr_val = float(self.atr[-1])
+            except Exception:
+                atr_val = float("nan")
+
+            if not np.isfinite(atr_val) or atr_val <= 0 or price <= 0:
+                return
+
+            target_r = (float(p.ai_target_atr_mult) * atr_val) / float(price)
+            stop_r = (float(p.ai_stop_loss_atr_mult) * atr_val) / float(price)
+            cost_r = 2.0 * (float(getattr(p, "commission_pct", 0.0)) + float(getattr(p, "slippage_pct", 0.0)))
+            ev_pct = (ai_confidence * target_r - (1.0 - ai_confidence) * stop_r - cost_r) * 100.0
+            if ev_pct < float(getattr(p, "min_expected_value_pct", 0.0)):
+                return
+             
             disagreement_str = f"{ensemble_disagreement:.3f}" if ensemble_disagreement is not None else "N/A"
             logger.debug(f"AI confidence: {ai_confidence:.3f}, tier: {tier}, "
                         f"factor: {confidence_factor:.2f}, disagreement: {disagreement_str}")
@@ -1082,15 +1219,17 @@ def run_backtest(
         return None
 
     strategy_cls = create_strategy(params)
-    # Default slippage if not configured
-    slippage = getattr(CONF.strategy, "slippage_pct", 0.002)
-    # Realistic A-share commission: 0.1% (includes Stamp Duty 0.05% + Broker 0.03% + Misc)
+    # Execution friction: Backtesting.py exposes only a single `commission` rate.
+    # We approximate slippage by folding it into commission (both are per-side rates).
+    commission = float(getattr(params, "commission_pct", 0.001))
+    slippage = float(getattr(params, "slippage_pct", 0.0))
     bt = Backtest(
         df,
         strategy_cls,
         cash=100_000,
-        commission=0.001,
+        commission=(commission + slippage),
         trade_on_close=True,
+        finalize_trades=True,
         exclusive_orders=True,
     )
     stats = bt.run()
@@ -1134,7 +1273,7 @@ def scan_today_signal(
         return None
 
     cols = _build_column_names(params)
-    required = [cols["sma_s"], cols["sma_l"], cols["macd_h"], cols["rsi"], cols["bb_lower"]]
+    required = [cols["sma_s"], cols["sma_l"], cols["macd_h"], cols["rsi"], cols["bb_lower"], cols["atr"]]
     if not all(c in df.columns for c in required):
         return None
 
@@ -1160,6 +1299,7 @@ def scan_today_signal(
     # ===== 大盘情绪过滤 (Market Regime Filter) =====
     current_date_str = row_1.get("date")
     market_uptrend = True
+    market_state = "sideways_low_vol"
     idx_df = get_market_index()
     if idx_df is not None and current_date_str is not None:
         try:
@@ -1168,6 +1308,7 @@ def scan_today_signal(
             idx_loc = idx_df.index.get_indexer([current_date_ts], method='pad')[0]
             if idx_loc != -1 and idx_loc < len(idx_df):
                 market_uptrend = bool(idx_df.iloc[idx_loc]["market_uptrend"])
+                market_state = str(idx_df.iloc[idx_loc].get("market_state", market_state))
         except Exception as e:
             logger.debug(f"Market trend check failed: {e}")
             pass
@@ -1176,18 +1317,20 @@ def scan_today_signal(
     #     return None
     # ===============================================
 
-    # Get weekly timeframe confirmation for scan_today_signal
+    # Get weekly timeframe confirmation for scan_today_signal (config-controlled)
     weekly_data = None
-    try:
-        from quant.infra.config import CONF
-        if current_date_str is not None:
+    mt_cfg = getattr(getattr(CONF, "strategy", None), "multi_timeframe", {}) or {}
+    mt_enabled = bool(mt_cfg.get("enabled", True)) if isinstance(mt_cfg, dict) else True
+    weekly_enabled = bool(mt_cfg.get("weekly_confirmation", True)) if isinstance(mt_cfg, dict) else True
+    if mt_enabled and weekly_enabled and current_date_str is not None:
+        try:
             weekly_data = get_weekly_confirmation(
                 code,
                 str(current_date_str),
                 CONF.history_data.data_dir
             )
-    except Exception:
-        weekly_data = None
+        except Exception:
+            weekly_data = None
     
     signal_pullback, signal_rebound, signal_trend_breakout, signal_details = evaluate_buy_signals(
         price=price,
@@ -1222,18 +1365,67 @@ def scan_today_signal(
     if not signal_type:
         return None
         
-    # ===== AI 模型概率门控 (Phase 8) =====
+    # ===== AI Gate + EV Filter (align with backtest entry logic) =====
     ai_model = _get_ai_model()
-    act_prob = 1.0  # 默认满算力，纯规则兜底
-    if ai_model is not None:
-        feat_cols = [c for c in df.columns if c.startswith('feat_')]
-        if feat_cols:
-            feat_row = df.iloc[-1][feat_cols]
-            # 只有当所有特征都不是 NA 的时候才进行推断
-            if not feat_row.isna().any():
-                act_prob = float(ai_model.predict(feat_row.values.reshape(1, -1))[0])
-                if act_prob < getattr(params, 'ai_prob_threshold', 0.35):
-                    return None  # AI 预测未来不佳，残酷否决 (对齐回测逻辑)
+    ensemble_model = _get_ensemble_model()
+    use_ensemble = ensemble_model is not None
+
+    model_present = use_ensemble or (ai_model is not None)
+    ai_confidence = 0.5
+    ensemble_disagreement = None
+    ai_model_type = "ensemble" if use_ensemble else ("lgbm" if ai_model is not None else "rule")
+
+    feat_cols = [c for c in df.columns if c.startswith("feat_")]
+    if model_present:
+        if not feat_cols:
+            return None
+        feat_row = df.iloc[-1][feat_cols]
+        if feat_row.isna().any():
+            return None
+        if use_ensemble:
+            X_pred = feat_row.values.reshape(1, -1)
+            ai_confidence, ensemble_disagreement = get_ensemble_prediction_and_disagreement(
+                pd.DataFrame(X_pred, columns=feat_cols)
+            )
+        elif ai_model is not None:
+            ai_confidence = float(ai_model.predict(feat_row.values.reshape(1, -1))[0])
+
+    # Dynamic AI threshold based on market state
+    try:
+        ai_thresh = get_dynamic_ai_threshold(
+            market_state=market_state,
+            base_threshold=params.ai_prob_threshold,
+            volatility_regime="normal",
+        )
+    except Exception:
+        ai_thresh = params.ai_prob_threshold
+
+    if ai_confidence < ai_thresh:
+        return None
+
+    confidence_factor, tier = get_tiered_confidence_factor(
+        ai_confidence=ai_confidence,
+        ensemble_disagreement=ensemble_disagreement,
+        use_ensemble=use_ensemble,
+    )
+    if tier == "block":
+        return None
+
+    # Expected value (EV) gate (percent)
+    atr_raw = row_1[cols["atr"]]
+    if pd.isna(atr_raw) or pd.isna(price) or price <= 0:
+        return None
+    atr_val = float(atr_raw)
+    if np.isnan(atr_val) or atr_val <= 0:
+        return None
+
+    target_r = (params.ai_target_atr_mult * atr_val) / float(price)
+    stop_r = (params.ai_stop_loss_atr_mult * atr_val) / float(price)
+    cost_r = 2.0 * (params.commission_pct + params.slippage_pct)
+    ev_pct = (ai_confidence * target_r - (1.0 - ai_confidence) * stop_r - cost_r) * 100.0
+
+    if ev_pct < params.min_expected_value_pct:
+        return None
     # ============================================
 
     # Calculate extra fields for analyzer compatibility (Sector rotation / Ranking)
@@ -1251,17 +1443,29 @@ def scan_today_signal(
     
     signal_strength = signal_details.get('signal_strength', 'weak')
 
+    buy_score = float(total_score) * float(ai_confidence) * float(confidence_factor)
+
     return {
         "code": code,
         "date": str(row_1["date"]).split(" ")[0] if "date" in row_1 else "",
         "close": round(float(price), 2),
         "total_score": round(total_score, 3),
+        "buy_score": round(buy_score, 4),
         "signal_strength": signal_strength,
         "signal_type": signal_type,
         "rsi": round(float(rsi_val), 2),
         "mom_20": round(float(mom_20), 4),
         "volume_ratio": round(float(vol_1 / vol_2) if vol_2 > 0 else 0.0, 2),
-        "ai_prob": round(act_prob, 4),
+        "ai_prob": round(float(ai_confidence), 4),
+        "ai_threshold": round(float(ai_thresh), 4),
+        "ai_tier": tier,
+        "ensemble_disagreement": round(float(ensemble_disagreement), 4) if ensemble_disagreement is not None else None,
+        "market_state": market_state,
+        "market_uptrend": bool(market_uptrend),
+        "atr": round(float(atr_val), 4),
+        "atr_pct": round(float(atr_val / float(price) * 100.0), 3),
+        "expected_value_pct": round(float(ev_pct), 3),
+        "ai_model_type": ai_model_type,
     }
 
 

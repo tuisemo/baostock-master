@@ -8,8 +8,8 @@ from typing import Optional, Dict, List, Iterator
 import gc
 import mmap
 
-from quant.config import CONF
-from quant.logger import logger
+from quant.infra.config import CONF
+from quant.infra.logger import logger
 
 
 # =============================================================================

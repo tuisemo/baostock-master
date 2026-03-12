@@ -46,6 +46,10 @@ ENHANCED_CORE_PARAM_SPACE: Dict[str, Tuple[float, float, float]] = {
     
     # === AI 门控（1 维）===
     "ai_prob_threshold": (0.1, 0.5, 0.05),
+
+    # === EV 门控（1 维）===
+    # 单位: %。0 表示至少非负期望值，越高越保守、信号更少但更“硬”。
+    "min_expected_value_pct": (0.0, 2.0, 0.25),
     
     # === 仓位管理（1 维）===
     "position_size": (0.05, 0.20, 0.01),

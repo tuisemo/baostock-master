@@ -335,7 +335,9 @@ def analyze_all_stocks() -> None:
         sector_signals = calculate_sector_rotation_signals(res_df)
         res_df = pd.merge(res_df, sector_signals, on='code', how='left')
             
-        res_df = res_df.sort_values("total_score", ascending=False)
+        # Prefer buy_score (rule_score * ai_prob * confidence) when available
+        sort_col = "buy_score" if "buy_score" in res_df.columns else "total_score"
+        res_df = res_df.sort_values(sort_col, ascending=False)
 
         date_str = datetime.now().strftime("%Y%m%d")
         out_filename = f"selected_stocks_{date_str}.csv"

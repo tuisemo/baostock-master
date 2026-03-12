@@ -1,289 +1,305 @@
-import argparse
+import hashlib
 import json
 import os
 import random
-from datetime import datetime, timedelta
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional
 
 import numpy as np
 import optuna
 import pandas as pd
 from tqdm import tqdm
 
-from quant.app.backtester import run_backtest
+from quant.app.backtester import scan_today_signal
+from quant.app.optimizer_enhanced import ENHANCED_CORE_PARAM_SPACE
 from quant.core.strategy_params import StrategyParams
 from quant.infra.config import CONF
 from quant.infra.logger import logger
-from quant.app.optimizer_enhanced import ENHANCED_CORE_PARAM_SPACE
+
+
+def _stable_int_seed(text: str) -> int:
+    # Python 内置 hash() 会被随机化，不能用于可复现实验
+    return int(hashlib.md5(text.encode("utf-8")).hexdigest()[:8], 16)
 
 
 class ValidationPipeline:
     """
     闭环验证与调优管道
-    用于严格的样本外历史回溯，支持多日期截面选股、持仓模拟和结果反馈。
+
+    设计原则:
+    1) 选股信号必须复用 scan_today_signal，避免“训练/验证/实盘”三套逻辑漂移。
+    2) 验证侧只评估“在 target_date 产生的买点”，不允许目标日期之后再入场，避免偷看未来。
+    3) 通过简化前瞻模拟(止损/止盈 + 持有期)评估收益与回撤，并供 Optuna 做参数搜索。
     """
-    def __init__(self, validation_dates: List[str], data_dir: str = None):
-        """
-        Args:
-            validation_dates: 样本外测试日期列表 (YYYY-MM-DD)
-            data_dir: 历史数据目录，默认从 config 拉取
-        """
+
+    def __init__(
+        self,
+        validation_dates: List[str],
+        data_dir: str | None = None,
+        sample_size: int = 200,
+        max_trades_per_day: int = 10,
+    ):
         self.validation_dates = sorted(validation_dates)
         self.data_dir = data_dir or CONF.history_data.data_dir
+        self.sample_size = int(sample_size)
+        self.max_trades_per_day = int(max_trades_per_day)
+
         self.all_codes = self._get_active_codes()
-        self._opt_fixed_params = {}
-        logger.info(f"Initialized ValidationPipeline with {len(self.validation_dates)} dates and {len(self.all_codes)} stocks.")
+        self._opt_fixed_params: Dict = {}
+        self._sample_cache: Dict[str, List[str]] = {}
+
+        logger.info(
+            f"Initialized ValidationPipeline with {len(self.validation_dates)} dates and "
+            f"{len(self.all_codes)} codes. sample_size={self.sample_size}, "
+            f"max_trades_per_day={self.max_trades_per_day}"
+        )
 
     def _get_active_codes(self) -> List[str]:
-        # 简单读取目录下的标的
         if not os.path.exists(self.data_dir):
             return []
-        files = [f for f in os.listdir(self.data_dir) if f.endswith(".csv")]
-        return [f[:-4] for f in files]
 
-    def _truncate_and_simulate_signals(self, target_date: str, params: StrategyParams) -> List[str]:
-        """
-        模拟在 target_date 当天复盘，截断未来数据，生成买入信号。
-        使用真实的指标计算和 SignalScorer 打分机制。
-        """
-        logger.debug(f"[Simulation] Generating signals for cross-section at {target_date}...")
-        
-        target_dt = pd.to_datetime(target_date)
-        signals = []
-        
-        from quant.features.analyzer import calculate_indicators
-        from quant.core.signal_scorer import SignalScorer, CrossSectionalRanker
-        
-        scorer = SignalScorer(params)
-        
-        # 为了提高回测速度，应该使用多进程或者采样。这里为了精准验证，遍历过滤后的票池
-        # 为了不让单日复盘太慢，我们暂时随机抽取200只股票进行打盘（如果总数很大）
-        rng = random.Random(hash(target_date + str(params.to_dict())))
-        sample_size = min(200, len(self.all_codes))
-        sampled_codes = rng.sample(self.all_codes, sample_size)
-        
-        for code in sampled_codes:
-            csv_path = os.path.join(self.data_dir, f"{code}.csv")
-            if not os.path.exists(csv_path):
+        codes: List[str] = []
+        for f in os.listdir(self.data_dir):
+            if not f.endswith(".csv"):
                 continue
-                
+            if f in {"stock-list.csv", "sh.000001.csv"}:
+                continue
+            codes.append(f[:-4])
+        return sorted(codes)
+
+    def _sample_codes_for_date(self, target_date: str) -> List[str]:
+        cached = self._sample_cache.get(target_date)
+        if cached is not None:
+            return cached
+
+        if not self.all_codes:
+            self._sample_cache[target_date] = []
+            return []
+
+        k = min(self.sample_size, len(self.all_codes))
+        rng = random.Random(_stable_int_seed(f"sample::{target_date}"))
+        sampled = rng.sample(self.all_codes, k)
+        self._sample_cache[target_date] = sampled
+        return sampled
+
+    def _scan_cross_section(self, target_date: str, params: StrategyParams) -> List[dict]:
+        """
+        在 target_date 截面上运行真实选股逻辑(scan_today_signal)，返回按 buy_score 排序的信号列表。
+        """
+        codes = self._sample_codes_for_date(target_date)
+        if not codes:
+            return []
+
+        signals: List[dict] = []
+        for code in codes:
             try:
-                # 1. 读取并截断数据
-                df = pd.read_csv(csv_path)
-                df['date'] = pd.to_datetime(df['date'])
-                df = df[df['date'] <= target_dt].copy()
-                
-                # 需要足够的历史数据预热指标 (例如 MA60, ATR 等)
-                if len(df) < 100:
-                    continue
-                    
-                # 2. 计算指标
-                df = calculate_indicators(df, params)
-                
-                if df.empty or len(df) < 2:
-                    continue
-                    
-                # 3. 提取 T 日（最后一行）和 T-1 日（倒数第二行）的特征
-                row_1 = df.iloc[-1]
-                row_2 = df.iloc[-2]
-                
-                # 跳过停牌或无交易的数据
-                if pd.isna(row_1.get('close')) or pd.isna(row_1.get(f'SMA_{params.ma_short}')):
-                    continue
-                
-                price = row_1['close']
-                
-                # 重构 backtester.evaluate_buy_signals 的核心门控逻辑
-                sma_s_1 = row_1[f'SMA_{params.ma_short}']
-                sma_l_1 = row_1[f'SMA_{params.ma_long}']
-                macd_h_1 = row_1[f'MACDh_{params.macd_fast}_{params.macd_slow}_{params.macd_signal}']
-                macd_h_2 = row_2[f'MACDh_{params.macd_fast}_{params.macd_slow}_{params.macd_signal}']
-                rsi_1 = row_1[f'RSI_{params.rsi_length}']
-                bb_lower_1 = row_1[f'BBL_{params.bbands_length}_{params.bbands_std}']
-                vol_1 = row_1['volume']
-                vol_2 = row_2['volume']
-                
-                # 预判形态门控
-                is_bb_dip = price < bb_lower_1 * params.bbands_lower_bias
-                is_rsi_dip = rsi_1 < params.rsi_oversold_extreme if hasattr(params, 'rsi_oversold_extreme') else rsi_1 < 20
-                is_above_ma = price > sma_s_1
-                
-                # 在真实回测里应该调用 evaluate_buy_signals，或者让 scorer 去算
-                # 这里为了适配 scorer 的接口：
-                signal_pullback = is_bb_dip
-                signal_rebound = is_rsi_dip
-                signal_breakout = is_above_ma and rsi_1 < params.rsi_cooled_max if hasattr(params, 'rsi_cooled_max') else is_above_ma and rsi_1 < 70
-                
-                # 4. 利用 SignalScorer 打分
-                score = scorer.calculate_signal_score(
-                    signal_pullback=signal_pullback,
-                    signal_rebound=signal_rebound,
-                    signal_breakout=signal_breakout,
-                    price=price,
-                    open_p=row_1['open'],
-                    low_p=row_1['low'],
-                    sma_l_1=sma_l_1,
-                    sma_s_1=sma_s_1,
-                    macd_h_1=macd_h_1,
-                    macd_h_2=macd_h_2,
-                    rsi_1=rsi_1,
-                    vol_1=vol_1,
-                    vol_2=vol_2,
-                    ai_prob=0.5  # 为了提速，闭环初期可以 mock ai probability
-                )
-                
-                # 如果符合入场的最基本条件 (质量评级不是 poor)
-                if score.quality_rating not in ["poor", "weak"]:
-                    # 后续也可以把 df_idx 的大盘过滤加上，这里保持信号层面过滤
-                    signals.append((code, score))
-                    
+                sig = scan_today_signal(code, params=params, target_date=target_date)
+                if sig:
+                    signals.append(sig)
             except Exception as e:
-                logger.debug(f"Trancation simulation failed for {code}: {e}")
-                
-        # 5. 横截面排名，选出 Top N
-        ranker = CrossSectionalRanker(top_n=5)  # 假定每天最多只开5单
-        ranked = ranker.rank_signals(signals)
-        
-        buy_list = [code for code, _ in ranked]
-        return buy_list
+                logger.debug(f"[Validation] scan failed: {code} @ {target_date}: {e}")
+                continue
+
+        if not signals:
+            return []
+
+        signals.sort(key=lambda d: float(d.get("buy_score", d.get("total_score", 0.0))), reverse=True)
+        return signals[: self.max_trades_per_day]
+
+    def _simulate_forward_trade(
+        self,
+        code: str,
+        target_date: str,
+        entry_atr: float,
+        params: StrategyParams,
+    ) -> Optional[Dict]:
+        """
+        对“在 target_date 收盘买入”的交易做简化前瞻模拟:
+        - 止损/止盈: ai_stop_loss_atr_mult / ai_target_atr_mult
+        - 持有期: min(max_hold_days, ai_forward_days)
+        - 同一天同时触及止损/止盈: 悲观假设先触发止损
+        """
+        csv_path = os.path.join(self.data_dir, f"{code}.csv")
+        if not os.path.exists(csv_path):
+            return None
+
+        df = pd.read_csv(csv_path)
+        if df.empty or "date" not in df.columns:
+            return None
+
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.sort_values("date").reset_index(drop=True)
+
+        target_dt = pd.to_datetime(target_date)
+        hist = df[df["date"] <= target_dt]
+        if hist.empty:
+            return None
+
+        entry_pos = int(hist.index[-1])
+        entry_row = df.iloc[entry_pos]
+
+        entry_price = float(entry_row.get("close", np.nan))
+        if not np.isfinite(entry_price) or entry_price <= 0:
+            return None
+
+        atr = float(entry_atr) if entry_atr is not None else np.nan
+        if not np.isfinite(atr) or atr <= 0:
+            return None
+
+        hold_days = int(getattr(params, "ai_forward_days", 5))
+        max_hold_days = int(getattr(params, "max_hold_days", hold_days))
+        hold_days = max(1, min(hold_days, max_hold_days))
+
+        stop_px = entry_price - float(params.ai_stop_loss_atr_mult) * atr
+        target_px = entry_price + float(params.ai_target_atr_mult) * atr
+
+        worst_low = entry_price
+
+        exit_price = entry_price
+        exit_reason = "timeout"
+        exit_dt = entry_row["date"]
+
+        last_pos = min(len(df) - 1, entry_pos + hold_days)
+
+        for pos in range(entry_pos + 1, last_pos + 1):
+            r = df.iloc[pos]
+            day_low = float(r.get("low", np.nan))
+            day_high = float(r.get("high", np.nan))
+
+            if np.isfinite(day_low):
+                worst_low = min(worst_low, day_low)
+
+            if np.isfinite(day_low) and day_low <= stop_px:
+                exit_price = stop_px
+                exit_reason = "stop"
+                exit_dt = r["date"]
+                break
+
+            if np.isfinite(day_high) and day_high >= target_px:
+                exit_price = target_px
+                exit_reason = "target"
+                exit_dt = r["date"]
+                break
+
+        if exit_reason == "timeout":
+            r = df.iloc[last_pos]
+            exit_dt = r["date"]
+            exit_price = float(r.get("close", np.nan))
+            if not np.isfinite(exit_price) or exit_price <= 0:
+                return None
+
+        gross_ret_pct = (exit_price - entry_price) / entry_price * 100.0
+
+        commission = float(getattr(params, "commission_pct", 0.0))
+        slippage = float(getattr(params, "slippage_pct", 0.0))
+        cost_pct = 2.0 * (commission + slippage) * 100.0
+        net_ret_pct = gross_ret_pct - cost_pct
+
+        max_drawdown_pct = (worst_low - entry_price) / entry_price * 100.0
+
+        return {
+            "code": code,
+            "entry_date": entry_row["date"].strftime("%Y-%m-%d"),
+            "exit_date": exit_dt.strftime("%Y-%m-%d"),
+            "exit_reason": exit_reason,
+            "return_pct": float(net_ret_pct),
+            "max_drawdown": float(max_drawdown_pct),
+        }
 
     def run_single_date_evaluation(self, target_date: str, params: StrategyParams) -> Dict:
-        """
-        评估单个验证日的表现：选股 -> 虚拟持仓 -> 平仓结算
-        """
-        # 1. 获取选股清单
-        buy_list = self._truncate_and_simulate_signals(target_date, params)
-        if not buy_list:
+        selected_signals = self._scan_cross_section(target_date, params)
+        if not selected_signals:
             return {"date": target_date, "trades": 0, "win_rate": 0.0, "avg_pnl": 0.0, "max_drawdown": 0.0}
-        
-        # 2. 从 T 日开始向后回测（持有期模拟）
-        # backtest 引擎已经支持 start_date 和 end_date，我们可以将 end_date 设为 target_date 的 N 天后
-        # 但我们更想要的是让它自然触发止损止盈或时间衰减
-        
-        # 将 target_date 转换为 datetime 并加上一个极宽的缓冲期 (例如 30 天) 供真实出场逻辑触发
-        try:
-            target_dt = datetime.strptime(target_date, "%Y-%m-%d")
-            sim_end_dt = target_dt + timedelta(days=40)
-            sim_end_date = sim_end_dt.strftime("%Y-%m-%d")
-        except ValueError:
-            logger.error(f"Invalid date format: {target_date}")
-            return {}
 
-        results = []
-        for code in buy_list:
-            # 使用增量回测机制仅模拟这几天
-            # 注意：实际底层回测库 backtesting.py 可能会因为数据量太少（缺乏指标预热）报错
-            # 改进：我们通常传入从 T-200 到 T+40 的数据片段给底层回测器，但在 T 日才允许产生 entry signal.
-            # 为了框架可用，这里假设回测引擎自身能处理 start_date
-            res = run_backtest(code, params, start_date=target_date, end_date=sim_end_date)
-            if res:
-                bt, stats = res
-                results.append({
-                    "code": code,
-                    "return_pct": stats.get("Return [%]", 0.0),
-                    "win_rate": stats.get("Win Rate [%]", 0.0),
-                    "max_drawdown": stats.get("Max. Drawdown [%]", 0.0),
-                    "trades": stats.get("# Trades", 0)
-                })
-        
-        # 3. 汇总当天买入的一篮子个股
+        results: List[Dict] = []
+        for sig in selected_signals:
+            code = str(sig.get("code"))
+            atr = sig.get("atr")
+            try:
+                out = self._simulate_forward_trade(code, target_date, atr, params)
+            except Exception as e:
+                logger.debug(f"[Validation] simulate failed: {code} @ {target_date}: {e}")
+                out = None
+
+            if out:
+                results.append(out)
+
         if not results:
-             return {"date": target_date, "trades": 0, "win_rate": 0.0, "avg_pnl": 0.0, "max_drawdown": 0.0}
-        
+            return {"date": target_date, "trades": 0, "win_rate": 0.0, "avg_pnl": 0.0, "max_drawdown": 0.0}
+
         df = pd.DataFrame(results)
         return {
             "date": target_date,
-            "trades": df["trades"].sum(),
-            "win_rate": (df["return_pct"] > 0).mean() * 100, # 简单按只统计胜率
-            "avg_pnl": df["return_pct"].mean(),
-            "max_drawdown": df["max_drawdown"].min()
+            "trades": int(len(df)),
+            "win_rate": float((df["return_pct"] > 0).mean() * 100.0),
+            "avg_pnl": float(df["return_pct"].mean()),
+            "max_drawdown": float(df["max_drawdown"].min()),
         }
 
     def run_full_evaluation(self, params: StrategyParams) -> Dict:
-        """
-        遍历所有验证日期并聚合总得分
-        """
         logger.info(f"Running full evaluation over {len(self.validation_dates)} dates...")
-        daily_summaries = []
+        daily_summaries: List[Dict] = []
+
         for date in tqdm(self.validation_dates, desc="Cross-sectional evaluation"):
             summary = self.run_single_date_evaluation(date, params)
             if summary and summary.get("trades", 0) > 0:
                 daily_summaries.append(summary)
-        
+
         if not daily_summaries:
             return {"composite_score": -999.0, "avg_win_rate": 0.0, "avg_pnl": 0.0, "avg_dd": 0.0, "detail": []}
-            
+
         df_all = pd.DataFrame(daily_summaries)
-        
-        avg_win_rate = df_all["win_rate"].mean()
-        avg_pnl = df_all["avg_pnl"].mean()
-        avg_dd = df_all["max_drawdown"].mean()
-        
-        # 复合适应度得分: 强调正收益与胜率，严惩回撤
-        composite_score = (avg_pnl * 0.4) + (avg_win_rate * 0.4) + (avg_dd * 0.2)
-        
+        avg_win_rate = float(df_all["win_rate"].mean())
+        avg_pnl = float(df_all["avg_pnl"].mean())
+        avg_dd = float(df_all["max_drawdown"].mean())
+
+        # Composite: reward pnl & win-rate, penalize drawdown magnitude.
+        composite_score = (avg_pnl * 0.4) + (avg_win_rate * 0.4) - (abs(avg_dd) * 0.2)
+
         return {
-            "composite_score": composite_score,
+            "composite_score": float(composite_score),
             "avg_win_rate": avg_win_rate,
             "avg_pnl": avg_pnl,
             "avg_dd": avg_dd,
-            "detail": daily_summaries
+            "detail": daily_summaries,
         }
 
     def _optuna_objective(self, trial: optuna.Trial) -> float:
-        """Optuna Trial 目标函数"""
         p_dict = StrategyParams().to_dict()
         for pname, (lo, hi, step) in ENHANCED_CORE_PARAM_SPACE.items():
             if isinstance(lo, int) and isinstance(hi, int) and isinstance(step, int):
                 p_dict[pname] = trial.suggest_int(pname, lo, hi, step=step)
             else:
                 p_dict[pname] = trial.suggest_float(pname, lo, hi, step=step)
-        
-        # Override with any fixed params defined
-        if hasattr(self, '_opt_fixed_params') and self._opt_fixed_params:
+
+        if self._opt_fixed_params:
             p_dict.update(self._opt_fixed_params)
 
         params = StrategyParams.from_dict(p_dict)
         res = self.run_full_evaluation(params)
-        
-        # Penalize if no valid summaries
         if not res.get("detail"):
             return -999.0
-            
-        return res["composite_score"]
+        return float(res["composite_score"])
 
-    def optimize_for_real_trading(self, n_trials: int = 50, fixed_params: Dict = None) -> Dict:
-        """
-        基于验证日期的闭环参数寻优
-        """
+    def optimize_for_real_trading(self, n_trials: int = 50, fixed_params: Dict | None = None) -> Dict:
         logger.info(f"Starting closed-loop optimization for {n_trials} trials...")
         self._opt_fixed_params = fixed_params or {}
-        
+
         study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=42))
         study.optimize(self._optuna_objective, n_trials=n_trials)
-        
+
         best_p = study.best_params
-        best_s = study.best_value
+        best_s = float(study.best_value)
         logger.info(f"Optimization finished! Best composite score: {best_s:.4f}")
-        
-        final_params = StrategyParams.from_dict({**StrategyParams().to_dict(), **best_p})
-        return {
-            "best_params": final_params.to_dict(),
-            "best_composite_score": best_s
-        }
+
+        final_params = StrategyParams.from_dict({**StrategyParams().to_dict(), **best_p, **(fixed_params or {})})
+        return {"best_params": final_params.to_dict(), "best_composite_score": best_s}
+
 
 if __name__ == "__main__":
-    # 临时测试桩：按月采样几个日期
     test_dates = ["2023-01-05", "2023-03-01", "2023-06-05", "2023-09-01"]
     pipeline = ValidationPipeline(validation_dates=test_dates)
-    
-    # 跑个基线
+
     base_params = StrategyParams()
     base_res = pipeline.run_full_evaluation(base_params)
-    print(f"=== Baseline Performance ===")
+    print("=== Baseline Performance ===")
     print(json.dumps(base_res, indent=2, ensure_ascii=False))
-    
-    # 跑闭环优化
-    print(f"\n=== Running Closed-loop Optimization (2 Trials) ===")
-    opt_res = pipeline.optimize_for_real_trading(n_trials=2)
-    print(json.dumps(opt_res, indent=2, ensure_ascii=False))

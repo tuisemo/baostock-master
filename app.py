@@ -169,7 +169,7 @@ custom_css = """
 
 from quant.data.stock_filter import update_stock_list
 from quant.data.data_updater import update_history_data
-from quant.features.features.analyzer import analyze_all_stocks, classify_market_state
+from quant.features.analyzer import analyze_all_stocks, classify_market_state
 from quant.infra.config import CONF
 from quant.app.backtester import run_backtest, scan_today_signal
 from quant.infra.logger import logger
@@ -447,25 +447,30 @@ def ui_scan_historical_date(target_date: str):
     if not target_date or not str(target_date).strip():
         yield '❌ 请输入有效的日期，例如 2024-05-10', pd.DataFrame()
         return
-        
+
     # Handle possible gr.DateTime formatting to just grab YYYY-MM-DD
     target_date = str(target_date).strip()[:10]
-    yield f'开始扫描 {target_date} 全库买点 (这可能需要几分钟)...请稍候。', pd.DataFrame()
-    
-    data_dir = CONF.history_data.data_dir
-    all_files = [f for f in os.listdir(data_dir) if f.endswith(".csv") and f != "stock-list.csv"]
-    if not all_files:
-        yield '❌ 扫描失败。未找到任何历史数据，请先在“数据同步中心”执行步骤二。', pd.DataFrame()
+    yield f'开始扫描 {target_date} 潜力池买点 (这可能需要几分钟)...请稍候。', pd.DataFrame()
+
+    # 统一股票池：使用与“选股推荐”相同的多因子评级潜力池
+    files = [f for f in os.listdir('.') if f.startswith('selected_stocks_') and f.endswith('.csv')]
+    if not files:
+        yield '❌ 扫描失败。未找到任何有效股票池列表，请先执行“核心策略打分”。', pd.DataFrame()
         return
-        
-    codes = [f.replace(".csv", "") for f in all_files]
+    latest_file = max(files)
+    df_stocks = pd.read_csv(latest_file)
+    col_name = 'code' if 'code' in df_stocks.columns else 'Code' if 'Code' in df_stocks.columns else None
+    if not col_name:
+        yield f'❌ 扫描失败。股票池文件 {latest_file} 格式不正确。', pd.DataFrame()
+        return
+
+    codes = df_stocks[col_name].dropna().tolist()
     results = []
     total = len(codes)
-    
-    # Run sequentially for Gradio to yield properly without overly complex multiprocess IPC
+
     for i, code in enumerate(codes):
         if i % 20 == 0:
-            yield f'正在扫描 {target_date} 历史买点，进度: {i}/{total} ({code})...', pd.DataFrame()
+            yield f'正在扫描 {target_date} 历史买点 (潜力池)，进度: {i}/{total} ({code})...', pd.DataFrame()
         try:
             res = scan_today_signal(code, target_date=target_date)
             if res:
@@ -474,11 +479,11 @@ def ui_scan_historical_date(target_date: str):
             logger.debug(f"Error scanning {code} on {target_date}: {e}")
 
     if not results:
-        yield f'✅ 历史扫描完成。在 {target_date} 全市场没有任何股票触发策略买入信号。', pd.DataFrame()
+        yield f'✅ 历史扫描完成。在 {target_date} 潜力池 ({total} 只) 中没有股票触发买入信号。', pd.DataFrame()
         return
 
     df = pd.DataFrame(results)
-    yield f'✅ 扫描完成！在 {target_date} 遍历了 {total} 只股票，共发现 {len(results)} 只处于高胜率买入节点。', df
+    yield f'✅ 扫描完成！在 {target_date} 遍历潜力池 {total} 只股票，发现 {len(results)} 只处于高胜率买入节点。', df
 
 
 def ui_run_optimization(rounds, samples, objective, stratify_mode):

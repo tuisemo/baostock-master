@@ -41,38 +41,63 @@ class StrategyParams:
     weight_volume: float = 0.3
 
     # Signal Scoring Weights (Phase 3 Nonlinearity)
-    w_pullback_ma: float = 2.0
+    # [Optimized 2026-03-12] w_pullback_ma: 2.0 -> 1.0, w_vol_up: 1.0 -> 0.5, w_rsi_rebound: 2.0 -> 2.5
+    w_pullback_ma: float = 1.0
     w_macd_cross: float = 1.0
-    w_vol_up: float = 1.0
-    w_rsi_rebound: float = 2.0
+    w_vol_up: float = 0.5
+    w_rsi_rebound: float = 2.5
     w_green_candle: float = 1.0
 
     # --- Strategy: Entry ---
-    vol_up_ratio: float = 1.35
-    rsi_cooled_max: float = 55.0
-    pullback_ma_tolerance: float = 1.02
-    negative_bias_pct: float = 0.95
-    rsi_oversold: float = 35.0
-    bbands_lower_bias: float = 1.02
+    # [Optimized 2026-03-12] vol_up_ratio: 1.35->1.55, rsi_cooled_max: 55->45,
+    #   pullback_ma_tolerance: 1.02->1.00, negative_bias_pct: 0.95->0.98,
+    #   rsi_oversold: 35->45, bbands_lower_bias: 1.02->1.06
+    vol_up_ratio: float = 1.55
+    rsi_cooled_max: float = 45.0
+    pullback_ma_tolerance: float = 1.00
+    negative_bias_pct: float = 0.98
+    rsi_oversold: float = 45.0
+    bbands_lower_bias: float = 1.06
     rsi_oversold_extreme: float = 22.0
 
     # --- Strategy: Exit ---
-    trail_atr_mult: float = 1.8
-    take_profit_pct: float = 0.06
-    breakeven_trigger: float = 0.04
+    # [Optimized 2026-03-12] trail_atr_mult: 1.8->1.4, take_profit_pct: 0.06->0.03,
+    #   breakeven_trigger: 0.04->0.05
+    trail_atr_mult: float = 1.4
+    take_profit_pct: float = 0.03
+    breakeven_trigger: float = 0.05
     breakeven_buffer: float = 1.005
 
     # --- Phase 9: AI Model Gate ---
-    ai_prob_threshold: float = 0.35
+    # [Optimized 2026-03-12] ai_prob_threshold: 0.35->0.50
+    ai_prob_threshold: float = 0.50
     bear_market_ai_threshold: float = 0.55  # Higher bar during bear markets
 
+    # --- AI Label / Horizon (align training + inference EV) ---
+    ai_forward_days: int = 5
+    ai_target_atr_mult: float = 2.0
+    ai_stop_loss_atr_mult: float = 1.5
+
+    # --- Execution Frictions (EV estimation) ---
+    commission_pct: float = 0.001  # per-side commission
+    slippage_pct: float = 0.0      # per-side slippage estimate
+
+    # --- Buy-point EV Gate ---
+    min_expected_value_pct: float = 0.0
+
     # --- Position Sizing ---
-    position_size: float = 0.1
+    # [Optimized 2026-03-12] position_size: 0.1->0.16
+    position_size: float = 0.16
     atr_risk_per_trade: float = 0.02  # Risk budget per trade for ATR-based sizing
 
     # --- Time-Decay Exit ---
-    max_hold_days: int = 15
+    # [Optimized 2026-03-12] max_hold_days: 15->5
+    max_hold_days: int = 5
     max_hold_min_return: float = 0.01  # Min return after max_hold_days
+
+    # --- Signal Quality / Cooldown ---
+    min_hold_days: int = 3
+    signal_cooldown_days: int = 5
 
     # --- Left/Right Independent Take-Profit & RSI ---
     take_profit_pct_left: float = 0.04
@@ -127,7 +152,9 @@ class StrategyParams:
                 "w_pullback_ma", "w_macd_cross", "w_vol_up", "w_rsi_rebound", "w_green_candle",
                 "bbands_lower_bias", "rsi_oversold_extreme", "ai_prob_threshold", "position_size",
                 "bear_market_ai_threshold", "atr_risk_per_trade",
-                "max_hold_days", "max_hold_min_return",
+                "ai_forward_days", "ai_target_atr_mult", "ai_stop_loss_atr_mult",
+                "commission_pct", "slippage_pct", "min_expected_value_pct",
+                "max_hold_days", "max_hold_min_return", "min_hold_days", "signal_cooldown_days",
                 "take_profit_pct_left", "take_profit_pct_right",
                 "rsi_overbought_left", "rsi_overbought_right",
             ):

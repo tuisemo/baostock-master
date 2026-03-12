@@ -7,7 +7,7 @@ from datetime import datetime
 from sklearn.metrics import classification_report, roc_auc_score
 from quant.infra.config import CONF
 from quant.infra.logger import logger
-from quant.features.features.analyzer import calculate_indicators
+from quant.features.analyzer import calculate_indicators
 from quant.core.strategy_params import StrategyParams
 from quant.features.features import extract_features, create_targets, create_multi_class_targets
 from quant.infra.cache_utils import DatasetCache, get_data_hash

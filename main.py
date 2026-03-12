@@ -19,7 +19,7 @@ def cmd_update_data():
 
 
 def cmd_analyze():
-    from quant.features.features.analyzer import analyze_all_stocks
+    from quant.features.analyzer import analyze_all_stocks
     analyze_all_stocks()
 
 
@@ -104,7 +104,13 @@ def cmd_train_ai():
     data_dir = CONF.history_data.data_dir
     
     # 构建包含高阶特征的数据集
-    df = build_dataset(data_dir, p, n_forward_days=5, target_atr_mult=2.0, stop_loss_atr_mult=1.5)
+    df = build_dataset(
+        data_dir,
+        p,
+        n_forward_days=p.ai_forward_days,
+        target_atr_mult=p.ai_target_atr_mult,
+        stop_loss_atr_mult=p.ai_stop_loss_atr_mult,
+    )
     
     if df.empty:
         logger.error("数据集为空，训练中止。")

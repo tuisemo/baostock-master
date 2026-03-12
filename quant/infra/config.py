@@ -1,6 +1,7 @@
 import os
 import yaml
 from dataclasses import dataclass, field
+from typing import Any, Dict
 
 
 @dataclass
@@ -73,8 +74,30 @@ class StrategyConfig:
     bear_market_ai_threshold: float = 0.50
     position_size: float = 0.1
     max_hold_days: int = 10
+    max_hold_min_return: float = 0.01
     rsi_overbought_left: float = 70.0
     rsi_overbought_right: float = 75.0
+
+    # Signal quality / cooldown
+    min_hold_days: int = 3
+    signal_cooldown_days: int = 5
+
+    # Execution frictions (used for EV estimation / reporting)
+    commission_pct: float = 0.001  # per-side commission, e.g. 0.001 = 0.1%
+    slippage_pct: float = 0.0      # per-side slippage estimate
+
+    # AI label / horizon parameters (keep training + inference aligned)
+    ai_forward_days: int = 5
+    ai_target_atr_mult: float = 2.0
+    ai_stop_loss_atr_mult: float = 1.5
+
+    # Optional selection gate based on expected value (EV) in percent
+    min_expected_value_pct: float = 0.0
+
+    # Advanced dynamic configs (kept as dict for forward compatibility)
+    market_state_thresholds: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    signal_fusion_weights: Dict[str, float] = field(default_factory=dict)
+    multi_timeframe: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -128,6 +151,8 @@ def load_config(config_path: str = "config.yaml") -> AppConfig:
         reversion=weights_data.get("reversion", 0.3),
         volume=weights_data.get("volume", 0.3),
     )
+
+    strategy_data = data.get("strategy", {}) or {}
     return AppConfig(
         log=LogConfig(
             level=data.get("log", {}).get("level", "INFO"),
@@ -149,22 +174,40 @@ def load_config(config_path: str = "config.yaml") -> AppConfig:
         ),
         analyzer=analyzer_cfg,
         strategy=StrategyConfig(
-            vol_up_ratio=data.get("strategy", {}).get("vol_up_ratio", 1.35),
-            rsi_cooled_max=data.get("strategy", {}).get("rsi_cooled_max", 55.0),
-            pullback_ma_tolerance=data.get("strategy", {}).get("pullback_ma_tolerance", 1.02),
-            negative_bias_pct=data.get("strategy", {}).get("negative_bias_pct", 0.95),
-            rsi_oversold=data.get("strategy", {}).get("rsi_oversold", 35.0),
-            bbands_lower_bias=data.get("strategy", {}).get("bbands_lower_bias", 1.02),
-            rsi_oversold_extreme=data.get("strategy", {}).get("rsi_oversold_extreme", 25.0),
-            trail_atr_mult=data.get("strategy", {}).get("trail_atr_mult", 1.8),
-            take_profit_pct=data.get("strategy", {}).get("take_profit_pct", 0.06),
-            breakeven_trigger=data.get("strategy", {}).get("breakeven_trigger", 0.04),
-            breakeven_buffer=data.get("strategy", {}).get("breakeven_buffer", 1.005),
-            w_pullback_ma=data.get("strategy", {}).get("w_pullback_ma", 2.0),
-            w_macd_cross=data.get("strategy", {}).get("w_macd_cross", 1.0),
-            w_vol_up=data.get("strategy", {}).get("w_vol_up", 1.0),
-            w_rsi_rebound=data.get("strategy", {}).get("w_rsi_rebound", 2.0),
-            w_green_candle=data.get("strategy", {}).get("w_green_candle", 1.0)
+            vol_up_ratio=strategy_data.get("vol_up_ratio", 1.35),
+            rsi_cooled_max=strategy_data.get("rsi_cooled_max", 55.0),
+            pullback_ma_tolerance=strategy_data.get("pullback_ma_tolerance", 1.02),
+            negative_bias_pct=strategy_data.get("negative_bias_pct", 0.95),
+            rsi_oversold=strategy_data.get("rsi_oversold", 35.0),
+            bbands_lower_bias=strategy_data.get("bbands_lower_bias", 1.02),
+            rsi_oversold_extreme=strategy_data.get("rsi_oversold_extreme", 25.0),
+            trail_atr_mult=strategy_data.get("trail_atr_mult", 1.8),
+            take_profit_pct=strategy_data.get("take_profit_pct", 0.06),
+            breakeven_trigger=strategy_data.get("breakeven_trigger", 0.04),
+            breakeven_buffer=strategy_data.get("breakeven_buffer", 1.005),
+            w_pullback_ma=strategy_data.get("w_pullback_ma", 2.0),
+            w_macd_cross=strategy_data.get("w_macd_cross", 1.0),
+            w_vol_up=strategy_data.get("w_vol_up", 1.0),
+            w_rsi_rebound=strategy_data.get("w_rsi_rebound", 2.0),
+            w_green_candle=strategy_data.get("w_green_candle", 1.0),
+            ai_prob_threshold=strategy_data.get("ai_prob_threshold", 0.35),
+            bear_market_ai_threshold=strategy_data.get("bear_market_ai_threshold", 0.50),
+            position_size=strategy_data.get("position_size", 0.10),
+            max_hold_days=strategy_data.get("max_hold_days", 10),
+            max_hold_min_return=strategy_data.get("max_hold_min_return", 0.01),
+            rsi_overbought_left=strategy_data.get("rsi_overbought_left", 70.0),
+            rsi_overbought_right=strategy_data.get("rsi_overbought_right", 75.0),
+            min_hold_days=strategy_data.get("min_hold_days", 3),
+            signal_cooldown_days=strategy_data.get("signal_cooldown_days", 5),
+            commission_pct=strategy_data.get("commission_pct", 0.001),
+            slippage_pct=strategy_data.get("slippage_pct", 0.0),
+            ai_forward_days=strategy_data.get("ai_forward_days", 5),
+            ai_target_atr_mult=strategy_data.get("ai_target_atr_mult", 2.0),
+            ai_stop_loss_atr_mult=strategy_data.get("ai_stop_loss_atr_mult", 1.5),
+            min_expected_value_pct=strategy_data.get("min_expected_value_pct", 0.0),
+            market_state_thresholds=strategy_data.get("market_state_thresholds", {}) or {},
+            signal_fusion_weights=strategy_data.get("signal_fusion_weights", {}) or {},
+            multi_timeframe=strategy_data.get("multi_timeframe", {}) or {},
         ),
         optimizer=OptimizerConfig(
             sample_count=data.get("optimizer", {}).get("sample_count", 200),

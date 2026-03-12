@@ -95,9 +95,37 @@ def get_market_thresholds(market_state: str) -> Dict[str, float]:
     Returns:
         Dictionary of thresholds for the market state
     """
+    # Allow config.yaml to override thresholds without touching code.
+    # Note: config may define a 5-state schema (e.g. 'sideways') while the engine uses 10 states.
+    state_alias = {
+        "bull_momentum": "strong_bull",
+        "bull_volume": "weak_bull",
+        "strong_bull": "strong_bull",
+        "weak_bull": "weak_bull",
+        "sideways_low_vol": "sideways",
+        "sideways_high_vol": "sideways",
+        "weak_bear": "weak_bear",
+        "bear_momentum": "strong_bear",
+        "bear_panic": "strong_bear",
+        "strong_bear": "strong_bear",
+    }
+
+    try:
+        from quant.infra.config import CONF
+        overrides = getattr(getattr(CONF, "strategy", None), "market_state_thresholds", None)
+        if isinstance(overrides, dict) and overrides:
+            if market_state in overrides and isinstance(overrides[market_state], dict):
+                return overrides[market_state]
+            alias = state_alias.get(market_state)
+            if alias and alias in overrides and isinstance(overrides[alias], dict):
+                return overrides[alias]
+    except Exception:
+        # Any failure here should not break trading; fall back to code defaults.
+        pass
+
     return MARKET_STATE_THRESHOLDS.get(
         market_state,
-        MARKET_STATE_THRESHOLDS['sideways_low_vol']  # Default fallback
+        MARKET_STATE_THRESHOLDS["sideways_low_vol"],  # Default fallback
     )
 
 

@@ -5,8 +5,8 @@ import os
 import time
 from datetime import datetime, timedelta
 from tqdm import tqdm
-from quant.config import CONF
-from quant.logger import logger
+from quant.infra.config import CONF
+from quant.infra.logger import logger
 
 def get_tencent_hq(codes: list) -> dict:
     """

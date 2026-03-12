@@ -7567,3 +7567,122 @@ ModuleNotFoundError: No module named 'quant.features.features.analyzer'; 'quant.
 2026-03-12 11:36:21 [WARNING] quant: Enhanced market classifier not available, using fallback
 2026-03-12 11:37:42 [WARNING] quant: Enhanced market classifier not available, using fallback
 2026-03-12 11:38:25 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 14:11:23 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:28:23 [ERROR] quant: 启动 Web UI 失败: No module named 'quant.config'
+2026-03-12 16:29:29 [ERROR] quant: 启动 Web UI 失败: No module named 'quant.features.features.analyzer'; 'quant.features.features' is not a package
+2026-03-12 16:31:37 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:39 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-03-12 16:31:55 [INFO] quant: 开始对 1548 支股票执行多因子综合分析...
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:31:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:32:07 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:07 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:07 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:08 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:08 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:09 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:09 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:10 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:16 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:17 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:18 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:32:19 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:33:30 [INFO] quant: Starting stock list update process.
+2026-03-12 16:33:31 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-03-12 16:33:31 [INFO] quant: 尝试查询日期: 2026-03-12 (第 1 次)
+2026-03-12 16:33:31 [WARNING] quant: 日期 2026-03-12 未返回任何股票数据，回退到前一天...
+2026-03-12 16:33:31 [INFO] quant: 尝试查询日期: 2026-03-11 (第 2 次)
+2026-03-12 16:33:39 [INFO] quant: 成功获取到 7143 条记录 (查询日期: 2026-03-11)
+2026-03-12 16:33:39 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 6367
+2026-03-12 16:33:40 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-03-12 16:34:17 [INFO] quant: Filtered 1917 micro-cap stocks (< 30.0 亿).
+2026-03-12 16:34:17 [INFO] quant: Filtered 1051 zombie stocks (< 10000.0 万).
+2026-03-12 16:34:17 [INFO] quant: Filtered 96 potential manipulated stocks (turnover > 20.0%).
+2026-03-12 16:34:17 [INFO] quant: Filtered 452 highly inactive stocks (turnover < 1.0%).
+2026-03-12 16:34:17 [INFO] quant: Filtered 1777 stocks failing PE/PB fundamentals.
+2026-03-12 16:34:17 [INFO] quant: Final high-value stock count: 1074
+2026-03-12 16:34:17 [INFO] quant: Saved high-value stock list to data\stock-list.csv
+2026-03-12 16:34:24 [INFO] quant: 分析完成。共有 95 支股票满足评分阈值。
+2026-03-12 16:34:24 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260312.csv
+2026-03-12 16:34:39 [INFO] quant: Loaded 1075 stocks to update historical data (including market index).
+2026-03-12 16:34:40 [INFO] quant: 第一轮：串行拉取全量数据...
+2026-03-12 16:52:09 [INFO] quant: Process interrupted by user.
+2026-03-12 16:52:21 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:52:21 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-03-12 16:52:28 [INFO] quant: Loaded 1075 stocks to update historical data (including market index).
+2026-03-12 16:52:28 [INFO] quant: 第一轮：串行拉取全量数据...
+2026-03-12 16:55:18 [INFO] quant: 第一轮完成: 14 new, 317 updated, 744 empty, 0 skipped, 0 errors.
+2026-03-12 16:55:18 [INFO] quant: ===== 数据更新完毕 =====
+  成功下载/更新: 331 只
+  无新数据 (empty): 744 只
+  已是最新 (skip): 0 只
+  最终失败: 0 只
+2026-03-12 16:56:15 [INFO] quant: 开始对 1593 支股票执行多因子综合分析...
+2026-03-12 16:56:17 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:18 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:18 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:18 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:18 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:18 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:18 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:18 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:18 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:18 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:18 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 16:56:25 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:25 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:26 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:26 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:27 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:27 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:28 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:29 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:33 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:33 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:35 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:56:50 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 16:58:44 [INFO] quant: 分析完成。共有 97 支股票满足评分阈值。
+2026-03-12 16:58:44 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260312.csv
+2026-03-12 16:59:14 [INFO] quant: Scanning progress: 0/97 (sh.601860)
+2026-03-12 16:59:16 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:24:55 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:24:55 [INFO] quant: Initialized ValidationPipeline with 1 dates and 1592 codes. sample_size=20, max_trades_per_day=5
+2026-03-12 18:24:55 [INFO] quant: Running full evaluation over 1 dates...
+2026-03-12 18:25:02 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:31:49 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:31:49 [INFO] quant: Initialized ValidationPipeline with 1 dates and 1592 codes. sample_size=20, max_trades_per_day=5
+2026-03-12 18:31:49 [INFO] quant: Running full evaluation over 1 dates...
+2026-03-12 18:31:51 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:34:02 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:41:05 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:41:05 [INFO] quant: 批量回测: 10 只股票 (seed=42)
+2026-03-12 18:41:07 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:41:38 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:41:38 [INFO] quant: 批量回测: 3 只股票 (seed=42)
+2026-03-12 18:41:40 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:41:58 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:41:58 [INFO] quant: Initialized ValidationPipeline with 3 dates and 1592 codes. sample_size=50, max_trades_per_day=5
+2026-03-12 18:41:58 [INFO] quant: Running full evaluation over 3 dates...
+2026-03-12 18:41:59 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:42:28 [INFO] quant: Starting closed-loop optimization for 3 trials...
+2026-03-12 18:42:28 [INFO] quant: Running full evaluation over 3 dates...
+2026-03-12 18:42:54 [INFO] quant: Running full evaluation over 3 dates...
+2026-03-12 18:43:21 [INFO] quant: Running full evaluation over 3 dates...
+2026-03-12 18:43:56 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:43:56 [INFO] quant: Initialized ValidationPipeline with 3 dates and 1592 codes. sample_size=20, max_trades_per_day=3
+2026-03-12 18:43:56 [INFO] quant: Running full evaluation over 3 dates...
+2026-03-12 18:43:58 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:44:17 [INFO] quant: Starting closed-loop optimization for 2 trials...
+2026-03-12 18:44:17 [INFO] quant: Running full evaluation over 3 dates...
+2026-03-12 18:44:33 [INFO] quant: Running full evaluation over 3 dates...
+2026-03-12 18:44:49 [INFO] quant: Optimization finished! Best composite score: -0.0800

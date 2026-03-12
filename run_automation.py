@@ -174,7 +174,7 @@ class AutomationRunner:
                 
                 # 计算技术指标
                 params = StrategyParams()
-                from quant.features.features.analyzer import calculate_indicators
+                from quant.features.analyzer import calculate_indicators
                 df = calculate_indicators(df, params)
                 
                 # 提取所有特征（基础 + 增强）

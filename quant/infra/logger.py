@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from quant.infra.config import CONF
 
 def setup_logger(name: str = "quant") -> logging.Logger:
@@ -17,6 +18,17 @@ def setup_logger(name: str = "quant") -> logging.Logger:
         '%(asctime)s [%(levelname)s] %(name)s: %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
+
+    # Windows 默认控制台编码可能无法输出 emoji 等字符，导致 UnicodeEncodeError。
+    # 使用 replace 避免日志输出影响主流程（尤其是实盘/自动化任务）。
+    try:
+        sys.stdout.reconfigure(errors="replace")
+    except Exception:
+        pass
+    try:
+        sys.stderr.reconfigure(errors="replace")
+    except Exception:
+        pass
 
     # Console Handler
     ch = logging.StreamHandler()
