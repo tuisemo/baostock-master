@@ -7689,3 +7689,42 @@ ModuleNotFoundError: No module named 'quant.features.features.analyzer'; 'quant.
 2026-03-12 18:49:48 [WARNING] quant: Enhanced market classifier not available, using fallback
 2026-03-12 18:49:48 [INFO] quant: 批量回测: 5 只股票 (seed=42)
 2026-03-12 18:49:50 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:51:59 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:08 [INFO] quant: 开始对 1593 支股票执行多因子综合分析...
+2026-03-12 18:52:27 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:27 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:27 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:27 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:27 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:28 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:28 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:28 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:28 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:28 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:28 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:28 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 18:52:43 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:43 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:43 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:44 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:44 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:44 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:45 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:45 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:49 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:51 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:52 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:52:58 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 18:54:43 [INFO] quant: 分析完成。共有 26 支股票满足评分阈值。
+2026-03-12 18:54:43 [INFO] quant: 高分优选股列表已保存至: selected_stocks_20260312.csv
+2026-03-12 18:54:48 [INFO] quant: Scanning progress: 0/26 (sz.002831)
+2026-03-12 18:54:50 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 19:00:39 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 19:06:31 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 19:07:08 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 19:07:09 [INFO] quant: Initialized ValidationPipeline with 5 dates and 1592 codes. sample_size=20, max_trades_per_day=3
+2026-03-12 19:07:09 [INFO] quant: Running full evaluation over 5 dates...
+2026-03-12 19:07:12 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-12 19:10:51 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 19:11:22 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-12 19:11:24 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)

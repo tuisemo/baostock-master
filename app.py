@@ -1,5 +1,6 @@
 import gradio as gr
 import pandas as pd
+import numpy as np
 import os
 from pyecharts import options as opts
 from pyecharts.globals import CurrentConfig
@@ -173,6 +174,120 @@ from quant.features.analyzer import analyze_all_stocks, classify_market_state
 from quant.infra.config import CONF
 from quant.app.backtester import run_backtest, scan_today_signal
 from quant.infra.logger import logger
+
+
+def _format_scan_results_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Make scan_today_signal output user-friendly for UI tables."""
+    if df is None or df.empty:
+        return pd.DataFrame() if df is None else df
+
+    df2 = df.copy()
+
+    # Keep numbers readable
+    for c in (
+        "close",
+        "total_score",
+        "buy_score",
+        "ai_prob",
+        "ai_threshold",
+        "ensemble_disagreement",
+        "atr",
+        "atr_pct",
+        "expected_value_pct",
+        "volume_ratio",
+        "mom_20",
+    ):
+        if c in df2.columns:
+            df2[c] = pd.to_numeric(df2[c], errors="coerce")
+
+    # Prefer buy_score ranking for "buy point" UX
+    if "buy_score" in df2.columns:
+        df2 = df2.sort_values("buy_score", ascending=False, na_position="last")
+    elif "total_score" in df2.columns:
+        df2 = df2.sort_values("total_score", ascending=False, na_position="last")
+
+    # Rename to user-facing labels (keep internal keys in code paths)
+    rename_map = {
+        "code": "代码",
+        "date": "日期",
+        "close": "收盘价",
+        "signal_type": "信号类型",
+        "signal_strength": "信号强度",
+        "total_score": "规则得分",
+        "buy_score": "买点得分",
+        "ai_prob": "AI胜率",
+        "ai_threshold": "AI阈值",
+        "ai_tier": "AI档位",
+        "ensemble_disagreement": "集成分歧",
+        "expected_value_pct": "期望值EV(%)",
+        "market_state": "市场状态",
+        "market_uptrend": "大盘上行",
+        "atr": "ATR",
+        "atr_pct": "ATR(%)",
+        "mom_20": "20日动量",
+        "volume_ratio": "量比",
+        "ai_model_type": "模型类型",
+    }
+    df2 = df2.rename(columns={k: v for k, v in rename_map.items() if k in df2.columns})
+
+    preferred_order = [
+        "代码",
+        "日期",
+        "收盘价",
+        "信号类型",
+        "买点得分",
+        "期望值EV(%)",
+        "AI胜率",
+        "AI阈值",
+        "AI档位",
+        "集成分歧",
+        "市场状态",
+        "大盘上行",
+        "ATR(%)",
+        "ATR",
+        "规则得分",
+        "信号强度",
+        "量比",
+        "20日动量",
+        "模型类型",
+    ]
+    keep = [c for c in preferred_order if c in df2.columns]
+    rest = [c for c in df2.columns if c not in keep]
+    return df2[keep + rest]
+
+
+def _summarize_scan_results(df: pd.DataFrame) -> str:
+    if df is None or df.empty:
+        return ""
+
+    lines: list[str] = []
+
+    if "signal_type" in df.columns:
+        counts = df["signal_type"].value_counts().head(5)
+        lines.append("📊 信号类型分布: " + " | ".join([f"{k}:{v}" for k, v in counts.items()]))
+
+    if "ai_prob" in df.columns:
+        try:
+            lines.append(f"🤖 AI 平均胜率: {df['ai_prob'].mean():.2%}")
+        except Exception:
+            pass
+
+    if "expected_value_pct" in df.columns:
+        try:
+            lines.append(
+                f"💰 EV(%) 均值/中位数: {df['expected_value_pct'].mean():.2f} / {df['expected_value_pct'].median():.2f}"
+            )
+        except Exception:
+            pass
+
+    if "market_state" in df.columns:
+        try:
+            ms = df["market_state"].mode().iloc[0]
+            lines.append(f"🌍 主要市场状态: {ms}")
+        except Exception:
+            pass
+
+    return "\n".join(lines)
 
 
 def ui_update_list():
@@ -394,10 +509,10 @@ def ui_backtest_stock(code):
 
 
 def ui_scan_signals():
-    yield '🎯 开始扫描全库最新买点 (这可能需要几分钟)...请稍候。', pd.DataFrame()
+    yield '🎯 开始扫描潜力池最新买点 (这可能需要几分钟)...请稍候。', pd.DataFrame()
     files = [f for f in os.listdir('.') if f.startswith('selected_stocks_') and f.endswith('.csv')]
     if not files:
-        yield '❌ 扫描失败。未找到任何有效股票池列表，请先在“数据同步中心”执行步骤一。', pd.DataFrame()
+        yield '❌ 扫描失败。未找到任何有效股票池列表，请先执行“核心策略打分”。', pd.DataFrame()
         return
     latest_file = max(files)
     df_stocks = pd.read_csv(latest_file)
@@ -420,48 +535,152 @@ def ui_scan_signals():
             logger.error(f"Error scanning {code}: {e}")
 
     if not results:
-        yield '✅ 扫描完成。今日全市场没有任何股票触发严苛的量化策略买入信号。', pd.DataFrame()
+        yield f'✅ 扫描完成。今日潜力池 ({total} 只) 没有股票触发买入信号。', pd.DataFrame()
         return
 
     df = pd.DataFrame(results)
-    
-    # Add signal analysis
-    signal_analysis = ""
-    if '信号类型' in df.columns:
-        signal_types = df['信号类型'].value_counts()
-        signal_analysis = f"\n📊 **信号类型分布**:\n"
-        for signal_type, count in signal_types.items():
-            signal_analysis += f"- {signal_type}: {count} 只\n"
-    
-    if 'AI胜率预测' in df.columns:
-        avg_ai_prob = df['AI胜率预测'].mean()
-        signal_analysis += f"\n🤖 **AI平均信心度**: {avg_ai_prob:.2%}\n"
-    
-    message = f'✅ 扫描完成！共遍历了 {total} 只股票，发现 {len(results)} 只处于高胜率买入节点。'
-    message += signal_analysis
-    
-    yield message, df
+
+    message = f'✅ 扫描完成！遍历潜力池 {total} 只股票，发现 {len(results)} 只处于买入节点。'
+    analysis = _summarize_scan_results(df)
+    if analysis:
+        message += "\n\n" + analysis
+
+    yield message, _format_scan_results_df(df)
+
+
+def ui_trade_plan(code: str, target_date: str | None, capital: float):
+    code = str(code or "").strip()
+    if not code:
+        return "❌ 请输入股票代码，例如 `sh.600000`"
+
+    date_s = str(target_date).strip()[:10] if target_date else ""
+    date_arg = date_s if date_s else None
+
+    try:
+        from quant.core.strategy_params import StrategyParams
+        from quant.core.adaptive_strategy import get_dynamic_params
+        from quant.app.backtester import get_tiered_confidence_factor
+    except Exception as e:
+        return f"❌ 依赖加载失败: {e}"
+
+    p = StrategyParams.from_app_config(CONF)
+    sig = scan_today_signal(code, params=p, target_date=date_arg)
+    if not sig:
+        return "❌ 未触发买点信号 (或数据不足/指标无法计算)。请确认代码与日期是否为交易日。"
+
+    try:
+        close = float(sig.get("close"))
+        atr = float(sig.get("atr"))
+    except Exception:
+        return "❌ 信号数据不完整 (缺少 close/atr)，无法生成交易计划。"
+
+    if close <= 0 or atr <= 0:
+        return "❌ close/atr 异常，无法生成交易计划。"
+
+    stop_px = close - float(p.ai_stop_loss_atr_mult) * atr
+    target_px = close + float(p.ai_target_atr_mult) * atr
+    stop_pct = (stop_px / close - 1.0) * 100.0
+    target_pct = (target_px / close - 1.0) * 100.0
+
+    market_state = sig.get("market_state", "")
+    try:
+        dyn_p = get_dynamic_params(p, str(market_state)) if market_state else p
+    except Exception:
+        dyn_p = p
+
+    ai_prob = float(sig.get("ai_prob", 0.5))
+    ai_thresh = sig.get("ai_threshold", None)
+    tier = sig.get("ai_tier", "")
+    disagreement = sig.get("ensemble_disagreement", None)
+    use_ensemble = str(sig.get("ai_model_type", "")).lower() == "ensemble"
+
+    try:
+        dis_v = float(disagreement) if disagreement is not None else None
+    except Exception:
+        dis_v = None
+
+    try:
+        confidence_factor, _tier2 = get_tiered_confidence_factor(
+            ai_confidence=ai_prob,
+            ensemble_disagreement=dis_v,
+            use_ensemble=use_ensemble,
+        )
+    except Exception:
+        confidence_factor = 1.0
+
+    suggested_pos = float(getattr(dyn_p, "position_size", 0.1)) * float(confidence_factor)
+
+    try:
+        cap = float(capital) if capital else 100000.0
+    except Exception:
+        cap = 100000.0
+
+    risk_budget = cap * float(getattr(dyn_p, "atr_risk_per_trade", 0.02))
+    risk_per_share = max(1e-8, close - stop_px)
+    shares = int((risk_budget / risk_per_share) // 100) * 100
+    risk_based_pos = (shares * close / cap) if shares > 0 else None
+
+    final_pos = suggested_pos
+    if risk_based_pos is not None and risk_based_pos > 0:
+        final_pos = min(final_pos, float(risk_based_pos))
+
+    hold_days = min(int(getattr(p, "max_hold_days", 5)), int(getattr(p, "ai_forward_days", 5)))
+
+    ev_pct = sig.get("expected_value_pct", None)
+    buy_score = sig.get("buy_score", None)
+    sig_type = sig.get("signal_type", "")
+
+    ai_thresh_s = f"{float(ai_thresh):.2f}" if ai_thresh is not None else "N/A"
+    ev_s = f"{float(ev_pct):+.2f}%" if ev_pct is not None else "N/A"
+    buy_score_s = f"{float(buy_score):.3f}" if buy_score is not None else "N/A"
+
+    lines = [
+        f"### 🧾 交易计划 (Buy Plan)",
+        f"- 标的: `{code}`  日期: `{sig.get('date','') or (date_s or 'latest')}`",
+        f"- 信号: {sig_type}  市场状态: `{market_state}`",
+        f"- 买点综合得分: `{buy_score_s}`  EV: `{ev_s}`",
+        "",
+        f"**价格区间 (以收盘价为参考)**",
+        f"- 参考买入价: `{close:.2f}`",
+        f"- 止损价(ATR): `{stop_px:.2f}` ({stop_pct:.2f}%)",
+        f"- 止盈价(ATR): `{target_px:.2f}` (+{target_pct:.2f}%)",
+        f"- 建议观察/持有窗口: `{hold_days}` 天 (与 AI 标签周期对齐)",
+        "",
+        f"**AI 门控**",
+        f"- AI胜率: `{ai_prob:.2%}`  阈值: `{ai_thresh_s}`  档位: `{tier}`  分歧: `{disagreement if disagreement is not None else 'N/A'}`",
+        "",
+        f"**仓位建议 (参考)**",
+        f"- 策略仓位(含置信度因子): `{suggested_pos:.2%}`",
+    ]
+
+    if risk_based_pos is not None and risk_based_pos > 0:
+        lines.append(f"- 风险预算仓位(按 atr_risk_per_trade): `{risk_based_pos:.2%}`  (约 `{shares}` 股)")
+        lines.append(f"- 建议执行仓位: `{final_pos:.2%}`  (约 `{cap*final_pos:,.0f}` 元)")
+    else:
+        lines.append(f"- 建议执行仓位: `{final_pos:.2%}`  (约 `{cap*final_pos:,.0f}` 元)")
+
+    return "\n".join(lines)
 
 
 def ui_scan_historical_date(target_date: str):
     if not target_date or not str(target_date).strip():
-        yield '❌ 请输入有效的日期，例如 2024-05-10', pd.DataFrame()
+        yield '❌ 请输入有效的日期，例如 2024-05-10', '', pd.DataFrame()
         return
 
     # Handle possible gr.DateTime formatting to just grab YYYY-MM-DD
     target_date = str(target_date).strip()[:10]
-    yield f'开始扫描 {target_date} 潜力池买点 (这可能需要几分钟)...请稍候。', pd.DataFrame()
+    yield f'开始扫描 {target_date} 潜力池买点 (这可能需要几分钟)...请稍候。', '', pd.DataFrame()
 
     # 统一股票池：使用与“选股推荐”相同的多因子评级潜力池
     files = [f for f in os.listdir('.') if f.startswith('selected_stocks_') and f.endswith('.csv')]
     if not files:
-        yield '❌ 扫描失败。未找到任何有效股票池列表，请先执行“核心策略打分”。', pd.DataFrame()
+        yield '❌ 扫描失败。未找到任何有效股票池列表，请先执行“核心策略打分”。', '', pd.DataFrame()
         return
     latest_file = max(files)
     df_stocks = pd.read_csv(latest_file)
     col_name = 'code' if 'code' in df_stocks.columns else 'Code' if 'Code' in df_stocks.columns else None
     if not col_name:
-        yield f'❌ 扫描失败。股票池文件 {latest_file} 格式不正确。', pd.DataFrame()
+        yield f'❌ 扫描失败。股票池文件 {latest_file} 格式不正确。', '', pd.DataFrame()
         return
 
     codes = df_stocks[col_name].dropna().tolist()
@@ -470,7 +689,7 @@ def ui_scan_historical_date(target_date: str):
 
     for i, code in enumerate(codes):
         if i % 20 == 0:
-            yield f'正在扫描 {target_date} 历史买点 (潜力池)，进度: {i}/{total} ({code})...', pd.DataFrame()
+            yield f'正在扫描 {target_date} 历史买点 (潜力池)，进度: {i}/{total} ({code})...', '', pd.DataFrame()
         try:
             res = scan_today_signal(code, target_date=target_date)
             if res:
@@ -479,11 +698,24 @@ def ui_scan_historical_date(target_date: str):
             logger.debug(f"Error scanning {code} on {target_date}: {e}")
 
     if not results:
-        yield f'✅ 历史扫描完成。在 {target_date} 潜力池 ({total} 只) 中没有股票触发买入信号。', pd.DataFrame()
+        yield f'✅ 历史扫描完成。在 {target_date} 潜力池 ({total} 只) 中没有股票触发买入信号。', '🌍 当日市场状态: 无信号', pd.DataFrame()
         return
 
     df = pd.DataFrame(results)
-    yield f'✅ 扫描完成！在 {target_date} 遍历潜力池 {total} 只股票，发现 {len(results)} 只处于高胜率买入节点。', df
+
+    market_state_text = ""
+    if "market_state" in df.columns:
+        try:
+            market_state_text = f"🌍 当日市场状态: {df['market_state'].mode().iloc[0]}"
+        except Exception:
+            market_state_text = "🌍 当日市场状态: 未知"
+
+    msg = f'✅ 扫描完成！在 {target_date} 遍历潜力池 {total} 只股票，发现 {len(results)} 只处于买入节点。'
+    analysis = _summarize_scan_results(df)
+    if analysis:
+        msg += "\n\n" + analysis
+
+    yield msg, market_state_text, _format_scan_results_df(df)
 
 
 def ui_run_optimization(rounds, samples, objective, stratify_mode):
@@ -539,6 +771,128 @@ def ui_run_optimization(rounds, samples, objective, stratify_mode):
     except Exception as e:
         logger.exception("优化过程中发生异常")
         yield f'❌ 优化失败：{e}', None
+
+
+def _parse_date_lines(text: str) -> list[str]:
+    if not text:
+        return []
+
+    dates: list[str] = []
+    for raw in str(text).splitlines():
+        s = raw.strip()
+        if not s:
+            continue
+        dates.append(s[:10])
+
+    # De-dup + keep chronological order
+    seen = set()
+    out: list[str] = []
+    for d in dates:
+        if d in seen:
+            continue
+        seen.add(d)
+        out.append(d)
+    return sorted(out)
+
+
+def ui_generate_validation_dates(start_date, end_date, n_dates):
+    start = str(start_date).strip()[:10] if start_date else ""
+    end = str(end_date).strip()[:10] if end_date else ""
+    if not start or not end:
+        return "❌ 请先选择开始/结束日期", ""
+
+    from quant.app.backtester import get_market_index
+
+    idx_df = get_market_index()
+    if idx_df is None or idx_df.empty:
+        return "❌ 无法读取大盘指数数据 (sh.000001.csv)，请先同步数据", ""
+
+    dates = idx_df.index
+    valid = dates[(dates >= start) & (dates <= end)]
+    if len(valid) == 0:
+        return f"❌ 在区间 {start} ~ {end} 没有可用交易日", ""
+
+    n = int(n_dates) if n_dates else 20
+    n = max(1, min(n, len(valid)))
+    indices = np.linspace(0, len(valid) - 1, n, dtype=int)
+    sample_dates = [valid[i].strftime("%Y-%m-%d") for i in indices]
+    return f"✅ 已生成 {len(sample_dates)} 个验证日期", "\n".join(sample_dates)
+
+
+def ui_run_validation(date_list_text, sample_size, max_trades_per_day, max_hold_days):
+    dates = _parse_date_lines(date_list_text)
+    if not dates:
+        return "❌ 请先生成或输入验证日期列表 (每行一个 YYYY-MM-DD)", pd.DataFrame()
+
+    from quant.app.validation_pipeline import ValidationPipeline
+    from quant.core.strategy_params import StrategyParams
+
+    p = StrategyParams.from_app_config(CONF)
+    try:
+        if max_hold_days is not None:
+            p.max_hold_days = int(max_hold_days)
+    except Exception:
+        pass
+
+    pipe = ValidationPipeline(
+        validation_dates=dates,
+        sample_size=int(sample_size),
+        max_trades_per_day=int(max_trades_per_day),
+    )
+    res = pipe.run_full_evaluation(p)
+    detail_df = pd.DataFrame(res.get("detail", []))
+
+    summary = (
+        f"✅ 策略体检完成\n\n"
+        f"日期数: {len(dates)} | sample_size: {int(sample_size)} | topN: {int(max_trades_per_day)} | max_hold_days: {p.max_hold_days}\n\n"
+        f"复合得分: {res.get('composite_score', -999.0):.4f}\n"
+        f"平均胜率: {res.get('avg_win_rate', 0.0):.2f}%\n"
+        f"平均PnL: {res.get('avg_pnl', 0.0):.2f}%\n"
+        f"平均回撤: {res.get('avg_dd', 0.0):.2f}%\n"
+    )
+    return summary, detail_df
+
+
+def ui_optimize_validation(date_list_text, sample_size, max_trades_per_day, max_hold_days, n_trials):
+    yield "🚀 开始闭环寻优 (基于买点信号的样本外体检得分)...", pd.DataFrame()
+
+    dates = _parse_date_lines(date_list_text)
+    if not dates:
+        yield "❌ 请先生成或输入验证日期列表 (每行一个 YYYY-MM-DD)", pd.DataFrame()
+        return
+
+    from quant.app.validation_pipeline import ValidationPipeline
+
+    fixed = {}
+    try:
+        if max_hold_days is not None:
+            fixed["max_hold_days"] = int(max_hold_days)
+    except Exception:
+        fixed = {}
+
+    pipe = ValidationPipeline(
+        validation_dates=dates,
+        sample_size=int(sample_size),
+        max_trades_per_day=int(max_trades_per_day),
+    )
+
+    try:
+        opt_res = pipe.optimize_for_real_trading(n_trials=int(n_trials), fixed_params=fixed or None)
+    except Exception as e:
+        yield f"❌ 闭环寻优失败: {e}", pd.DataFrame()
+        return
+
+    best_score = float(opt_res.get("best_composite_score", -999.0))
+    best_params = opt_res.get("best_params", {}) or {}
+    best_df = pd.DataFrame([{"param": k, "value": v} for k, v in sorted(best_params.items())])
+
+    msg = (
+        f"✅ 闭环寻优完成\n\n"
+        f"Best composite_score: {best_score:.4f}\n"
+        f"Trials: {int(n_trials)} | fixed_params: {fixed if fixed else 'None'}\n\n"
+        f"提示: 该结果用于更新 config.yaml 前，建议先做更大样本的体检验证。"
+    )
+    yield msg, best_df
 
 
 def ui_auto_pilot():
@@ -601,12 +955,15 @@ def ui_auto_pilot():
         
         # Add AI model info
         ai_info = ""
-        if 'AI胜率预测' in df_scan.columns:
-            avg_confidence = df_scan['AI胜率预测'].mean()
-            ai_info = f"\n🤖 AI平均信心度: {avg_confidence:.2%}"
+        if not df_scan.empty and 'ai_prob' in df_scan.columns:
+            avg_confidence = pd.to_numeric(df_scan['ai_prob'], errors="coerce").mean()
+            ai_info = f"\n🤖 AI 平均胜率: {avg_confidence:.2%}"
+        if not df_scan.empty and 'expected_value_pct' in df_scan.columns:
+            ev_med = pd.to_numeric(df_scan['expected_value_pct'], errors="coerce").median()
+            ai_info += f"\n💰 EV(%) 中位数: {ev_med:.2f}"
         
         msg = f"🏁 Auto-Pilot 闭环运转全部完成！ 🏁\n今日评级完成，共扫描出 {len(results)} 只处于高胜率买入节点的精准标的。{ai_info}"
-        yield msg, df_stocks, df_scan
+        yield msg, df_stocks, _format_scan_results_df(df_scan)
 
     except Exception as e:
         logger.exception("Auto-Pilot failed")
@@ -732,6 +1089,17 @@ with gr.Blocks(
         btn_analyze.click(fn=ui_run_analyzer, outputs=[txt_analyze_log, df_selected, txt_market_state_display])
         btn_scan.click(fn=ui_scan_signals, outputs=[txt_scan_log, df_scan_result])
 
+        with gr.Accordion("🧾 交易计划生成器 (单票)", open=False):
+            gr.Markdown("输入代码后，一键生成参考买入价/止损/止盈/仓位建议。")
+            with gr.Row():
+                txt_plan_code = gr.Textbox(label="股票代码", placeholder="例如: sh.600000", scale=2)
+                txt_plan_date = gr.Textbox(label="日期(可选)", placeholder="留空=最新；或输入 2026-03-11", scale=2)
+                num_capital = gr.Number(label="资金规模(元)", value=100000, scale=1)
+                btn_plan = gr.Button("生成交易计划", variant="primary", scale=1)
+
+            md_plan = gr.Markdown("")
+            btn_plan.click(fn=ui_trade_plan, inputs=[txt_plan_code, txt_plan_date, num_capital], outputs=md_plan)
+
     with gr.Tab("3️⃣ 历史胜率回测与沙盘推演"):
         gr.Markdown("### 🔬 对扫描出的买入标的，或您自选的个股，验证其在当前自动优化参数下的历史盈利能力和交易点位准确性。")
         gr.Markdown("**✨ 新增功能**: 动态仓位管理、智能止盈止损、主动卖出信号、市场状态感知、夏普比率计算")
@@ -777,7 +1145,62 @@ with gr.Blocks(
         df_opt_history = gr.Dataframe(label="📈 历次参数变异爬山记录 (评估报告)", interactive=False)
         btn_optimize.click(fn=ui_run_optimization, inputs=[sl_rounds, sl_samples, sl_objective, sl_stratify], outputs=[txt_opt_log, df_opt_history])
 
-    with gr.Tab("5️⃣ 历史信号回溯扫描"):
+    with gr.Tab("5️⃣ 策略体检与稳健性验证"):
+        gr.Markdown("### 🧪 样本外体检：用真实历史截面验证“买点信号”的胜率、收益与回撤")
+        gr.Markdown("**定位**：让用户每天看到的不只是“买哪些”，还要看到“这套策略最近健康不健康”。")
+        gr.Markdown("**说明**：体检复用 `scan_today_signal` 的买点逻辑，并使用一致的 ATR 止损/止盈与持有期进行前瞻模拟。")
+
+        with gr.Accordion("① 生成验证日期样本", open=True):
+            with gr.Row():
+                dt_validate_start = gr.DateTime(label="开始日期", include_time=False, scale=2)
+                dt_validate_end = gr.DateTime(label="结束日期", include_time=False, scale=2)
+                sl_validate_n = gr.Slider(label="抽样日期数", minimum=3, maximum=60, value=12, step=1, scale=2)
+                btn_gen_dates = gr.Button("生成日期", variant="secondary", scale=1)
+
+            txt_gen_status = gr.Textbox(label="生成状态", lines=1, interactive=False)
+            txt_validate_dates = gr.Textbox(
+                label="验证日期列表 (每行一个 YYYY-MM-DD，可手工编辑)",
+                lines=6,
+                placeholder="例如:\n2024-01-05\n2024-03-01\n2024-06-05",
+            )
+
+            btn_gen_dates.click(
+                fn=ui_generate_validation_dates,
+                inputs=[dt_validate_start, dt_validate_end, sl_validate_n],
+                outputs=[txt_gen_status, txt_validate_dates],
+            )
+
+        with gr.Accordion("② 运行策略体检", open=True):
+            with gr.Row():
+                sl_sample_size = gr.Slider(label="票池抽样数量", minimum=20, maximum=400, value=80, step=10)
+                sl_topn = gr.Slider(label="每日最多买入只数(topN)", minimum=1, maximum=20, value=5, step=1)
+                sl_hold = gr.Slider(label="最大持有天数(max_hold_days)", minimum=1, maximum=25, value=5, step=1)
+                btn_validate = gr.Button("运行体检", variant="primary")
+
+            txt_validate_summary = gr.Textbox(label="体检结论", lines=6, interactive=False)
+            df_validate_detail = gr.Dataframe(label="体检明细(按日期)", interactive=False)
+
+            btn_validate.click(
+                fn=ui_run_validation,
+                inputs=[txt_validate_dates, sl_sample_size, sl_topn, sl_hold],
+                outputs=[txt_validate_summary, df_validate_detail],
+            )
+
+        with gr.Accordion("③ 闭环寻优 (可选，耗时较长)", open=False):
+            with gr.Row():
+                sl_trials = gr.Slider(label="Optuna Trials", minimum=1, maximum=50, value=10, step=1)
+                btn_opt_validate = gr.Button("运行闭环寻优", variant="primary")
+
+            txt_opt_summary = gr.Textbox(label="寻优结果", lines=6, interactive=False)
+            df_best_params = gr.Dataframe(label="Best Params", interactive=False)
+
+            btn_opt_validate.click(
+                fn=ui_optimize_validation,
+                inputs=[txt_validate_dates, sl_sample_size, sl_topn, sl_hold, sl_trials],
+                outputs=[txt_opt_summary, df_best_params],
+            )
+
+    with gr.Tab("6️⃣ 历史信号回溯扫描"):
         gr.Markdown("### ⏰ 让时间倒流，测试策略在过去某一天的实盘表现")
         gr.Markdown("**✨ 增强功能**: 历史市场状态重构、K线形态回溯、AI预测验证")
         gr.Markdown("输入历史上任意一个交易日（例如大跌、大涨或盘整的日子），引擎会回到那一天，按照那天的 K 线给您输出“如果在那一天使用本系统你会买哪些股票”。")
@@ -798,7 +1221,25 @@ with gr.Blocks(
             
         df_history_scan_result = gr.Dataframe(label="📊 穿越至选取日期的预言买点结果 (含AI预测和形态特征)", interactive=False)
         
-        btn_scan_historical.click(fn=ui_scan_historical_date, inputs=txt_target_date, outputs=[txt_history_scan_log, df_history_scan_result])
+        btn_scan_historical.click(
+            fn=ui_scan_historical_date,
+            inputs=txt_target_date,
+            outputs=[txt_history_scan_log, txt_historical_market_state, df_history_scan_result],
+        )
+
+        with gr.Accordion("🧾 交易计划生成器 (基于该日期信号)", open=False):
+            gr.Markdown("复制上表中的代码，结合该日期生成参考交易计划。")
+            with gr.Row():
+                txt_his_plan_code = gr.Textbox(label="股票代码", placeholder="例如: sh.600000", scale=2)
+                num_his_capital = gr.Number(label="资金规模(元)", value=100000, scale=1)
+                btn_his_plan = gr.Button("生成交易计划", variant="primary", scale=1)
+
+            md_his_plan = gr.Markdown("")
+            btn_his_plan.click(
+                fn=ui_trade_plan,
+                inputs=[txt_his_plan_code, txt_target_date, num_his_capital],
+                outputs=md_his_plan,
+            )
 
     # Add help and documentation section
     with gr.Tab("📚 使用指南与帮助文档"):
