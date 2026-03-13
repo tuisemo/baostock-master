@@ -7728,3 +7728,51 @@ ModuleNotFoundError: No module named 'quant.features.features.analyzer'; 'quant.
 2026-03-12 19:10:51 [WARNING] quant: Enhanced market classifier not available, using fallback
 2026-03-12 19:11:22 [WARNING] quant: Enhanced market classifier not available, using fallback
 2026-03-12 19:11:24 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-13 16:56:39 [INFO] quant: Process interrupted by user.
+2026-03-13 16:56:52 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-13 16:56:52 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-03-13 16:57:10 [INFO] quant: Starting stock list update process.
+2026-03-13 16:57:18 [INFO] quant: Fetching all A-share combinations from baostock...
+2026-03-13 16:57:18 [INFO] quant: 尝试查询日期: 2026-03-13 (第 1 次)
+2026-03-13 16:57:22 [WARNING] quant: 日期 2026-03-13 未返回任何股票数据，回退到前一天...
+2026-03-13 16:57:22 [INFO] quant: 尝试查询日期: 2026-03-12 (第 2 次)
+2026-03-13 16:57:33 [INFO] quant: 成功获取到 7143 条记录 (查询日期: 2026-03-12)
+2026-03-13 16:57:33 [INFO] quant: Count after basic rules (BSE, STAR, ST, Delisted): 6367
+2026-03-13 16:57:33 [INFO] quant: Fetching real-time market data from Tencent to filter micro-cap, zombie, and manipulated stocks...
+2026-03-13 16:59:22 [INFO] quant: Filtered 1921 micro-cap stocks (< 30.0 亿).
+2026-03-13 16:59:22 [INFO] quant: Filtered 1011 zombie stocks (< 10000.0 万).
+2026-03-13 16:59:22 [INFO] quant: Filtered 88 potential manipulated stocks (turnover > 20.0%).
+2026-03-13 16:59:22 [INFO] quant: Filtered 435 highly inactive stocks (turnover < 1.0%).
+2026-03-13 16:59:22 [INFO] quant: Filtered 1786 stocks failing PE/PB fundamentals.
+2026-03-13 16:59:22 [INFO] quant: Final high-value stock count: 1126
+2026-03-13 16:59:22 [INFO] quant: Saved high-value stock list to data\stock-list.csv
+2026-03-13 16:59:40 [INFO] quant: Loaded 1127 stocks to update historical data (including market index).
+2026-03-13 16:59:41 [INFO] quant: 第一轮：串行拉取全量数据...
+2026-03-13 17:05:18 [INFO] quant: Process interrupted by user.
+2026-03-13 17:05:24 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-13 17:05:25 [INFO] quant: 启动可视化量化平台 (Web UI)...
+2026-03-13 17:05:28 [INFO] quant: Loaded 1127 stocks to update historical data (including market index).
+2026-03-13 17:05:31 [INFO] quant: 第一轮：串行拉取全量数据...
+2026-03-13 17:07:18 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-13 17:32:57 [INFO] quant: Initialized ValidationPipeline with 20 dates and 1607 codes. sample_size=200, max_trades_per_day=10
+2026-03-13 17:32:57 [INFO] quant: Running full evaluation over 20 dates...
+2026-03-13 17:40:18 [INFO] quant: 第一轮完成: 9 new, 452 updated, 202 empty, 0 skipped, 464 errors.
+2026-03-13 17:40:18 [INFO] quant: 第二轮：对 464 只失败股票进行重试（间隔 500ms）...
+2026-03-13 17:49:34 [INFO] quant: 第二轮重试完成: 464/464 恢复成功。最终剩余 0 只无法获取。
+2026-03-13 17:49:34 [INFO] quant: ===== 数据更新完毕 =====
+  成功下载/更新: 925 只
+  无新数据 (empty): 202 只
+  已是最新 (skip): 0 只
+  最终失败: 0 只
+2026-03-13 17:54:30 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-13 17:54:30 [ERROR] quant: 历史数据文件不存在: data\sh.600000.csv
+2026-03-13 17:54:32 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-13 17:54:35 [ERROR] quant: 历史数据文件不存在: data\sh.600036.csv
+2026-03-13 17:54:35 [ERROR] quant: 历史数据文件不存在: data\sh.600519.csv
+2026-03-13 17:54:35 [ERROR] quant: 历史数据文件不存在: data\sz.000001.csv
+2026-03-13 17:54:35 [ERROR] quant: 历史数据文件不存在: data\sz.000002.csv
+2026-03-13 17:54:35 [ERROR] quant: 历史数据文件不存在: data\sz.000333.csv
+2026-03-13 17:55:13 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-13 17:55:15 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)
+2026-03-13 17:58:42 [WARNING] quant: Enhanced market classifier not available, using fallback
+2026-03-13 17:58:44 [INFO] quant: AI 模型已加载: models/alpha_lgbm.txt (53 features)

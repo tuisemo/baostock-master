@@ -1,0 +1,6 @@
+﻿code,date,close,total_score,buy_score,signal_strength,signal_type,rsi,mom_20,volume_ratio,ai_prob,ai_threshold,ai_tier,ensemble_disagreement,market_state,market_uptrend,atr,atr_pct,expected_value_pct,ai_model_type,name
+sh.600064,2026-03-10,8.66,1.309,0.3927,strong,布林带极度下杀反弹 (左侧),43.44,-0.0114,0.67,0.5,0.45,medium,,sideways_low_vol,True,0.1566,1.808,0.252,rule,南京高科
+sh.600867,2026-03-10,9.17,0.85,0.2595,strong,均线放量金叉 (右侧),62.3,0.0577,1.67,0.5088,0.45,medium,,sideways_low_vol,True,0.2221,2.422,0.481,lgbm,通化东宝
+sh.603203,2026-03-10,40.95,0.85,0.261,strong,均线放量金叉 (右侧),61.78,0.0675,1.99,0.5117,0.45,medium,,sideways_low_vol,True,1.8036,4.404,1.081,lgbm,快克智能
+sz.002074,2026-03-10,38.06,0.6,0.1816,medium,均线放量金叉 (右侧),55.79,0.0026,0.69,0.5044,0.45,medium,,sideways_low_vol,True,1.1534,3.031,0.604,lgbm,国轩高科
+sz.002335,2026-03-10,69.48,0.85,0.3065,strong,均线放量金叉 (右侧),69.98,0.1239,1.72,0.601,0.45,medium,,sideways_low_vol,True,3.6495,5.253,2.969,lgbm,科华数据
