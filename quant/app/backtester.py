@@ -397,6 +397,7 @@ def _build_column_names(p: StrategyParams) -> dict[str, str]:
 
 
 _MARKET_INDEX_CACHE = None
+_WEEKLY_SRC_CACHE: dict[str, pd.DataFrame] = {}
 
 def get_market_index() -> pd.DataFrame | None:
     global _MARKET_INDEX_CACHE
@@ -544,10 +545,31 @@ def evaluate_buy_signals(
     macd_golden_cross = macd_h_2 <= 0 and macd_h_1 > 0
     is_green_candle = price > open_p
 
-    if has_vol_slope and vol_slope_1 > 0.1:
+    # Normalize vol_slope (may be NaN on early bars or missing in some data sources)
+    vol_slope_val = 0.0
+    if has_vol_slope:
+        try:
+            vol_slope_val = float(vol_slope_1)
+        except Exception:
+            vol_slope_val = 0.0
+        if not np.isfinite(vol_slope_val):
+            vol_slope_val = 0.0
+
+    # "vol_up" is intended to mean a *strong* volume confirmation (used by right-side breakouts).
+    # For left-side we also add a continuous vol_slope contribution into volume_score (see below).
+    vol_slope_thr = float(getattr(p, "vol_slope_strong_threshold", 0.10))
+    if has_vol_slope and vol_slope_val > vol_slope_thr:
         vol_up = True
     else:
         vol_up = vol_1 > vol_2 * p.vol_up_ratio
+
+    # Continuous volume trend component (positive/negative) for multi-dimension confirmation.
+    vol_slope_component = 0.0
+    if has_vol_slope:
+        scale = float(getattr(p, "vol_slope_score_scale", 0.10))
+        weight = float(getattr(p, "vol_slope_score_weight", 0.0))
+        if np.isfinite(scale) and scale > 0 and np.isfinite(weight) and weight != 0:
+            vol_slope_component = float(np.clip(vol_slope_val / scale, -1.0, 1.0) * weight)
 
     mom_ok = True
     if has_mom_div and mom_div_1 <= -0.02:
@@ -588,6 +610,9 @@ def evaluate_buy_signals(
     reversion_score = 0.0
     volume_score = 0.0
     pattern_score = 0.0
+
+    # Make volume_score reflect volume *trend* even when there is no volume spike.
+    volume_score += vol_slope_component
     
     if is_bb_dip or is_rsi_dip:
         # 止跌形态验证（收阳线或长下影线），作为强烈加分项
@@ -676,15 +701,32 @@ def evaluate_buy_signals(
         signal_trend_breakout = False
         signal_strength = "weak"
 
+    # Quality gate: require minimum composite score (multi-dimension confirmation).
+    min_comp = float(getattr(p, "min_composite_score", 0.0))
+    quality_gate_passed = True
+    if np.isfinite(min_comp) and min_comp > 0:
+        quality_gate_passed = composite_score >= min_comp
+        if not quality_gate_passed:
+            signal_pullback = False
+            signal_rebound = False
+            signal_trend_breakout = False
+            signal_strength = "weak"
+
     signal_details = {
         'trend_score': trend_score,
         'reversion_score': reversion_score,
         'volume_score': volume_score,
         'pattern_score': pattern_score,
         'composite_score': composite_score,
+        'min_composite_score': min_comp,
+        'quality_gate_passed': quality_gate_passed,
         'timeframe_alignment': timeframe_alignment_score,
         'timeframe_block': timeframe_block,
         'alignment_threshold': alignment_threshold,
+        'vol_slope': vol_slope_val,
+        'vol_slope_component': vol_slope_component,
+        'vol_up_strong': bool(vol_up),
+        'vol_up_ratio': float(vol_1 / vol_2) if vol_2 else None,
         'fusion_weights': weights,
         'signal_strength': signal_strength,
     }
@@ -705,25 +747,46 @@ def get_weekly_confirmation(code: str, current_date: str, data_dir: str = 'data'
         Dictionary with weekly trend data or None
     """
     try:
-        import pandas as pd
-        import os
-        
-        file_path = os.path.join(data_dir, f"{code}.csv")
-        if not os.path.exists(file_path):
+        # Note: This helper is called on every bar in backtests.
+        # Cache the parsed daily dataframe per code to avoid repeated disk IO.
+        if not code:
             return None
+
+        cache_key = f"{os.path.abspath(data_dir)}::{code}"
+        df = _WEEKLY_SRC_CACHE.get(cache_key)
+         
+        if df is None:
+            file_path = os.path.join(data_dir, f"{code}.csv")
+            if not os.path.exists(file_path):
+                return None
+                
+            df = pd.read_csv(file_path)
+            if df.empty or len(df) < 50:
+                return None
             
-        df = pd.read_csv(file_path)
-        if df.empty or len(df) < 50:
-            return None
-        
-        # Convert date column
-        date_col = 'date' if 'date' in df.columns else 'Date'
-        df[date_col] = pd.to_datetime(df[date_col])
-        df = df.sort_values(date_col)
-        
+            # Convert date column (standardize to 'date' for caching)
+            date_col = 'date' if 'date' in df.columns else 'Date'
+            if date_col not in df.columns:
+                return None
+            df[date_col] = pd.to_datetime(df[date_col])
+            df = df.sort_values(date_col)
+            if date_col != 'date':
+                df = df.rename(columns={date_col: 'date'})
+            date_col = 'date'
+            # Keep cache bounded to avoid unbounded memory growth in batch backtests.
+            if len(_WEEKLY_SRC_CACHE) >= 8:
+                try:
+                    _WEEKLY_SRC_CACHE.pop(next(iter(_WEEKLY_SRC_CACHE)))
+                except Exception:
+                    _WEEKLY_SRC_CACHE.clear()
+            _WEEKLY_SRC_CACHE[cache_key] = df
+        else:
+            # Cached df is standardized to contain a 'date' column.
+            date_col = 'date'
+         
         # Get current date
         current = pd.to_datetime(current_date)
-        
+         
         # Filter to data up to current date
         df = df[df[date_col] <= current]
         
@@ -800,13 +863,14 @@ def get_dynamic_ai_threshold(
     return max(0.15, min(0.70, adjusted))
 
 
-def create_strategy(params: StrategyParams) -> type[Strategy]:
+def create_strategy(params: StrategyParams, code: str | None = None) -> type[Strategy]:
     cols = _build_column_names(params)
 
     class _Strategy(Strategy):
         _p = params
         _base_p = params  # Keep original params for reference
         _cols = cols
+        _code = str(code or "")
         _market_state = "sideways"  # Default
         _dynamic_p = params  # Dynamic params based on market state
 
@@ -1218,7 +1282,7 @@ def run_backtest(
     if df.empty or len(df) < 10:
         return None
 
-    strategy_cls = create_strategy(params)
+    strategy_cls = create_strategy(params, code=code)
     # Execution friction: Backtesting.py exposes only a single `commission` rate.
     # We approximate slippage by folding it into commission (both are per-side rates).
     commission = float(getattr(params, "commission_pct", 0.001))
@@ -1243,33 +1307,24 @@ def run_backtest(
 def scan_today_signal(
     code: str, params: StrategyParams | None = None, target_date: str | None = None
 ) -> dict | None:
-    from quant.infra.config import CONF
     params = _resolve_params(params)
-    file_path = os.path.join(CONF.history_data.data_dir, f"{code}.csv")
-    if not os.path.exists(file_path):
+    # Reuse the same preparation pipeline as backtest to avoid drift:
+    # - indicators + ML features
+    # - Date index
+    # - dropna to ensure model inference has a complete row
+    df = _load_and_prepare(code, params)
+    if df is None or df.empty:
         return None
 
-    df = pd.read_csv(file_path)
-    
     if target_date is not None:
-        if "date" in df.columns:
-            df = df[df["date"] <= target_date].copy()
-        elif "Date" in df.columns:
-            df = df[df["Date"] <= target_date].copy()
-            
-    if df.empty or len(df) < 50:
-        return None
+        try:
+            td = pd.to_datetime(str(target_date)[:10])
+        except Exception:
+            td = None
+        if td is not None:
+            df = df[df.index <= td]
 
-    df = calculate_indicators(df, params)
-    
-    # ===== Phase 8: Add ML features for AI model inference =====
-    try:
-        from quant.features.features import extract_features
-        df = extract_features(df)
-    except Exception as e:
-        logger.debug(f"[{code}] Feature extraction in scan failed: {e}")
-        
-    if df.empty:
+    if df.empty or len(df) < 3:
         return None
 
     cols = _build_column_names(params)
@@ -1281,15 +1336,17 @@ def scan_today_signal(
     row_2 = df.iloc[-2]
     row_3 = df.iloc[-3] if len(df) >= 3 else row_2
 
-    price = row_1["close"]
+    price = row_1.get("Close", row_1.get("close", np.nan))
+    if pd.isna(price):
+        return None
     sma_l_1 = row_1[cols["sma_l"]]
     sma_l_3 = row_3[cols["sma_l"]]
     sma_s_1 = row_1[cols["sma_s"]]
     macd_h_1 = row_1[cols["macd_h"]]
     macd_h_2 = row_2[cols["macd_h"]]
     rsi_val = row_1[cols["rsi"]]
-    vol_1 = row_1.get("volume", row_1.get("Volume", 0))
-    vol_2 = row_2.get("volume", row_2.get("Volume", 0))
+    vol_1 = row_1.get("Volume", row_1.get("volume", 0))
+    vol_2 = row_2.get("Volume", row_2.get("volume", 0))
 
     has_vol_slope = "vol_slope" in df.columns
     vol_slope_1 = row_1["vol_slope"] if has_vol_slope else 0.0
@@ -1297,15 +1354,14 @@ def scan_today_signal(
     mom_div_1 = row_1["momentum_divergence"] if has_mom_div else 0.0
 
     # ===== 大盘情绪过滤 (Market Regime Filter) =====
-    current_date_str = row_1.get("date")
+    current_date_ts = df.index[-1]
+    current_date_str = current_date_ts.strftime("%Y-%m-%d")
     market_uptrend = True
     market_state = "sideways_low_vol"
     idx_df = get_market_index()
-    if idx_df is not None and current_date_str is not None:
+    if idx_df is not None:
         try:
-            # Handle both string and datetime date formats
-            current_date_ts = pd.to_datetime(current_date_str)
-            idx_loc = idx_df.index.get_indexer([current_date_ts], method='pad')[0]
+            idx_loc = idx_df.index.get_indexer([current_date_ts], method="pad")[0]
             if idx_loc != -1 and idx_loc < len(idx_df):
                 market_uptrend = bool(idx_df.iloc[idx_loc]["market_uptrend"])
                 market_state = str(idx_df.iloc[idx_loc].get("market_state", market_state))
@@ -1317,12 +1373,21 @@ def scan_today_signal(
     #     return None
     # ===============================================
 
+    # IMPORTANT: Keep scan logic aligned with backtest logic by applying dynamic params (v10)
+    # based on the current market_state (no look-ahead; market_state is computed at target_date).
+    dyn_p = params
+    try:
+        if market_state:
+            dyn_p = get_dynamic_params(params, market_state)
+    except Exception:
+        dyn_p = params
+
     # Get weekly timeframe confirmation for scan_today_signal (config-controlled)
     weekly_data = None
     mt_cfg = getattr(getattr(CONF, "strategy", None), "multi_timeframe", {}) or {}
     mt_enabled = bool(mt_cfg.get("enabled", True)) if isinstance(mt_cfg, dict) else True
     weekly_enabled = bool(mt_cfg.get("weekly_confirmation", True)) if isinstance(mt_cfg, dict) else True
-    if mt_enabled and weekly_enabled and current_date_str is not None:
+    if mt_enabled and weekly_enabled:
         try:
             weekly_data = get_weekly_confirmation(
                 code,
@@ -1334,8 +1399,8 @@ def scan_today_signal(
     
     signal_pullback, signal_rebound, signal_trend_breakout, signal_details = evaluate_buy_signals(
         price=price,
-        open_p=row_1["open"],
-        low_p=row_1["low"],
+        open_p=float(row_1.get("Open", row_1.get("open", np.nan))),
+        low_p=float(row_1.get("Low", row_1.get("low", np.nan))),
         sma_l_1=sma_l_1,
         sma_l_3=sma_l_3,
         sma_s_1=sma_s_1,
@@ -1350,7 +1415,7 @@ def scan_today_signal(
         has_mom_div=has_mom_div,
         mom_div_1=mom_div_1,
         market_uptrend=market_uptrend,
-        p=params,
+        p=dyn_p,
         weekly_data=weekly_data,
     )
 
@@ -1394,11 +1459,11 @@ def scan_today_signal(
     try:
         ai_thresh = get_dynamic_ai_threshold(
             market_state=market_state,
-            base_threshold=params.ai_prob_threshold,
+            base_threshold=dyn_p.ai_prob_threshold,
             volatility_regime="normal",
         )
     except Exception:
-        ai_thresh = params.ai_prob_threshold
+        ai_thresh = dyn_p.ai_prob_threshold
 
     if ai_confidence < ai_thresh:
         return None
@@ -1431,7 +1496,9 @@ def scan_today_signal(
     # Calculate extra fields for analyzer compatibility (Sector rotation / Ranking)
     mom_20 = 0.0
     if len(df) >= 20:
-        mom_20 = (price - df.iloc[-20]["close"]) / df.iloc[-20]["close"]
+        ref_close = df.iloc[-20].get("Close", df.iloc[-20].get("close", np.nan))
+        if np.isfinite(float(ref_close)) and float(ref_close) != 0:
+            mom_20 = (float(price) - float(ref_close)) / float(ref_close)
     
     # Use enhanced signal scoring from signal_details
     total_score = signal_details.get('composite_score', 0.0)
@@ -1447,12 +1514,22 @@ def scan_today_signal(
 
     return {
         "code": code,
-        "date": str(row_1["date"]).split(" ")[0] if "date" in row_1 else "",
+        "date": current_date_str,
         "close": round(float(price), 2),
         "total_score": round(total_score, 3),
         "buy_score": round(buy_score, 4),
         "signal_strength": signal_strength,
         "signal_type": signal_type,
+        # Multi-dimension transparency
+        "trend_score": round(float(signal_details.get("trend_score", 0.0)), 3),
+        "reversion_score": round(float(signal_details.get("reversion_score", 0.0)), 3),
+        "volume_score": round(float(signal_details.get("volume_score", 0.0)), 3),
+        "pattern_score": round(float(signal_details.get("pattern_score", 0.0)), 3),
+        "timeframe_alignment": round(float(signal_details.get("timeframe_alignment", 1.0)), 3),
+        "quality_gate_passed": bool(signal_details.get("quality_gate_passed", True)),
+        "min_composite_score": round(float(signal_details.get("min_composite_score", 0.0)), 3),
+        "vol_slope": round(float(signal_details.get("vol_slope", vol_slope_1 if has_vol_slope else 0.0) or 0.0), 4),
+        "vol_slope_component": round(float(signal_details.get("vol_slope_component", 0.0)), 3),
         "rsi": round(float(rsi_val), 2),
         "mom_20": round(float(mom_20), 4),
         "volume_ratio": round(float(vol_1 / vol_2) if vol_2 > 0 else 0.0, 2),

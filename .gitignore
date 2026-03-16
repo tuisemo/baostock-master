@@ -20,6 +20,9 @@ data/*.csv
 data/*.log
 data/cache/
 data/historical/
+data/exports/
+data/optimize_results/
+data/risk_reports/
 
 # Trained models (large binary)
 models/

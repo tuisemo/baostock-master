@@ -53,6 +53,13 @@ class StrategyParams:
     #   pullback_ma_tolerance: 1.02->1.00, negative_bias_pct: 0.95->0.98,
     #   rsi_oversold: 35->45, bbands_lower_bias: 1.02->1.06
     vol_up_ratio: float = 1.55
+    # Volume slope (normalized regression slope over 5 bars, see analyzer._add_volume_slope)
+    # Used to:
+    # 1) Treat strong rising volume as confirmation (vol_up)
+    # 2) Provide a continuous volume score contribution (positive/negative)
+    vol_slope_strong_threshold: float = 0.10
+    vol_slope_score_scale: float = 0.10
+    vol_slope_score_weight: float = 0.30
     rsi_cooled_max: float = 45.0
     pullback_ma_tolerance: float = 1.00
     negative_bias_pct: float = 0.98
@@ -98,6 +105,9 @@ class StrategyParams:
     # --- Signal Quality / Cooldown ---
     min_hold_days: int = 3
     signal_cooldown_days: int = 5
+    # Minimum composite score to accept a signal (multi-dimension confirmation gate).
+    # 0 disables the gate. Recommended: 0.45~0.55.
+    min_composite_score: float = 0.50
 
     # --- Left/Right Independent Take-Profit & RSI ---
     take_profit_pct_left: float = 0.04
@@ -150,11 +160,13 @@ class StrategyParams:
                 "negative_bias_pct", "rsi_oversold", "trail_atr_mult",
                 "take_profit_pct", "breakeven_trigger", "breakeven_buffer",
                 "w_pullback_ma", "w_macd_cross", "w_vol_up", "w_rsi_rebound", "w_green_candle",
+                "vol_slope_strong_threshold", "vol_slope_score_scale", "vol_slope_score_weight",
                 "bbands_lower_bias", "rsi_oversold_extreme", "ai_prob_threshold", "position_size",
                 "bear_market_ai_threshold", "atr_risk_per_trade",
                 "ai_forward_days", "ai_target_atr_mult", "ai_stop_loss_atr_mult",
                 "commission_pct", "slippage_pct", "min_expected_value_pct",
                 "max_hold_days", "max_hold_min_return", "min_hold_days", "signal_cooldown_days",
+                "min_composite_score",
                 "take_profit_pct_left", "take_profit_pct_right",
                 "rsi_overbought_left", "rsi_overbought_right",
             ):

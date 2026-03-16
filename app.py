@@ -190,6 +190,14 @@ def _format_scan_results_df(df: pd.DataFrame) -> pd.DataFrame:
         "close",
         "total_score",
         "buy_score",
+        "trend_score",
+        "reversion_score",
+        "volume_score",
+        "pattern_score",
+        "timeframe_alignment",
+        "min_composite_score",
+        "vol_slope",
+        "vol_slope_component",
         "ai_prob",
         "ai_threshold",
         "ensemble_disagreement",
@@ -215,6 +223,15 @@ def _format_scan_results_df(df: pd.DataFrame) -> pd.DataFrame:
         "signal_type": "信号类型",
         "total_score": "规则得分",
         "buy_score": "买点得分",
+        "trend_score": "趋势分",
+        "reversion_score": "回撤分",
+        "volume_score": "量能分",
+        "pattern_score": "形态分",
+        "timeframe_alignment": "多周期一致",
+        "min_composite_score": "质量阈值",
+        "quality_gate_passed": "质量通过",
+        "vol_slope": "量能斜率",
+        "vol_slope_component": "量能斜率分",
         "expected_value_pct": "EV(%)",
         "ai_prob": "AI胜率",
         "ai_threshold": "AI阈值",
@@ -237,6 +254,11 @@ def _format_scan_results_df(df: pd.DataFrame) -> pd.DataFrame:
         "收盘价",
         "信号类型",
         "买点得分",
+        "趋势分",
+        "回撤分",
+        "量能分",
+        "形态分",
+        "多周期一致",
         "EV(%)",
         "AI胜率",
         "AI阈值",
@@ -246,6 +268,10 @@ def _format_scan_results_df(df: pd.DataFrame) -> pd.DataFrame:
         "大盘上行",
         "ATR(%)",
         "规则得分",
+        "质量阈值",
+        "质量通过",
+        "量能斜率",
+        "量能斜率分",
         "量比",
         "20日动量",
         "模型类型",
@@ -693,17 +719,31 @@ def ui_trade_plan(code: str, target_date: str | None, capital: float) -> tuple[s
     buy_score = sig.get("buy_score", None)
     total_score = sig.get("total_score", None)
     sig_type = str(sig.get("signal_type", "") or "")
+    trend_score = sig.get("trend_score", None)
+    reversion_score = sig.get("reversion_score", None)
+    volume_score = sig.get("volume_score", None)
+    pattern_score = sig.get("pattern_score", None)
+    tf_align = sig.get("timeframe_alignment", None)
+    vol_slope = sig.get("vol_slope", None)
 
     ai_thresh_s = f"{float(ai_thresh):.2f}" if ai_thresh is not None else "N/A"
     ev_s = f"{float(ev_pct):+.2f}%" if ev_pct is not None else "N/A"
     buy_score_s = f"{float(buy_score):.3f}" if buy_score is not None else "N/A"
     rules_s = f"{float(total_score):.3f}" if total_score is not None else "N/A"
+    multi_s = (
+        f"趋势 `{float(trend_score):.2f}`  回撤 `{float(reversion_score):.2f}`  "
+        f"量能 `{float(volume_score):.2f}`  形态 `{float(pattern_score):.2f}`  "
+        f"多周期 `{float(tf_align):.2f}`  量能斜率 `{float(vol_slope):+.3f}`"
+        if all(v is not None for v in (trend_score, reversion_score, volume_score, pattern_score, tf_align, vol_slope))
+        else None
+    )
 
     lines = [
         "### 交易计划 (Buy Plan)",
         f"- 标的: `{code}`  日期: `{sig.get('date','') or (date_s or 'latest')}`",
         f"- 信号: {sig_type}  市场状态: `{market_state or 'N/A'}`",
         f"- 买点得分: `{buy_score_s}`  规则得分: `{rules_s}`  EV: `{ev_s}`",
+        *( [f"- 多维评分: {multi_s}"] if multi_s else [] ),
         "",
         "#### 价格区间 (以收盘价为参考)",
         f"- 参考买入价: `{close:.2f}`",
