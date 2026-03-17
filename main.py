@@ -259,6 +259,17 @@ def main():
         help="Run signal scan on a specific historical date to verify past recommendations.",
     )
     scan_parser.add_argument("--date", type=str, required=True, help="Target date mapping in YYYY-MM-DD format (e.g., 2024-05-10)")
+    
+    rev_parser = subparsers.add_parser(
+        "reverse-validate",
+        help="Run reverse validation: scan historical dates and track performance to evaluate stock selection ability.",
+    )
+    rev_parser.add_argument("--dates", type=str, help="Comma-separated dates (YYYY-MM-DD) to test")
+    rev_parser.add_argument("--start-date", type=str, help="Start date for date range")
+    rev_parser.add_argument("--end-date", type=str, help="End date for date range")
+    rev_parser.add_argument("--hold-days", type=int, default=5, help="Number of days to hold stocks")
+    rev_parser.add_argument("--max-stocks", type=int, default=50, help="Max stocks to test per date")
+    rev_parser.add_argument("--output", type=str, help="Output file path for report")
 
     args = parser.parse_args()
 
@@ -280,6 +291,9 @@ def main():
         cmd_auto_pilot()
     elif args.command == "scan-date":
         cmd_scan_date(args)
+    elif args.command == "reverse-validate":
+        from quant.app.reverse_validation import cmd_reverse_validate as rev_cmd
+        rev_cmd(args)
     else:
         parser.print_help()
         sys.exit(1)
