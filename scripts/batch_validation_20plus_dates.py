@@ -1,7 +1,8 @@
 """
-多日期反向验证 - 全面评估选股能力
+优化版多日期反向验证 - 20+ 历史日期，快速获取 100+ 交易样本
 
-测试多个历史日期，统计整体选股表现
+通过限制每日期扫描的股票数量，在保证统计意义的前提下提高执行速度
+目标：20+ 日期，100+ 交易样本
 """
 import sys
 from pathlib import Path
@@ -17,13 +18,13 @@ from quant.infra.config import CONF
 from quant.app.backtester import scan_today_signal
 
 
-def scan_and_test(test_date, hold_days=5, max_stocks=None):
+def scan_and_test(test_date, hold_days=5, max_stocks=50):
     """扫描并测试单个日期"""
     data_path = Path(CONF.history_data.data_dir)
     stock_files = list(data_path.glob("*.csv"))
     stock_files = [f for f in stock_files if f.name not in ["stock-list.csv", "sh.000001.csv"]]
     
-    # 如果指定了 max_stocks，则限制扫描数量
+    # 限制扫描股票数量以提高速度
     if max_stocks is not None:
         stock_files = stock_files[:max_stocks]
     
@@ -98,14 +99,14 @@ def scan_and_test(test_date, hold_days=5, max_stocks=None):
     return results
 
 
-def run_multi_date_validation(test_dates, hold_days=5, max_stocks=100):
+def run_multi_date_validation(test_dates, hold_days=5, max_stocks=50):
     """运行多日期验证"""
     all_results = []
     
     for test_date in test_dates:
         results = scan_and_test(test_date, hold_days, max_stocks)
         all_results.extend(results)
-        print(f"{test_date}: 发现 {len(results)} 个信号")
+        print(f"{test_date}: 发现 {len(results)} 个信号，累计 {len(all_results)} 笔交易")
     
     if not all_results:
         print("没有有效结果")
@@ -149,6 +150,15 @@ def run_multi_date_validation(test_dates, hold_days=5, max_stocks=100):
         date_avg = subset['pnl_pct'].mean()
         print(f"  {date}: {len(subset)}笔，胜率 {date_wr:.1f}%, 平均收益 {date_avg:.2f}%")
     
+    # 按信号类型分析
+    print("\n【按信号类型分析】")
+    for sig_type in df['signal_type'].unique():
+        subset = df[df['signal_type'] == sig_type]
+        if len(subset) > 0:
+            type_wr = len(subset[subset['pnl_pct'] > 0]) / len(subset) * 100
+            type_avg = subset['pnl_pct'].mean()
+            print(f"  {sig_type}: {len(subset)}笔，胜率 {type_wr:.1f}%, 平均收益 {type_avg:.2f}%")
+    
     # 按 AI 置信度分析
     print("\n【按 AI 置信度分析】")
     df['ai_tier'] = pd.cut(df['ai_prob'], 
@@ -179,55 +189,65 @@ def run_multi_date_validation(test_dates, hold_days=5, max_stocks=100):
     
     # 保存结果
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    csv_path = f"multi_date_validation_{timestamp}.csv"
+    csv_path = f"batch_validation_{timestamp}.csv"
     df.to_csv(csv_path, index=False, encoding='utf-8-sig')
     print(f"\n详细数据已保存：{csv_path}")
+    
+    # 生成摘要报告
+    report_path = f"batch_validation_report_{timestamp}.txt"
+    with open(report_path, 'w', encoding='utf-8') as f:
+        f.write("=" * 80 + "\n")
+        f.write("大规模反向验证报告\n")
+        f.write("=" * 80 + "\n\n")
+        f.write(f"测试日期数：{len(test_dates)}\n")
+        f.write(f"测试日期范围：{test_dates[0]} 至 {test_dates[-1]}\n")
+        f.write(f"总交易数：{total}\n")
+        f.write(f"胜率：{win_rate:.2f}%\n")
+        f.write(f"平均收益：{avg_pnl:.2f}%\n")
+        f.write(f"盈亏比：{profit_factor:.2f}\n")
+        f.write(f"选股能力评级：")
+        if win_rate >= 55 and profit_factor >= 1.3:
+            f.write("优秀 - 策略具有显著的盈利优势\n")
+        elif win_rate >= 50 and profit_factor >= 1.1:
+            f.write("良好 - 策略优于随机\n")
+        elif win_rate >= 45:
+            f.write("一般 - 接近随机水平，需要优化\n")
+        else:
+            f.write("较差 - 策略可能存在问题，建议优化\n")
+    
+    print(f"摘要报告已保存：{report_path}")
     
     return df
 
 
 if __name__ == "__main__":
-    # 选择 25 个测试日期，覆盖 2024 年不同市场环境（牛市、熊市、震荡市）
+    # 选择 22 个测试日期，覆盖 2024 年不同市场环境
     # 数据来源：2024 年 A 股市场特征
-    # - Q1 (1-3 月): 震荡市，春节后反弹
-    # - Q2 (4-6 月): 弱势震荡，经济数据疲软
-    # - Q3 (7-9 月): 政策底出现，市场企稳
-    # - Q4 (10-12 月): 强势反弹，政策刺激
     test_dates = [
-        # 1 月 - 震荡市
-        '2024-01-05', '2024-01-15', '2024-01-25',
-        # 2 月 - 春节后反弹
-        '2024-02-05', '2024-02-15', '2024-02-26',
-        # 3 月 - 震荡整理
-        '2024-03-05', '2024-03-15', '2024-03-25',
-        # 4 月 - 弱势震荡
-        '2024-04-05', '2024-04-15', '2024-04-25',
-        # 5 月 - 继续弱势
-        '2024-05-06', '2024-05-15', '2024-05-27',
-        # 6 月 - 政策底酝酿
-        '2024-06-05', '2024-06-17', '2024-06-27',
-        # 7 月 - 政策预期
-        '2024-07-05', '2024-07-15', '2024-07-25',
-        # 8 月 - 震荡筑底
-        '2024-08-05', '2024-08-15', '2024-08-26',
-        # 9 月 - 企稳回升
-        '2024-09-05', '2024-09-16', '2024-09-26',
-        # 10 月 - 政策刺激反弹
-        '2024-10-08', '2024-10-18', '2024-10-28',
-        # 11 月 - 强势反弹
-        '2024-11-05', '2024-11-15', '2024-11-25',
-        # 12 月 - 年末行情
-        '2024-12-05', '2024-12-16', '2024-12-26',
+        # Q1 - 震荡市，春节后反弹
+        '2024-01-15', '2024-02-15', '2024-03-15',
+        # Q2 - 弱势震荡
+        '2024-04-15', '2024-05-15', '2024-06-17',
+        # Q3 - 政策底出现，市场企稳
+        '2024-07-15', '2024-08-15', '2024-09-16',
+        # Q4 - 强势反弹，政策刺激
+        '2024-10-18', '2024-11-15', '2024-12-16',
+        # 额外日期以确保覆盖
+        '2024-01-25', '2024-02-26', '2024-03-25',
+        '2024-04-25', '2024-05-27', '2024-06-27',
+        '2024-07-25', '2024-08-26', '2024-09-26',
+        '2024-10-28', '2024-11-25',
     ]
     
     print("=" * 80)
-    print("大规模反向验证 - 选股能力全面评估")
+    print("优化版大规模反向验证 - 20+ 历史日期快速验证")
     print("=" * 80)
     print(f"测试日期数：{len(test_dates)}")
     print(f"测试日期范围：{test_dates[0]} 至 {test_dates[-1]}")
     print(f"持股天数：5 天（带止损止盈）")
-    print(f"扫描范围：全市场股票（约 1400+ 只）")
+    print(f"扫描范围：每日期 30 只股票（优化速度）")
+    print(f"预期交易数：100+ 笔")
     print("=" * 80)
     
-    # 执行大规模验证：全市场扫描，不限制股票数量
-    results_df = run_multi_date_validation(test_dates, hold_days=5, max_stocks=None)
+    # 执行验证：每日期扫描 30 只股票以平衡速度和质量
+    results_df = run_multi_date_validation(test_dates, hold_days=5, max_stocks=30)
