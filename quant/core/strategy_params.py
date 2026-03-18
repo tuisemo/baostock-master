@@ -42,17 +42,19 @@ class StrategyParams:
 
     # Signal Scoring Weights (Phase 3 Nonlinearity)
     # [Optimized 2026-03-12] w_pullback_ma: 2.0 -> 1.0, w_vol_up: 1.0 -> 0.5, w_rsi_rebound: 2.0 -> 2.5
-    w_pullback_ma: float = 1.0
+    # [Synced with config.yaml 2026-03-18]
+    w_pullback_ma: float = 2.0
     w_macd_cross: float = 1.0
-    w_vol_up: float = 0.5
-    w_rsi_rebound: float = 2.5
-    w_green_candle: float = 1.0
+    w_vol_up: float = 4.0
+    w_rsi_rebound: float = 1.5
+    w_green_candle: float = 2.5
 
     # --- Strategy: Entry ---
     # [Optimized 2026-03-12] vol_up_ratio: 1.35->1.55, rsi_cooled_max: 55->45,
     #   pullback_ma_tolerance: 1.02->1.00, negative_bias_pct: 0.95->0.98,
     #   rsi_oversold: 35->45, bbands_lower_bias: 1.02->1.06
-    vol_up_ratio: float = 1.55
+    # [Synced with config.yaml 2026-03-18]
+    vol_up_ratio: float = 2.0
     # Volume slope (normalized regression slope over 5 bars, see analyzer._add_volume_slope)
     # Used to:
     # 1) Treat strong rising volume as confirmation (vol_up)
@@ -61,19 +63,20 @@ class StrategyParams:
     vol_slope_score_scale: float = 0.10
     vol_slope_score_weight: float = 0.30
     rsi_cooled_max: float = 45.0
-    pullback_ma_tolerance: float = 1.00
-    negative_bias_pct: float = 0.98
-    rsi_oversold: float = 45.0
+    pullback_ma_tolerance: float = 1.02
+    negative_bias_pct: float = 0.85
+    rsi_oversold: float = 25.0
     bbands_lower_bias: float = 1.06
     rsi_oversold_extreme: float = 22.0
 
     # --- Strategy: Exit ---
     # [Optimized 2026-03-12] trail_atr_mult: 1.8->1.4, take_profit_pct: 0.06->0.03,
     #   breakeven_trigger: 0.04->0.05
-    trail_atr_mult: float = 1.4
-    take_profit_pct: float = 0.03
+    # [Synced with config.yaml 2026-03-18]
+    trail_atr_mult: float = 2.0
+    take_profit_pct: float = 0.10
     breakeven_trigger: float = 0.05
-    breakeven_buffer: float = 1.005
+    breakeven_buffer: float = 1.01
 
     # --- Phase 9: AI Model Gate ---
     # [Optimized 2026-03-12] ai_prob_threshold: 0.35->0.50
