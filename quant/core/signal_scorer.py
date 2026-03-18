@@ -223,7 +223,7 @@ class SignalScorer:
         signal_score: SignalScore,
         base_position_size: float,
         equity: float,
-        volatility: float = None,
+        volatility: float | None = None,
     ) -> float:
         """
         动态仓位分配
@@ -426,7 +426,7 @@ def calculate_signal_score(
     vol_1: float,
     vol_2: float,
     ai_prob: float = 0.5,
-    params: StrategyParams = None,
+    params: StrategyParams | None = None,
 ) -> SignalScore:
     """
     便捷函数：计算信号评分

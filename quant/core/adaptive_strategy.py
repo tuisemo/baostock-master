@@ -180,7 +180,7 @@ def get_signal_strength_category(
     reversion_score: float,
     volume_score: float,
     pattern_score: float,
-    weights: Dict[str, float] = None
+    weights: Dict[str, float] | None = None
 ) -> str:
     """
     Categorize signal strength based on component scores.

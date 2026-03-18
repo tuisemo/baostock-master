@@ -53,7 +53,7 @@ class SlippageModel:
         'micro': 0      # < 5B
     }
 
-    def __init__(self, config: dict = None):
+    def __init__(self, config: dict | None = None):
         """
         Initialize slippage model
 
@@ -94,7 +94,7 @@ class SlippageModel:
         volume: float,
         avg_volume: float,
         market_cap_tier: str,
-        trade_value: float = None
+        trade_value: float | None = None
     ) -> float:
         """Calculate realistic slippage
 
@@ -181,10 +181,10 @@ class SlippageModel:
 
 
 # Global slippage model instance
-_slippage_model: SlippageModel = None
+_slippage_model: SlippageModel | None = None
 
 
-def get_slippage_model(config: dict = None) -> SlippageModel:
+def get_slippage_model(config: dict | None = None) -> SlippageModel:
     """Get global slippage model instance"""
     global _slippage_model
     if _slippage_model is None:
@@ -277,7 +277,7 @@ def _get_ensemble_model():
 
 def get_tiered_confidence_factor(
     ai_confidence: float,
-    ensemble_disagreement: float = None,
+    ensemble_disagreement: float | None = None,
     use_ensemble: bool = False
 ) -> tuple[float, str]:
     """
@@ -335,7 +335,7 @@ def get_ensemble_prediction_and_disagreement(X: pd.DataFrame) -> tuple[float, fl
         # 检查模型类型
         if hasattr(ensemble, 'trained_models'):
             # MultiModelEnsemble
-            predictions = []
+            predictions_list: list = []
             for model_name in ensemble.models:
                 model = ensemble.trained_models.get(model_name)
                 if model is None:
@@ -353,30 +353,30 @@ def get_ensemble_prediction_and_disagreement(X: pd.DataFrame) -> tuple[float, fl
                 else:
                     continue
                 
-                predictions.append(pred)
+                predictions_list.append(pred)
             
-            if not predictions:
+            if not predictions_list:
                 return 0.5, 0.0
             
             # 计算平均预测
-            predictions = np.array(predictions)
-            ensemble_proba = np.mean(predictions, axis=0)
+            predictions_arr = np.array(predictions_list)
+            ensemble_proba = np.mean(predictions_arr, axis=0)
             
             # 计算分歧度 (标准差)
-            disagreement = np.std(predictions, axis=0)
+            disagreement = np.std(predictions_arr, axis=0)
             
             return float(ensemble_proba[0]) if len(ensemble_proba) > 0 else 0.5, float(disagreement[0])
         
         elif hasattr(ensemble, 'models'):
             # EnsembleLGBM
-            predictions = []
+            predictions_lgbm: list = []
             for model in ensemble.models:
                 pred = model.predict(X, num_iteration=model.best_iteration)
-                predictions.append(pred)
+                predictions_lgbm.append(pred)
             
-            predictions = np.array(predictions)
-            ensemble_proba = np.mean(predictions, axis=0)
-            disagreement = np.std(predictions, axis=0)
+            predictions_lgbm_arr = np.array(predictions_lgbm)
+            ensemble_proba = np.mean(predictions_lgbm_arr, axis=0)
+            disagreement = np.std(predictions_lgbm_arr, axis=0)
             
             return float(ensemble_proba[0]) if len(ensemble_proba) > 0 else 0.5, float(disagreement[0])
         
@@ -826,7 +826,7 @@ def evaluate_buy_signals(
     mom_div_1: float,
     market_uptrend: bool,
     p: StrategyParams,
-    weekly_data: dict = None,
+    weekly_data: dict | None = None,
 ) -> tuple[bool, bool, bool, dict]:
     """
     Enhanced buy signal evaluation with multi-timeframe support and detailed scoring.

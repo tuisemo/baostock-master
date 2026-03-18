@@ -125,7 +125,7 @@ def get_market_state_risk_level(market_state: str) -> int:
         风险等级 (1-10, 1为最低风险，10为最高风险)
     """
     thresholds = get_market_state_thresholds(market_state)
-    return thresholds.get("risk_level", 5)
+    return int(thresholds.get("risk_level", 5))
 
 
 def calculate_adaptive_thresholds(
