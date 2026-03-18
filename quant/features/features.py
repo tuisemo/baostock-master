@@ -6,6 +6,7 @@ import gc
 
 from quant.infra.config import CONF
 from quant.infra.logger import logger
+from quant.core.cache import GLOBAL_CACHE
 from quant.infra.numba_accelerator import (
     compute_vol_slope_numba,
     create_targets_numba,
@@ -19,10 +20,6 @@ from quant.infra.numba_accelerator import (
     compute_features_numba,
     NUMBA_AVAILABLE
 )
-
-# Cache for the market index dataframe to avoid reading it on every stock
-_MARKET_INDEX_CACHE = None
-
 # Numba 状态
 _NUMBA_STATUS = get_numba_status()
 
@@ -81,9 +78,8 @@ def _optimize_feature_memory(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def _get_market_features() -> pd.DataFrame | None:
-    global _MARKET_INDEX_CACHE
-    if _MARKET_INDEX_CACHE is not None:
-        return _MARKET_INDEX_CACHE
+    if GLOBAL_CACHE.market_index is not None:
+        return GLOBAL_CACHE.market_index
         
     idx_path = os.path.join(CONF.history_data.data_dir, "sh.000001.csv")
     if not os.path.exists(idx_path):
@@ -115,8 +111,8 @@ def _get_market_features() -> pd.DataFrame | None:
         ma_20 = close_s.rolling(window=20).mean()
         features['feat_market_bias_20'] = (close_s - ma_20) / (ma_20 + 1e-8)
         
-        _MARKET_INDEX_CACHE = features
-        return _MARKET_INDEX_CACHE
+        GLOBAL_CACHE.market_index = features
+        return GLOBAL_CACHE.market_index
     except Exception:
         return None
 
@@ -718,9 +714,6 @@ def _fallback_multi_class_targets(df, n_forward_days, close_col, high_col, low_c
 
 # ========== Sector and Cross-Sectional Feature Functions ==========
 
-# Sector cache for cross-sectional calculations
-_SECTOR_DATA_CACHE = {}
-
 
 def get_sector_data(sector_code: str) -> pd.DataFrame | None:
     """
@@ -732,10 +725,10 @@ def get_sector_data(sector_code: str) -> pd.DataFrame | None:
     Returns:
         板块数据DataFrame或None
     """
-    global _SECTOR_DATA_CACHE
+    sector_cache = GLOBAL_CACHE.sector_data
 
-    if sector_code in _SECTOR_DATA_CACHE:
-        return _SECTOR_DATA_CACHE[sector_code]
+    if sector_code in sector_cache:
+        return sector_cache[sector_code]
 
     idx_path = os.path.join(CONF.history_data.data_dir, f"{sector_code}.csv")
     if not os.path.exists(idx_path):
@@ -752,7 +745,7 @@ def get_sector_data(sector_code: str) -> pd.DataFrame | None:
             df.set_index("Date", inplace=True)
             df.sort_index(inplace=True)
 
-        _SECTOR_DATA_CACHE[sector_code] = df
+        GLOBAL_CACHE.set_sector(sector_code, df)
         return df
     except Exception:
         return None

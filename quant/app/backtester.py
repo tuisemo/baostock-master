@@ -11,6 +11,7 @@ from tqdm import tqdm
 from quant.features.analyzer import calculate_indicators
 from quant.core.market_state import classify_market_state
 from quant.core.adaptive_strategy import get_dynamic_params_v10 as get_dynamic_params
+from quant.core.cache import GLOBAL_CACHE
 from quant.core.constants import (
     CONFIDENCE,
     CONFIDENCE_HIGH_THRESHOLD as _CONST_CONF_HIGH,
@@ -403,13 +404,9 @@ def _build_column_names(p: StrategyParams) -> dict[str, str]:
     }
 
 
-_MARKET_INDEX_CACHE = None
-_WEEKLY_SRC_CACHE: dict[str, pd.DataFrame] = {}
-
 def get_market_index() -> pd.DataFrame | None:
-    global _MARKET_INDEX_CACHE
-    if _MARKET_INDEX_CACHE is not None:
-        return _MARKET_INDEX_CACHE
+    if GLOBAL_CACHE.market_index is not None:
+        return GLOBAL_CACHE.market_index
 
     file_path = os.path.join(CONF.history_data.data_dir, "sh.000001.csv")
     if not os.path.exists(file_path):
@@ -502,8 +499,8 @@ def get_market_index() -> pd.DataFrame | None:
     df_idx["market_state"] = state
     df_idx["market_volatility"] = volatility
     
-    _MARKET_INDEX_CACHE = df_idx
-    return _MARKET_INDEX_CACHE
+    GLOBAL_CACHE.market_index = df_idx
+    return GLOBAL_CACHE.market_index
 
 def _resolve_params(params: StrategyParams | None) -> StrategyParams:
     from quant.core.strategy_params import StrategyParams as SP
@@ -760,7 +757,7 @@ def get_weekly_confirmation(code: str, current_date: str, data_dir: str = 'data'
             return None
 
         cache_key = f"{os.path.abspath(data_dir)}::{code}"
-        df = _WEEKLY_SRC_CACHE.get(cache_key)
+        df = GLOBAL_CACHE.get_weekly(cache_key)
          
         if df is None:
             file_path = os.path.join(data_dir, f"{code}.csv")
@@ -781,12 +778,12 @@ def get_weekly_confirmation(code: str, current_date: str, data_dir: str = 'data'
                 df = df.rename(columns={date_col: 'date'})
             date_col = 'date'
             # Keep cache bounded to avoid unbounded memory growth in batch backtests.
-            if len(_WEEKLY_SRC_CACHE) >= 8:
+            if GLOBAL_CACHE.weekly_count >= 8:
                 try:
-                    _WEEKLY_SRC_CACHE.pop(next(iter(_WEEKLY_SRC_CACHE)))
+                    GLOBAL_CACHE.clear_oldest_weekly()
                 except Exception:
-                    _WEEKLY_SRC_CACHE.clear()
-            _WEEKLY_SRC_CACHE[cache_key] = df
+                    GLOBAL_CACHE.clear_weekly()
+            GLOBAL_CACHE.set_weekly(cache_key, df)
         else:
             # Cached df is standardized to contain a 'date' column.
             date_col = 'date'

@@ -16,10 +16,7 @@ import pandas as pd
 
 from quant.infra.config import CONF
 from quant.infra.logger import logger
-
-
-# ===== 全局缓存 =====
-_MARKET_INDEX_CACHE: Optional[pd.DataFrame] = None
+from quant.core.cache import GLOBAL_CACHE
 
 
 # ===== 市场状态阈值配置 =====
@@ -364,10 +361,8 @@ def get_market_index() -> Optional[pd.DataFrame]:
     Returns:
         包含市场数据的DataFrame，失败时返回None
     """
-    global _MARKET_INDEX_CACHE
-
-    if _MARKET_INDEX_CACHE is not None:
-        return _MARKET_INDEX_CACHE
+    if GLOBAL_CACHE.market_index is not None:
+        return GLOBAL_CACHE.market_index
 
     file_path = os.path.join(CONF.history_data.data_dir, "sh.000001.csv")
     if not os.path.exists(file_path):
@@ -479,14 +474,13 @@ def get_market_index() -> Optional[pd.DataFrame]:
     df_idx["market_state"] = state
     df_idx["market_volatility"] = volatility
 
-    _MARKET_INDEX_CACHE = df_idx
-    return _MARKET_INDEX_CACHE
+    GLOBAL_CACHE.market_index = df_idx
+    return GLOBAL_CACHE.market_index
 
 
 def clear_market_index_cache() -> None:
     """清除大盘指数缓存（主要用于测试）"""
-    global _MARKET_INDEX_CACHE
-    _MARKET_INDEX_CACHE = None
+    GLOBAL_CACHE.clear_market_index()
 
 
 # 向后兼容：导出classify_market_state_enhanced作为classify_market_state
