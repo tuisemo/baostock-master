@@ -13,7 +13,7 @@ class LogConfig:
 @dataclass
 class FilterConfig:
     keep_star_market: bool = False
-    min_market_cap_billion: float = 50.0
+    min_market_cap_billion: float = 30.0  # 与yaml同步: 30.0
     min_turnover_amount_wan: float = 10000.0
     max_turnover_rate_pct: float = 20.0
     min_turnover_rate_pct: float = 1.0
@@ -31,45 +31,45 @@ class HistoryDataConfig:
 @dataclass
 class AnalyzerWeights:
     trend: float = 0.4
-    reversion: float = 0.3
-    volume: float = 0.3
+    reversion: float = 0.35  # 与yaml同步: 0.35
+    volume: float = 0.25  # 与yaml同步: 0.25
 
 
 @dataclass
 class AnalyzerConfig:
     weights: AnalyzerWeights = field(default_factory=AnalyzerWeights)
     ma_short: int = 5
-    ma_long: int = 20
+    ma_long: int = 50  # 与yaml同步: 50
     macd_fast: int = 12
     macd_slow: int = 26
     macd_signal: int = 9
     rsi_length: int = 14
-    rsi_buy_threshold: float = 40.0
-    rsi_sell_threshold: float = 70.0
+    rsi_buy_threshold: float = 45.0  # 与yaml同步: 45
+    rsi_sell_threshold: float = 65.0  # 与yaml同步: 65
     bbands_length: int = 20
     bbands_std: float = 2.0
     atr_length: int = 14
-    atr_multiplier: float = 2.0
+    atr_multiplier: float = 2.5  # 与yaml同步: 2.5
 
 
 @dataclass
 class StrategyConfig:
-    vol_up_ratio: float = 1.35
-    rsi_cooled_max: float = 55.0
+    vol_up_ratio: float = 2.0  # 与yaml同步: 2.0
+    rsi_cooled_max: float = 45.0  # 与yaml同步: 45
     pullback_ma_tolerance: float = 1.02
-    negative_bias_pct: float = 0.95
-    rsi_oversold: float = 35.0
+    negative_bias_pct: float = 0.85  # 与yaml同步: 0.85
+    rsi_oversold: float = 25.0  # 与yaml同步: 25
     bbands_lower_bias: float = 1.02
     rsi_oversold_extreme: float = 25.0
-    trail_atr_mult: float = 1.8
-    take_profit_pct: float = 0.06
-    breakeven_trigger: float = 0.04
-    breakeven_buffer: float = 1.005
+    trail_atr_mult: float = 2.0  # 与yaml同步: 2.0
+    take_profit_pct: float = 0.1  # 与yaml同步: 0.1
+    breakeven_trigger: float = 0.05  # 与yaml同步: 0.05
+    breakeven_buffer: float = 1.01  # 与yaml同步: 1.01
     w_pullback_ma: float = 2.0
     w_macd_cross: float = 1.0
-    w_vol_up: float = 1.0
-    w_rsi_rebound: float = 2.0
-    w_green_candle: float = 1.0
+    w_vol_up: float = 4.0  # 与yaml同步: 4.0
+    w_rsi_rebound: float = 1.5  # 与yaml同步: 1.5
+    w_green_candle: float = 2.5  # 与yaml同步: 2.5
     ai_prob_threshold: float = 0.35
     bear_market_ai_threshold: float = 0.50
     position_size: float = 0.1
@@ -103,11 +103,11 @@ class StrategyConfig:
 @dataclass
 class OptimizerConfig:
     sample_count: int = 200
-    max_rounds: int = 5
+    max_rounds: int = 10  # 与yaml同步: 10
     convergence_threshold: float = 0.005
     walk_forward_splits: int = 5
     train_ratio: float = 0.7
-    objective: str = "sharpe_adj"
+    objective: str = "sharpe_pure"  # 与yaml同步: sharpe_pure
     regularization_strength: float = 0.1
     walk_forward_folds: int = 3
     results_dir: str = "data/optimize_results"
