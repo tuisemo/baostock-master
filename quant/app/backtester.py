@@ -510,6 +510,303 @@ def _resolve_params(params: StrategyParams | None) -> StrategyParams:
     return SP.from_app_config(CONF)
 
 
+# ===== Helper Functions for evaluate_buy_signals =====
+
+def _normalize_vol_and_momentum(
+    has_vol_slope: bool,
+    vol_slope_1: float,
+    vol_1: float,
+    vol_2: float,
+    has_mom_div: bool,
+    mom_div_1: float,
+    p: StrategyParams,
+) -> tuple[float, bool, float, bool]:
+    """
+    Normalize volume slope and momentum indicators.
+    
+    Returns:
+        tuple: (vol_slope_val, vol_up, vol_slope_component, mom_ok)
+    """
+    vol_slope_val = 0.0
+    if has_vol_slope:
+        try:
+            vol_slope_val = float(vol_slope_1)
+        except Exception:
+            vol_slope_val = 0.0
+        if not np.isfinite(vol_slope_val):
+            vol_slope_val = 0.0
+
+    vol_slope_thr = float(getattr(p, "vol_slope_strong_threshold", 0.10))
+    if has_vol_slope and vol_slope_val > vol_slope_thr:
+        vol_up = True
+    else:
+        vol_up = vol_1 > vol_2 * p.vol_up_ratio
+
+    vol_slope_component = 0.0
+    if has_vol_slope:
+        scale = float(getattr(p, "vol_slope_score_scale", 0.10))
+        weight = float(getattr(p, "vol_slope_score_weight", 0.0))
+        if np.isfinite(scale) and scale > 0 and np.isfinite(weight) and weight != 0:
+            vol_slope_component = float(np.clip(vol_slope_val / scale, -1.0, 1.0) * weight)
+
+    mom_ok = True
+    if has_mom_div and mom_div_1 <= -0.02:
+        mom_ok = False
+
+    return vol_slope_val, vol_up, vol_slope_component, mom_ok
+
+
+def _evaluate_timeframe(
+    weekly_data: dict | None,
+    market_uptrend: bool,
+) -> tuple[float, float]:
+    """
+    Evaluate multi-timeframe confirmation.
+    
+    Returns:
+        tuple: (timeframe_alignment_score, alignment_threshold)
+    """
+    mt_cfg = getattr(getattr(CONF, "strategy", None), "multi_timeframe", {}) or {}
+    mt_enabled = bool(mt_cfg.get("enabled", True)) if isinstance(mt_cfg, dict) else True
+    weekly_enabled = bool(mt_cfg.get("weekly_confirmation", True)) if isinstance(mt_cfg, dict) else True
+    alignment_threshold = float(mt_cfg.get("alignment_threshold", 0.0)) if isinstance(mt_cfg, dict) else 0.0
+
+    timeframe_alignment_score = 1.0
+    if mt_enabled and weekly_enabled and weekly_data is not None:
+        weekly_uptrend = weekly_data.get('uptrend', True)
+        weekly_rsi = weekly_data.get('rsi', 50)
+        weekly_macd_positive = weekly_data.get('macd_positive', True)
+        
+        if market_uptrend == weekly_uptrend:
+            timeframe_alignment_score += 0.3
+        if weekly_rsi > 50:
+            timeframe_alignment_score += 0.2
+        if weekly_macd_positive:
+            timeframe_alignment_score += 0.2
+        
+        if not weekly_uptrend and weekly_rsi < 40:
+            timeframe_alignment_score -= 0.5
+
+    return timeframe_alignment_score, alignment_threshold
+
+
+def _evaluate_left_side(
+    price: float,
+    open_p: float,
+    low_p: float,
+    bb_lower_1: float,
+    rsi_1: float,
+    is_bb_dip: bool,
+    is_rsi_dip: bool,
+    is_green_candle: bool,
+    vol_up: bool,
+    vol_slope_component: float,
+    macd_golden_cross: bool,
+    macd_h_1: float,
+    macd_h_2: float,
+    mom_ok: bool,
+    market_uptrend: bool,
+    p: StrategyParams,
+) -> tuple[bool, bool, float, float, float, float]:
+    """
+    Evaluate left-side (pullback/rebound) buy signals.
+    
+    Returns:
+        tuple: (signal_pullback, signal_rebound, trend_score, reversion_score, volume_score, pattern_score)
+    """
+    signal_pullback = False
+    signal_rebound = False
+    
+    trend_score = 0.0
+    reversion_score = 0.0
+    volume_score = vol_slope_component
+    pattern_score = 0.0
+
+    if is_bb_dip or is_rsi_dip:
+        lower_shadow = min(open_p, price) - low_p
+        body = abs(price - open_p)
+        has_bottoming_sign = is_green_candle or (lower_shadow > body * 1.5 and lower_shadow > 0)
+            
+        score = 0.0
+        if has_bottoming_sign: 
+            score += 1.0
+            pattern_score += 0.8
+        if is_bb_dip: 
+            score += p.w_pullback_ma
+            reversion_score += 0.7
+        if is_rsi_dip: 
+            score += p.w_rsi_rebound
+            reversion_score += 0.6
+        if is_green_candle: 
+            score += p.w_green_candle
+            pattern_score += 0.5
+        if vol_up: 
+            score += p.w_vol_up
+            volume_score += 0.8
+        if macd_golden_cross or macd_h_1 > macd_h_2: 
+            score += p.w_macd_cross
+            trend_score += 0.6
+        if mom_ok: 
+            score += 1.0
+            trend_score += 0.4
+        
+        pass_threshold = 1.2 if market_uptrend else 3.0
+        signal_pullback = (score >= pass_threshold) and is_bb_dip
+        signal_rebound = (score >= pass_threshold) and is_rsi_dip
+
+    return signal_pullback, signal_rebound, trend_score, reversion_score, volume_score, pattern_score
+
+
+def _evaluate_right_side(
+    price: float,
+    sma_s_1: float,
+    macd_golden_cross: bool,
+    rsi_1: float,
+    vol_up: bool,
+    is_green_candle: bool,
+    market_uptrend: bool,
+    trend_score: float,
+    volume_score: float,
+    pattern_score: float,
+) -> tuple[bool, float, float, float]:
+    """
+    Evaluate right-side (trend breakout) buy signals.
+    
+    Returns:
+        tuple: (signal_trend_breakout, trend_score, volume_score, pattern_score)
+    """
+    signal_trend_breakout = False
+    
+    if market_uptrend:
+        is_above_ma = price > sma_s_1
+        is_rsi_health = 42 < rsi_1 < 72
+        if macd_golden_cross and is_above_ma and vol_up and is_rsi_health and is_green_candle:
+            signal_trend_breakout = True
+            trend_score = max(trend_score, 0.8)
+            volume_score = max(volume_score, 0.7)
+            pattern_score = max(pattern_score, 0.6)
+
+    return signal_trend_breakout, trend_score, volume_score, pattern_score
+
+
+def _calculate_composite_score(
+    trend_score: float,
+    reversion_score: float,
+    volume_score: float,
+    pattern_score: float,
+    timeframe_alignment_score: float,
+) -> tuple[float, dict, str]:
+    """
+    Calculate composite score from component scores using weighted voting.
+    
+    Returns:
+        tuple: (composite_score, weights, signal_strength)
+    """
+    weights_cfg = getattr(getattr(CONF, "strategy", None), "signal_fusion_weights", {}) or {}
+    weights = weights_cfg if isinstance(weights_cfg, dict) and weights_cfg else {
+        "trend": 0.3, "reversion": 0.3, "volume": 0.2, "pattern": 0.2,
+    }
+    for k in ("trend", "reversion", "volume", "pattern"):
+        weights.setdefault(k, 0.0)
+    w_sum = float(sum(weights.values()))
+    if w_sum > 0:
+        weights = {k: float(v) / w_sum for k, v in weights.items()}
+    else:
+        weights = {"trend": 0.3, "reversion": 0.3, "volume": 0.2, "pattern": 0.2}
+    
+    composite_score = (
+        trend_score * weights['trend'] +
+        reversion_score * weights['reversion'] +
+        volume_score * weights['volume'] +
+        pattern_score * weights['pattern']
+    ) * timeframe_alignment_score
+
+    if composite_score >= 0.75:
+        signal_strength = 'strong'
+    elif composite_score >= 0.50:
+        signal_strength = 'medium'
+    else:
+        signal_strength = 'weak'
+
+    return composite_score, weights, signal_strength
+
+
+def _apply_quality_gates(
+    composite_score: float,
+    timeframe_block: bool,
+    alignment_threshold: float,
+    signal_pullback: bool,
+    signal_rebound: bool,
+    signal_trend_breakout: bool,
+    signal_strength: str,
+    p: StrategyParams,
+) -> tuple[bool, bool, bool, str]:
+    """
+    Apply quality gates (timeframe block and minimum composite score).
+    
+    Returns:
+        tuple: (signal_pullback, signal_rebound, signal_trend_breakout, signal_strength)
+    """
+    if timeframe_block:
+        signal_pullback = False
+        signal_rebound = False
+        signal_trend_breakout = False
+        signal_strength = "weak"
+
+    min_comp = float(getattr(p, "min_composite_score", 0.0))
+    quality_gate_passed = True
+    if np.isfinite(min_comp) and min_comp > 0:
+        quality_gate_passed = composite_score >= min_comp
+        if not quality_gate_passed:
+            signal_pullback = False
+            signal_rebound = False
+            signal_trend_breakout = False
+            signal_strength = "weak"
+
+    return signal_pullback, signal_rebound, signal_trend_breakout, signal_strength
+
+
+def _build_signal_details(
+    trend_score: float,
+    reversion_score: float,
+    volume_score: float,
+    pattern_score: float,
+    composite_score: float,
+    timeframe_alignment_score: float,
+    timeframe_block: bool,
+    alignment_threshold: float,
+    vol_slope_val: float,
+    vol_slope_component: float,
+    vol_up: bool,
+    vol_1: float,
+    vol_2: float,
+    weights: dict,
+    signal_strength: str,
+    p: StrategyParams,
+) -> dict:
+    """
+    Build the signal_details dictionary with all scoring components.
+    """
+    return {
+        'trend_score': trend_score,
+        'reversion_score': reversion_score,
+        'volume_score': volume_score,
+        'pattern_score': pattern_score,
+        'composite_score': composite_score,
+        'min_composite_score': float(getattr(p, "min_composite_score", 0.0)),
+        'quality_gate_passed': True,
+        'timeframe_alignment': timeframe_alignment_score,
+        'timeframe_block': timeframe_block,
+        'alignment_threshold': alignment_threshold,
+        'vol_slope': vol_slope_val,
+        'vol_slope_component': vol_slope_component,
+        'vol_up_strong': bool(vol_up),
+        'vol_up_ratio': float(vol_1 / vol_2) if vol_2 else None,
+        'fusion_weights': weights,
+        'signal_strength': signal_strength,
+    }
+
+
 def evaluate_buy_signals(
     price: float,
     open_p: float,
@@ -540,200 +837,54 @@ def evaluate_buy_signals(
     Returns:
         Tuple of (signal_pullback, signal_rebound, signal_trend_breakout, signal_details)
     """
-    # Optional multi-timeframe controls from config.yaml
-    mt_cfg = getattr(getattr(CONF, "strategy", None), "multi_timeframe", {}) or {}
-    mt_enabled = bool(mt_cfg.get("enabled", True)) if isinstance(mt_cfg, dict) else True
-    weekly_enabled = bool(mt_cfg.get("weekly_confirmation", True)) if isinstance(mt_cfg, dict) else True
-    alignment_threshold = float(mt_cfg.get("alignment_threshold", 0.0)) if isinstance(mt_cfg, dict) else 0.0
-
     macd_golden_cross = macd_h_2 <= 0 and macd_h_1 > 0
     is_green_candle = price > open_p
 
-    # Normalize vol_slope (may be NaN on early bars or missing in some data sources)
-    vol_slope_val = 0.0
-    if has_vol_slope:
-        try:
-            vol_slope_val = float(vol_slope_1)
-        except Exception:
-            vol_slope_val = 0.0
-        if not np.isfinite(vol_slope_val):
-            vol_slope_val = 0.0
+    # Step 1: Normalize volume and momentum indicators
+    vol_slope_val, vol_up, vol_slope_component, mom_ok = _normalize_vol_and_momentum(
+        has_vol_slope, vol_slope_1, vol_1, vol_2, has_mom_div, mom_div_1, p
+    )
 
-    # "vol_up" is intended to mean a *strong* volume confirmation (used by right-side breakouts).
-    # For left-side we also add a continuous vol_slope contribution into volume_score (see below).
-    vol_slope_thr = float(getattr(p, "vol_slope_strong_threshold", 0.10))
-    if has_vol_slope and vol_slope_val > vol_slope_thr:
-        vol_up = True
-    else:
-        vol_up = vol_1 > vol_2 * p.vol_up_ratio
+    # Step 2: Multi-timeframe confirmation
+    timeframe_alignment_score, alignment_threshold = _evaluate_timeframe(
+        weekly_data, market_uptrend
+    )
+    timeframe_block = (timeframe_alignment_score < alignment_threshold) if alignment_threshold > 0 else False
 
-    # Continuous volume trend component (positive/negative) for multi-dimension confirmation.
-    vol_slope_component = 0.0
-    if has_vol_slope:
-        scale = float(getattr(p, "vol_slope_score_scale", 0.10))
-        weight = float(getattr(p, "vol_slope_score_weight", 0.0))
-        if np.isfinite(scale) and scale > 0 and np.isfinite(weight) and weight != 0:
-            vol_slope_component = float(np.clip(vol_slope_val / scale, -1.0, 1.0) * weight)
-
-    mom_ok = True
-    if has_mom_div and mom_div_1 <= -0.02:
-        mom_ok = False
-
-    # === Multi-Timeframe Confirmation ===
-    timeframe_alignment_score = 1.0  # Base score
-    if mt_enabled and weekly_enabled and weekly_data is not None:
-        weekly_uptrend = weekly_data.get('uptrend', True)
-        weekly_rsi = weekly_data.get('rsi', 50)
-        weekly_macd_positive = weekly_data.get('macd_positive', True)
-        
-        # Check alignment between daily and weekly
-        if market_uptrend == weekly_uptrend:
-            timeframe_alignment_score += 0.3
-        if weekly_rsi > 50:
-            timeframe_alignment_score += 0.2
-        if weekly_macd_positive:
-            timeframe_alignment_score += 0.2
-        
-        # Penalize if weekly is strongly bearish
-        if not weekly_uptrend and weekly_rsi < 40:
-            timeframe_alignment_score -= 0.5
-
-    timeframe_block = False
-    if mt_enabled and weekly_enabled and weekly_data is not None and alignment_threshold > 0:
-        timeframe_block = timeframe_alignment_score < alignment_threshold
-
-    # === 左侧交易评估 ===
+    # Step 3: Left-side evaluation (pullback/rebound)
     is_bb_dip = price < bb_lower_1 * p.bbands_lower_bias
     is_rsi_dip = rsi_1 < p.rsi_oversold_extreme
     
-    signal_pullback = False
-    signal_rebound = False
-    
-    # Component scores for signal fusion
-    trend_score = 0.0
-    reversion_score = 0.0
-    volume_score = 0.0
-    pattern_score = 0.0
+    signal_pullback, signal_rebound, trend_score, reversion_score, volume_score, pattern_score = _evaluate_left_side(
+        price, open_p, low_p, bb_lower_1, rsi_1,
+        is_bb_dip, is_rsi_dip, is_green_candle,
+        vol_up, vol_slope_component, macd_golden_cross, macd_h_1, macd_h_2,
+        mom_ok, market_uptrend, p
+    )
 
-    # Make volume_score reflect volume *trend* even when there is no volume spike.
-    volume_score += vol_slope_component
-    
-    if is_bb_dip or is_rsi_dip:
-        # 止跌形态验证（收阳线或长下影线），作为强烈加分项
-        lower_shadow = min(open_p, price) - low_p
-        body = abs(price - open_p)
-        has_bottoming_sign = is_green_candle or (lower_shadow > body * 1.5 and lower_shadow > 0)
-            
-        # 左侧接飞刀算分系统
-        score = 0.0
-        if has_bottoming_sign: 
-            score += 1.0       # 有止跌形态直接+1分
-            pattern_score += 0.8
-        if is_bb_dip: 
-            score += p.w_pullback_ma    # 复用回调权重为布林下轨突刺分
-            reversion_score += 0.7
-        if is_rsi_dip: 
-            score += p.w_rsi_rebound   # 复用超卖权重为极度恐慌分
-            reversion_score += 0.6
-        if is_green_candle: 
-            score += p.w_green_candle
-            pattern_score += 0.5
-        if vol_up: 
-            score += p.w_vol_up
-            volume_score += 0.8
-        if macd_golden_cross or macd_h_1 > macd_h_2: 
-            score += p.w_macd_cross
-            trend_score += 0.6
-        if mom_ok: 
-            score += 1.0
-            trend_score += 0.4
-        
-        # 大盘熊市时，左侧入局门槛提高 - 优化后门槛适中
-        pass_threshold = 1.2 if market_uptrend else 3.0
-        signal_pullback = (score >= pass_threshold) and is_bb_dip
-        signal_rebound = (score >= pass_threshold) and is_rsi_dip
+    # Step 4: Right-side evaluation (trend breakout)
+    signal_trend_breakout, trend_score, volume_score, pattern_score = _evaluate_right_side(
+        price, sma_s_1, macd_golden_cross, rsi_1, vol_up, is_green_candle,
+        market_uptrend, trend_score, volume_score, pattern_score
+    )
 
-    # === 右侧交易评估 (牛市专属) ===
-    signal_trend_breakout = False
-    if market_uptrend:
-        is_above_ma = price > sma_s_1
-        # Balanced RSI range for better signal quality
-        is_rsi_health = 42 < rsi_1 < 72
-        # Added volume confirmation requirement
-        if macd_golden_cross and is_above_ma and vol_up and is_rsi_health and is_green_candle:
-            signal_trend_breakout = True
-            trend_score = max(trend_score, 0.8)
-            volume_score = max(volume_score, 0.7)
-            pattern_score = max(pattern_score, 0.6)
+    # Step 5: Calculate composite score
+    composite_score, weights, signal_strength = _calculate_composite_score(
+        trend_score, reversion_score, volume_score, pattern_score, timeframe_alignment_score
+    )
 
-    # === Signal Fusion Enhancement ===
-    # Weighted voting for signal strength
-    weights_cfg = getattr(getattr(CONF, "strategy", None), "signal_fusion_weights", {}) or {}
-    weights = weights_cfg if isinstance(weights_cfg, dict) and weights_cfg else {
-        "trend": 0.3,
-        "reversion": 0.3,
-        "volume": 0.2,
-        "pattern": 0.2,
-    }
-    # Fill missing keys + normalize to sum to 1
-    for k in ("trend", "reversion", "volume", "pattern"):
-        weights.setdefault(k, 0.0)
-    w_sum = float(sum(weights.values()))
-    if w_sum > 0:
-        weights = {k: float(v) / w_sum for k, v in weights.items()}
-    else:
-        weights = {"trend": 0.3, "reversion": 0.3, "volume": 0.2, "pattern": 0.2}
-    composite_score = (
-        trend_score * weights['trend'] +
-        reversion_score * weights['reversion'] +
-        volume_score * weights['volume'] +
-        pattern_score * weights['pattern']
-    ) * timeframe_alignment_score
+    # Step 6: Apply quality gates
+    signal_pullback, signal_rebound, signal_trend_breakout, signal_strength = _apply_quality_gates(
+        composite_score, timeframe_block, alignment_threshold,
+        signal_pullback, signal_rebound, signal_trend_breakout, signal_strength, p
+    )
 
-    # Signal strength categorization - higher thresholds for better quality
-    if composite_score >= 0.75:
-        signal_strength = 'strong'
-    elif composite_score >= 0.50:
-        signal_strength = 'medium'
-    else:
-        signal_strength = 'weak'
-
-    # If weekly alignment is explicitly required and fails, block the signal entirely.
-    if timeframe_block:
-        signal_pullback = False
-        signal_rebound = False
-        signal_trend_breakout = False
-        signal_strength = "weak"
-
-    # Quality gate: require minimum composite score (multi-dimension confirmation).
-    min_comp = float(getattr(p, "min_composite_score", 0.0))
-    quality_gate_passed = True
-    if np.isfinite(min_comp) and min_comp > 0:
-        quality_gate_passed = composite_score >= min_comp
-        if not quality_gate_passed:
-            signal_pullback = False
-            signal_rebound = False
-            signal_trend_breakout = False
-            signal_strength = "weak"
-
-    signal_details = {
-        'trend_score': trend_score,
-        'reversion_score': reversion_score,
-        'volume_score': volume_score,
-        'pattern_score': pattern_score,
-        'composite_score': composite_score,
-        'min_composite_score': min_comp,
-        'quality_gate_passed': quality_gate_passed,
-        'timeframe_alignment': timeframe_alignment_score,
-        'timeframe_block': timeframe_block,
-        'alignment_threshold': alignment_threshold,
-        'vol_slope': vol_slope_val,
-        'vol_slope_component': vol_slope_component,
-        'vol_up_strong': bool(vol_up),
-        'vol_up_ratio': float(vol_1 / vol_2) if vol_2 else None,
-        'fusion_weights': weights,
-        'signal_strength': signal_strength,
-    }
+    # Step 7: Build signal details
+    signal_details = _build_signal_details(
+        trend_score, reversion_score, volume_score, pattern_score,
+        composite_score, timeframe_alignment_score, timeframe_block, alignment_threshold,
+        vol_slope_val, vol_slope_component, vol_up, vol_1, vol_2, weights, signal_strength, p
+    )
 
     return signal_pullback, signal_rebound, signal_trend_breakout, signal_details
 
