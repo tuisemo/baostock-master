@@ -24,7 +24,7 @@ class FilterConfig:
 
 @dataclass
 class HistoryDataConfig:
-    default_lookback_days: int = 500
+    default_lookback_days: int = 1000  # 与yaml同步: 1000
     data_dir: str = "data"
 
 
