@@ -9,6 +9,14 @@ from dataclasses import dataclass, field
 
 from quant.infra.logger import logger
 from quant.core.strategy_params import StrategyParams
+from quant.core.constants import (
+    SCORE,
+    POSITION,
+    QUALITY_MULTIPLIERS,
+    QUALITY_MULTIPLIERS_TP_SL,
+    TRADE_TYPE,
+    VOLATILITY_CONFIG,
+)
 
 
 @dataclass
@@ -197,13 +205,13 @@ class SignalScorer:
         )
         
         # 3. 信号质量评级
-        if score.total_score >= 15:
+        if score.total_score >= SCORE.STRONG:
             score.quality_rating = "strong"
-        elif score.total_score >= 10:
+        elif score.total_score >= SCORE.GOOD:
             score.quality_rating = "good"
-        elif score.total_score >= 5:
+        elif score.total_score >= SCORE.NEUTRAL:
             score.quality_rating = "neutral"
-        elif score.total_score >= 2:
+        elif score.total_score >= SCORE.WEAK:
             score.quality_rating = "weak"
         else:
             score.quality_rating = "poor"
@@ -232,14 +240,7 @@ class SignalScorer:
             调整后的仓位大小（0-1）
         """
         # 1. 基于信号质量的调整
-        quality_multipliers = {
-            'strong': 1.5,
-            'good': 1.2,
-            'neutral': 1.0,
-            'weak': 0.7,
-            'poor': 0.4,
-        }
-        quality_factor = quality_multipliers.get(signal_score.quality_rating, 1.0)
+        quality_factor = QUALITY_MULTIPLIERS.get(signal_score.quality_rating, 1.0)
         
         # 2. 基于总评分的连续调整
         score_factor = 1.0
@@ -249,15 +250,15 @@ class SignalScorer:
         # 3. 基于波动率的调整
         volatility_factor = 1.0
         if volatility is not None and volatility > 0:
-            normal_volatility = 0.02  # 假设正常波动率为 2%
+            normal_volatility = VOLATILITY_CONFIG['normal_volatility']  # 正常波动率
             volatility_factor = max(0.5, normal_volatility / max(volatility, 0.01))
         
         # 4. 综合调整
         adjusted_size = base_position_size * quality_factor * score_factor * volatility_factor
         
         # 5. 限制仓位范围
-        min_size = 0.01  # 最小 1% 仓位
-        max_size = 0.30  # 最大 30% 仓位
+        min_size = POSITION.MIN_SIZE  # 最小仓位
+        max_size = POSITION.MAX_SIZE  # 最大仓位
         
         adjusted_size = max(min_size, min(max_size, adjusted_size))
         
@@ -292,14 +293,7 @@ class SignalScorer:
             (止盈价, 止损价)
         """
         # 基于信号质量的调整系数
-        quality_multipliers = {
-            'strong': 1.5,
-            'good': 1.2,
-            'neutral': 1.0,
-            'weak': 0.8,
-            'poor': 0.6,
-        }
-        quality_factor = quality_multipliers.get(signal_score.quality_rating, 1.0)
+        quality_factor = QUALITY_MULTIPLIERS_TP_SL.get(signal_score.quality_rating, 1.0)
         
         # 基础止盈止损参数
         base_tp_pct = self.params.take_profit_pct
@@ -308,12 +302,12 @@ class SignalScorer:
         # 根据交易类型调整
         if trade_type == "right":
             # 右侧交易：更宽松的止盈止损
-            base_tp_mult = 3.0  # 止盈为 3 倍 ATR
-            base_sl_mult = 2.5  # 止损为 2.5 倍 ATR
+            base_tp_mult = TRADE_TYPE.RIGHT_TP_MULT
+            base_sl_mult = TRADE_TYPE.RIGHT_SL_MULT
         else:
             # 左侧交易：更严格的止盈止损
-            base_tp_mult = 2.0
-            base_sl_mult = 1.5
+            base_tp_mult = TRADE_TYPE.LEFT_TP_MULT
+            base_sl_mult = TRADE_TYPE.LEFT_SL_MULT
         
         # 动态调整
         tp_mult = base_tp_mult * quality_factor

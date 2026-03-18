@@ -11,6 +11,12 @@ from tqdm import tqdm
 from quant.features.analyzer import calculate_indicators
 from quant.core.market_state import classify_market_state
 from quant.core.adaptive_strategy import get_dynamic_params_v10 as get_dynamic_params
+from quant.core.constants import (
+    CONFIDENCE,
+    CONFIDENCE_HIGH_THRESHOLD as _CONST_CONF_HIGH,
+    CONFIDENCE_MEDIUM_THRESHOLD as _CONST_CONF_MEDIUM,
+    CONFIDENCE_LOW_THRESHOLD as _CONST_CONF_LOW,
+)
 from quant.infra.config import CONF
 from quant.infra.logger import logger
 
@@ -192,10 +198,10 @@ _ENSEMBLE_MODEL = None
 _ENSEMBLE_MODEL_PATH = "models/ensemble_v1"
 _ENSEMBLE_MODEL_LOAD_ATTEMPTED = False
 
-# Tiered confidence factor thresholds
-CONFIDENCE_HIGH_THRESHOLD = 0.65
-CONFIDENCE_MEDIUM_THRESHOLD = 0.45
-CONFIDENCE_LOW_THRESHOLD = 0.30
+# Tiered confidence factor thresholds (imported from constants module)
+CONFIDENCE_HIGH_THRESHOLD = _CONST_CONF_HIGH
+CONFIDENCE_MEDIUM_THRESHOLD = _CONST_CONF_MEDIUM
+CONFIDENCE_LOW_THRESHOLD = _CONST_CONF_LOW
 
 def _get_ai_model():
     """Lazy-load the LightGBM model singleton. Returns None if model is unavailable or corrupted."""
