@@ -18,22 +18,14 @@ def get_scan_func():
     from quant.app.backtester import scan_today_signal
     return scan_today_signal
 
-# 导入增强版市场状态分类和自适应参数调整
+# 导入市场状态分类和自适应参数调整
 try:
-    from quant.core.market_classifier import (
-        classify_market_state_enhanced,
-        analyze_market_regime,
-        get_market_state_transitions
-    )
+    from quant.core.market_state import classify_market_state
     from quant.core.adaptive_strategy import (
-        get_dynamic_params_enhanced,
+        get_dynamic_params,
         smooth_param_transition,
         get_param_transition_matrix
     )
-    
-    # 将增强版函数作为默认函数（向后兼容）
-    classify_market_state = classify_market_state_enhanced
-    get_dynamic_params = get_dynamic_params_enhanced
     
     ENHANCED_MARKET_CLASSIFIER = True
 except ImportError:
@@ -166,137 +158,6 @@ def _analyze_single_file(file_path: str) -> dict | None:
     except Exception as e:
         logger.debug(f"处理文件异常 {file_path}: {e}")
     return None
-
-
-def classify_market_state(index_df: pd.DataFrame, lookback_days: int = 60) -> str:
-    """
-    Classify market state into 5 categories:
-    - strong_bull: Strong uptrend with low volatility
-    - weak_bull: Mild uptrend
-    - sideways: Range-bound with low volatility
-    - weak_bear: Mild downtrend
-    - strong_bear: Strong downtrend with high volatility
-    """
-    if index_df is None or len(index_df) < lookback_days:
-        return "sideways"
-
-    # Use latest data
-    recent = index_df.tail(lookback_days).copy()
-
-    # Validate required column
-    if 'close' not in recent.columns:
-        return "sideways"
-
-    # Calculate moving averages
-    ma20 = recent['close'].rolling(window=20).mean()
-    ma60 = recent['close'].rolling(window=60).mean()
-
-    # Check if MA60 has valid value
-    if pd.isna(ma60.iloc[-1]) or pd.isna(ma20.iloc[-1]):
-        return "sideways"
-
-    # Trend strength (distance between MA20 and MA60)
-    try:
-        trend_strength = (ma20.iloc[-1] - ma60.iloc[-1]) / ma60.iloc[-1]
-    except ZeroDivisionError:
-        return "sideways"
-
-    # Volatility (20-day return standard deviation)
-    returns = recent['close'].pct_change().dropna()
-    if len(returns) < 20:
-        return "sideways"
-    volatility = returns.tail(20).std()
-
-    # Rate of change (20-day return)
-    if len(recent) < 20:
-        return "sideways"
-    try:
-        roc_20 = (recent['close'].iloc[-1] - recent['close'].iloc[-20]) / recent['close'].iloc[-20]
-    except ZeroDivisionError:
-        return "sideways"
-
-    # Classification logic
-    if trend_strength > 0.02 and volatility < 0.02 and roc_20 > 0.05:
-        return "strong_bull"
-    elif trend_strength > 0.005:
-        return "weak_bull"
-    elif -0.005 <= trend_strength <= 0.005 and volatility < 0.025:
-        return "sideways"
-    elif trend_strength < -0.005 and volatility < 0.03:
-        return "weak_bear"
-    elif trend_strength < -0.02 or (trend_strength < -0.01 and volatility > 0.03):
-        return "strong_bear"
-    else:
-        return "sideways"
-
-
-def get_dynamic_params(base_params: StrategyParams, market_state: str) -> StrategyParams:
-    """
-    Dynamically adjust strategy parameters based on market state.
-    """
-    from dataclasses import replace
-    try:
-        params = replace(base_params)
-    except Exception:
-        # Fallback: try to convert to dict and recreate
-        try:
-            params = StrategyParams(**base_params.__dict__)
-        except Exception as e:
-            logger.error(f"Failed to create params copy: {e}")
-            raise
-
-    # Market state adjustments
-    state_adjustments = {
-        'strong_bull': {
-            'position_size': 1.3,
-            'ai_prob_threshold': -0.05,
-            'max_hold_days': 5,
-            'trail_atr_mult': 2.2,
-            'take_profit_pct': 0.001,  # Increase by 1%
-        },
-        'weak_bull': {
-            'position_size': 1.1,
-            'ai_prob_threshold': -0.02,
-            'max_hold_days': 2,
-            'trail_atr_mult': 2.0,
-        },
-        'sideways': {
-            'position_size': 1.0,
-            'ai_prob_threshold': 0.0,
-            'max_hold_days': 0,
-        },
-        'weak_bear': {
-            'position_size': 0.8,
-            'ai_prob_threshold': 0.08,
-            'max_hold_days': -2,
-            'trail_atr_mult': 1.6,
-        },
-        'strong_bear': {
-            'position_size': 0.6,
-            'ai_prob_threshold': 0.12,
-            'max_hold_days': -5,
-            'trail_atr_mult': 1.4,
-            'take_profit_pct': -0.002,  # Decrease by 0.2%
-        },
-    }
-
-    # Apply adjustments
-    adjustments = state_adjustments.get(market_state, {})
-    for key, delta in adjustments.items():
-        current_value = getattr(params, key, None)
-        if current_value is not None:
-            if isinstance(current_value, float):
-                # Add delta (or multiply for position_size)
-                if key == 'position_size':
-                    setattr(params, key, min(0.25, max(0.02, current_value * delta)))
-                elif key in ['ai_prob_threshold', 'take_profit_pct']:
-                    setattr(params, key, current_value + delta)
-                else:
-                    setattr(params, key, current_value + delta)
-            elif isinstance(current_value, int):
-                setattr(params, key, current_value + int(delta))
-
-    return params
 
 
 def analyze_all_stocks() -> None:
