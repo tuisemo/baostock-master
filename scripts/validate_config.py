@@ -9,10 +9,15 @@
     python scripts/validate_config.py [--verbose] [--json]
 """
 
-import argparse
-import json
+import os
 import sys
 from pathlib import Path
+
+# 添加项目根目录到路径
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import argparse
+import json
 
 import yaml
 
