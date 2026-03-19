@@ -16,7 +16,6 @@ historical_scan_*.csv
 selected_stocks_*.csv
 
 # Data files (large, generated at runtime)
-data/*.csv
 data/*.log
 data/cache/
 data/historical/

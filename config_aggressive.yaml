@@ -1,0 +1,180 @@
+# 激进配置 - 产生更多选股推荐
+# 基于原配置，放宽关键筛选条件以增加推荐数量
+
+log:
+  level: INFO
+  file: data/quant.log
+
+filter:
+  keep_star_market: false
+  min_market_cap_billion: 30.0
+  min_turnover_amount_wan: 10000.0
+  max_turnover_rate_pct: 25.0  # 从20%放宽
+  min_turnover_rate_pct: 1.0
+  min_pe: 0.0
+  max_pe: 100.0  # 从80放宽
+  min_pb: 0.5
+
+history_data:
+  default_lookback_days: 1000
+  data_dir: data
+
+analyzer:
+  weights:
+    trend: 0.40
+    reversion: 0.35
+    volume: 0.25
+  ma_short: 5
+  ma_long: 50
+  macd_fast: 12
+  macd_slow: 26
+  macd_signal: 9
+  rsi_length: 14
+  rsi_buy_threshold: 40  # 从45放宽
+  rsi_sell_threshold: 70
+  bbands_length: 20
+  bbands_std: 2.0
+  atr_length: 14
+  atr_multiplier: 2.5
+
+strategy:
+  vol_up_ratio: 1.5  # 从2.0放宽至1.5 - 捕捉更多放量机会
+  rsi_cooled_max: 50  # 从45放宽至50
+  pullback_ma_tolerance: 1.02
+  negative_bias_pct: 0.85
+  rsi_oversold: 30  # 从25放宽至30
+  bbands_lower_bias: 1.02
+  trail_atr_mult: 2.0
+  take_profit_pct: 0.10
+  breakeven_trigger: 0.05
+  breakeven_buffer: 1.01
+  w_pullback_ma: 2.0
+  w_macd_cross: 1.0
+  w_vol_up: 4.0
+  w_rsi_rebound: 1.5
+  w_green_candle: 2.5
+
+  # Signal quality parameters - 放宽以增加推荐
+  min_hold_days: 2  # 从3放宽至2
+  signal_cooldown_days: 3  # 从5放宽至3
+
+  # Dynamic AI thresholds - 降低阈值以增加推荐
+  market_state_thresholds:
+    strong_bull:
+      ai_threshold: 0.35  # 从0.45降低
+      position_mult: 1.3
+      stop_mult: 2.5
+      trailing_mult: 2.5
+      profit_mult: 1.3
+    weak_bull:
+      ai_threshold: 0.40  # 从0.50降低
+      position_mult: 1.1
+      stop_mult: 2.2
+      trailing_mult: 2.0
+      profit_mult: 1.1
+    sideways:
+      ai_threshold: 0.45  # 从0.55降低
+      position_mult: 1.0
+      stop_mult: 2.0
+      trailing_mult: 1.8
+      profit_mult: 1.0
+    weak_bear:
+      ai_threshold: 0.50  # 从0.60降低
+      position_mult: 0.8
+      stop_mult: 1.6
+      trailing_mult: 1.6
+      profit_mult: 0.8
+    strong_bear:
+      ai_threshold: 0.60  # 从0.70降低
+      position_mult: 0.5
+      stop_mult: 1.4
+      trailing_mult: 1.0
+      profit_mult: 0.5
+  
+  signal_fusion_weights:
+    trend: 0.3
+    reversion: 0.3
+    volume: 0.2
+    pattern: 0.2
+  
+  multi_timeframe:
+    enabled: true
+    weekly_confirmation: true
+    alignment_threshold: 0.5
+
+optimizer:
+  sample_count: 200
+  max_rounds: 10
+  convergence_threshold: 0.005
+  walk_forward_splits: 5
+  train_ratio: 0.7
+  objective: sharpe_pure
+  regularization_strength: 0.1
+  walk_forward_folds: 3
+  results_dir: data/optimize_results
+
+risk:
+  var:
+    enabled: true
+    confidence_level: 0.95
+    max_var_95: 0.05
+    history_window: 252
+    calculation_method: historical
+    breach_threshold: 3
+  drawdown:
+    max_drawdown_pct: 0.15
+    adjustment_levels:
+      - level: 0.05
+        position_factor: 1.0
+      - level: 0.10
+        position_factor: 0.6
+      - level: 0.15
+        position_factor: 0.3
+      - level: 1.00
+        position_factor: 0.0
+    enable_gradual_recovery: true
+  slippage:
+    enabled: true
+    base_slippage:
+      large: 0.0005
+      mid: 0.001
+      small: 0.002
+      micro: 0.005
+    volume_impact_factor: 0.0001
+    max_volume_impact: 0.002
+    market_cap_thresholds:
+      large: 100
+      mid: 30
+      small: 5
+      micro: 0
+  correlation:
+    max_correlation: 0.7
+    lookback_window: 60
+    min_periods: 30
+    dynamic_adjustment: true
+    correlation_regime_thresholds:
+      high: 0.7
+      elevated: 0.5
+  monte_carlo:
+    enabled: true
+    n_paths: 1000
+    block_size: 20
+    confidence_levels: [0.95, 0.99]
+    stress_scenarios:
+      - market_crash
+      - bear_market
+      - high_volatility
+      - liquidity_crisis
+  portfolio:
+    max_sector_weight: 0.30
+    max_single_position: 0.25
+    target_portfolio_volatility: 0.15
+    max_positions: 10
+
+risk_report:
+  enabled: true
+  output_dir: data/risk_reports
+  report_frequency: daily
+  include_var_trend: true
+  include_correlation_heatmap: true
+  include_stress_test: true

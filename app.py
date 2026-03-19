@@ -1,24 +1,32 @@
+"""
+量化选股系统 - 可视化界面
+========================
+核心功能：
+1. 今日推荐股票 - 一键扫描
+2. 个股分析 - 量价走势 + 买卖信号
+3. 回测 - 策略表现验证
+4. 数据更新 - 一键更新
+
+启动方式: python main.py ui
+"""
+
 from __future__ import annotations
 
-import base64
-import concurrent.futures
-from datetime import datetime
 import os
+import sys
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Optional
 
 import gradio as gr
-import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
-# Charts (optional, used in Backtest panel)
-from pyecharts import options as opts
-from pyecharts.charts import Bar, Grid, Kline, Line, Scatter
-from pyecharts.globals import CurrentConfig
+# 确保quant模块可导入
+sys.path.insert(0, str(Path(__file__).parent))
 
-CurrentConfig.ONLINE_HOST = "https://cdn.staticfile.net/echarts/5.4.3/"
-
-from quant.app.backtester import run_backtest, scan_today_signal
+from quant.app.backtester import run_backtest
 from quant.data.data_updater import update_history_data
 from quant.data.stock_filter import update_stock_list
 from quant.infra.config import CONF
@@ -26,1203 +34,492 @@ from quant.infra.logger import logger
 
 
 # =========================
-# UI Theme (CSS)
+# 配置
 # =========================
 
-CUSTOM_CSS = """
-:root {
-  --bg0: #0b1020;
-  --bg1: #0f172a;
-  --card: rgba(255, 255, 255, 0.06);
-  --card2: rgba(255, 255, 255, 0.10);
-  --ink: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.70);
-  --faint: rgba(255, 255, 255, 0.55);
-  --line: rgba(255, 255, 255, 0.12);
-  --accent: #06b6d4;     /* cyan */
-  --accent2: #f59e0b;    /* amber */
-  --good: #22c55e;
-  --warn: #f97316;
-  --bad: #ef4444;
-  --radius: 14px;
-  --shadow2: 0 8px 24px rgba(0,0,0,0.25);
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --sans: "Segoe UI Variable", "Segoe UI", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
-}
+CACHE_DIR = Path("data/cache")
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-.gradio-container {
-  max-width: 1400px !important;
-  margin: 0 auto !important;
-  font-family: var(--sans) !important;
-  color: var(--ink) !important;
-  background:
-    radial-gradient(1200px 700px at 10% 10%, rgba(6, 182, 212, 0.16), transparent 55%),
-    radial-gradient(900px 600px at 90% 20%, rgba(245, 158, 11, 0.10), transparent 55%),
-    radial-gradient(900px 700px at 40% 95%, rgba(99, 102, 241, 0.12), transparent 60%),
-    linear-gradient(180deg, var(--bg0), var(--bg1)) !important;
-}
-
-.block, .gr-box, .gr-panel, .gr-group {
-  border-radius: var(--radius) !important;
-  border: 1px solid var(--line) !important;
-  background: var(--card) !important;
-  box-shadow: var(--shadow2) !important;
-}
-
-.gr-button-primary {
-  background: linear-gradient(135deg, var(--accent), #3b82f6) !important;
-  border: none !important;
-  font-weight: 700 !important;
-  transition: transform .15s ease, box-shadow .15s ease !important;
-}
-.gr-button-primary:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 14px 30px rgba(6, 182, 212, 0.25) !important;
-}
-
-.dataframe {
-  border-radius: var(--radius) !important;
-  overflow: hidden !important;
-}
-.dataframe th {
-  background: rgba(255, 255, 255, 0.10) !important;
-  color: var(--ink) !important;
-  font-weight: 700 !important;
-}
-.dataframe tr:hover td {
-  background: rgba(6, 182, 212, 0.06) !important;
-}
-
-.pill {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: rgba(255,255,255,0.07);
-  font-size: 12px;
-  color: var(--muted);
-}
-.pill.good { border-color: rgba(34,197,94,0.35); color: rgba(34,197,94,0.95); }
-.pill.warn { border-color: rgba(249,115,22,0.35); color: rgba(249,115,22,0.95); }
-.pill.bad  { border-color: rgba(239,68,68,0.35);  color: rgba(239,68,68,0.95); }
-
-@keyframes fadein {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.fadein { animation: fadein .45s ease both; }
-"""
+TODAY_STR = datetime.now().strftime("%Y-%m-%d")
 
 
 # =========================
-# Helpers
+# 工具函数
 # =========================
 
-MARKET_STATES = [
-    "strong_bull",
-    "bull_momentum",
-    "bull_volume",
-    "weak_bull",
-    "sideways_low_vol",
-    "sideways_high_vol",
-    "weak_bear",
-    "bear_momentum",
-    "bear_panic",
-    "strong_bear",
-]
-
-
-def _now_tag() -> str:
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
-
-
-def _safe_float(x: Any) -> float | None:
-    try:
-        v = float(x)
-        if np.isnan(v):
-            return None
-        return v
-    except Exception:
-        return None
-
-
-def _read_stock_list() -> tuple[list[str], dict[str, str]]:
-    path = Path(CONF.history_data.data_dir) / "stock-list.csv"
-    if not path.exists():
-        return [], {}
-    df = pd.read_csv(path)
-    if "code" not in df.columns:
-        return [], {}
-    codes = df["code"].dropna().astype(str).tolist()
-    name_map: dict[str, str] = {}
-    if "code_name" in df.columns:
-        # strict=False for older pandas compatibility
-        name_map = dict(zip(df["code"].astype(str).tolist(), df["code_name"].fillna("").astype(str).tolist(), strict=False))
-    return codes, name_map
-
-
-def _parse_codes_text(text: str) -> list[str]:
-    codes: list[str] = []
-    for raw in str(text or "").splitlines():
-        s = raw.strip()
-        if not s:
-            continue
-        codes.append(s)
-    # de-dup while keeping order
-    seen: set[str] = set()
-    out: list[str] = []
-    for c in codes:
-        if c in seen:
-            continue
-        seen.add(c)
-        out.append(c)
-    return out
-
-
-def _format_scan_results_df(df: pd.DataFrame) -> pd.DataFrame:
-    """Make scan results user-friendly for UI tables (Chinese columns + stable ordering)."""
+def _calculate_signals(df: pd.DataFrame) -> pd.DataFrame:
+    """计算买卖信号"""
     if df is None or df.empty:
-        return pd.DataFrame() if df is None else df
-
-    df2 = df.copy()
-
-    for c in (
-        "close",
-        "total_score",
-        "buy_score",
-        "trend_score",
-        "reversion_score",
-        "volume_score",
-        "pattern_score",
-        "timeframe_alignment",
-        "min_composite_score",
-        "vol_slope",
-        "vol_slope_component",
-        "ai_prob",
-        "ai_threshold",
-        "ensemble_disagreement",
-        "atr",
-        "atr_pct",
-        "expected_value_pct",
-        "volume_ratio",
-        "mom_20",
-    ):
-        if c in df2.columns:
-            df2[c] = pd.to_numeric(df2[c], errors="coerce")
-
-    if "buy_score" in df2.columns:
-        df2 = df2.sort_values("buy_score", ascending=False, na_position="last")
-    elif "total_score" in df2.columns:
-        df2 = df2.sort_values("total_score", ascending=False, na_position="last")
-
-    rename_map = {
-        "code": "代码",
-        "name": "名称",
-        "date": "日期",
-        "close": "收盘价",
-        "signal_type": "信号类型",
-        "total_score": "规则得分",
-        "buy_score": "买点得分",
-        "trend_score": "趋势分",
-        "reversion_score": "回撤分",
-        "volume_score": "量能分",
-        "pattern_score": "形态分",
-        "timeframe_alignment": "多周期一致",
-        "min_composite_score": "质量阈值",
-        "quality_gate_passed": "质量通过",
-        "vol_slope": "量能斜率",
-        "vol_slope_component": "量能斜率分",
-        "expected_value_pct": "EV(%)",
-        "ai_prob": "AI胜率",
-        "ai_threshold": "AI阈值",
-        "ai_tier": "AI档位",
-        "ensemble_disagreement": "集成分歧",
-        "market_state": "市场状态",
-        "market_uptrend": "大盘上行",
-        "atr_pct": "ATR(%)",
-        "atr": "ATR",
-        "volume_ratio": "量比",
-        "mom_20": "20日动量",
-        "ai_model_type": "模型类型",
-    }
-    df2 = df2.rename(columns={k: v for k, v in rename_map.items() if k in df2.columns})
-
-    preferred_order = [
-        "代码",
-        "名称",
-        "日期",
-        "收盘价",
-        "信号类型",
-        "买点得分",
-        "趋势分",
-        "回撤分",
-        "量能分",
-        "形态分",
-        "多周期一致",
-        "EV(%)",
-        "AI胜率",
-        "AI阈值",
-        "AI档位",
-        "集成分歧",
-        "市场状态",
-        "大盘上行",
-        "ATR(%)",
-        "规则得分",
-        "质量阈值",
-        "质量通过",
-        "量能斜率",
-        "量能斜率分",
-        "量比",
-        "20日动量",
-        "模型类型",
-    ]
-    keep = [c for c in preferred_order if c in df2.columns]
-    rest = [c for c in df2.columns if c not in keep]
-    return df2[keep + rest]
-
-
-def _summarize_scan_results(df: pd.DataFrame, total_universe: int) -> str:
-    if df is None or df.empty:
-        return f"- 扫描股票数: {total_universe}\n- 命中买点数: 0\n"
-
-    lines: list[str] = [
-        f"- 扫描股票数: {total_universe}",
-        f"- 命中买点数: {len(df)}",
-    ]
-
-    if "ai_prob" in df.columns:
-        v = pd.to_numeric(df["ai_prob"], errors="coerce").mean()
-        if pd.notna(v):
-            lines.append(f"- AI胜率均值: {float(v):.2%}")
-
-    if "expected_value_pct" in df.columns:
-        ev_mean = pd.to_numeric(df["expected_value_pct"], errors="coerce").mean()
-        ev_med = pd.to_numeric(df["expected_value_pct"], errors="coerce").median()
-        if pd.notna(ev_mean) and pd.notna(ev_med):
-            lines.append(f"- EV(%) 均值/中位数: {float(ev_mean):.2f} / {float(ev_med):.2f}")
-
-    if "market_state" in df.columns:
-        try:
-            ms = str(df["market_state"].mode().iloc[0])
-            lines.append(f"- 主要市场状态: {ms}")
-        except Exception:
-            pass
-
-    return "\n".join(lines)
-
-
-def _apply_scan_filters(
-    df: pd.DataFrame,
-    min_buy_score: float,
-    min_expected_value_pct: float,
-    min_ai_prob: float,
-    market_state_allowlist: list[str],
-    max_atr_pct: float,
-) -> pd.DataFrame:
-    if df is None or df.empty:
-        return pd.DataFrame() if df is None else df
-
-    out = df.copy()
-
-    if "buy_score" in out.columns:
-        out = out[pd.to_numeric(out["buy_score"], errors="coerce") >= float(min_buy_score)]
-    if "expected_value_pct" in out.columns:
-        out = out[pd.to_numeric(out["expected_value_pct"], errors="coerce") >= float(min_expected_value_pct)]
-    if "ai_prob" in out.columns:
-        out = out[pd.to_numeric(out["ai_prob"], errors="coerce") >= float(min_ai_prob)]
-
-    if market_state_allowlist and "market_state" in out.columns:
-        out = out[out["market_state"].astype(str).isin(set(market_state_allowlist))]
-
-    if max_atr_pct is not None and float(max_atr_pct) > 0 and "atr_pct" in out.columns:
-        out = out[pd.to_numeric(out["atr_pct"], errors="coerce") <= float(max_atr_pct)]
-
-    return out.reset_index(drop=True)
-
-
-def _export_scan_csv(df_internal: pd.DataFrame, tag: str) -> str | None:
-    if df_internal is None or df_internal.empty:
-        return None
-    out_dir = Path("data") / "exports"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"scan_candidates_{tag}_{_now_tag()}.csv"
-    df_internal.to_csv(out_path, index=False, encoding="utf-8-sig")
-    return str(out_path)
-
-
-def _status_html() -> str:
-    data_dir = Path(CONF.history_data.data_dir)
-    stock_list_path = data_dir / "stock-list.csv"
-    idx_path = data_dir / "sh.000001.csv"
-
-    codes, _name_map = _read_stock_list()
-
-    def pill(text: str, cls: str) -> str:
-        return f"<span class='pill {cls}'>{text}</span>"
-
-    # Stock list
-    if stock_list_path.exists():
-        stock_list_state = pill("stock-list.csv 已就绪", "good")
-        stock_list_meta = f"{len(codes)} 只 | mtime: {datetime.fromtimestamp(stock_list_path.stat().st_mtime):%Y-%m-%d %H:%M}"
-    else:
-        stock_list_state = pill("缺少 stock-list.csv", "warn")
-        stock_list_meta = "请先在 Setup 中更新股票池"
-
-    # Index coverage
-    idx_state = pill("指数数据未知", "warn")
-    idx_meta = "请先同步历史数据"
-    if idx_path.exists():
-        try:
-            idx_df = pd.read_csv(idx_path)
-            if "date" in idx_df.columns:
-                dates = pd.to_datetime(idx_df["date"], errors="coerce").dropna()
-            elif "Date" in idx_df.columns:
-                dates = pd.to_datetime(idx_df["Date"], errors="coerce").dropna()
-            else:
-                dates = pd.Series([], dtype="datetime64[ns]")
-            if len(dates) > 0:
-                idx_state = pill("指数数据已就绪", "good")
-                idx_meta = f"{dates.min():%Y-%m-%d} ~ {dates.max():%Y-%m-%d} | rows: {len(dates)}"
-        except Exception:
-            pass
-
-    # Model status
-    model_dir = Path("models")
-    model_file = model_dir / "alpha_lgbm.txt"
-    if model_file.exists():
-        model_state = pill("AI 模型: alpha_lgbm.txt", "good")
-        model_meta = f"mtime: {datetime.fromtimestamp(model_file.stat().st_mtime):%Y-%m-%d %H:%M} | size: {model_file.stat().st_size/1024/1024:.1f} MB"
-    else:
-        model_state = pill("AI 模型缺失", "warn")
-        model_meta = "可先训练/放置模型文件，再进行 AI 门控扫描"
-
-    # Strategy params snapshot
-    try:
-        from quant.core.strategy_params import StrategyParams
-
-        p = StrategyParams.from_app_config(CONF)
-        params_meta = (
-            f"ai_prob_threshold={p.ai_prob_threshold:.2f} | min_EV(%)={p.min_expected_value_pct:.2f} | "
-            f"hold_window=min({p.max_hold_days},{p.ai_forward_days})"
+        return pd.DataFrame()
+    
+    df = df.copy()
+    
+    if "close" in df.columns:
+        df["ma5"] = df["close"].rolling(5).mean()
+        df["ma20"] = df["close"].rolling(20).mean()
+        df["ma60"] = df["close"].rolling(60).mean()
+        
+        # RSI
+        delta = df["close"].diff()
+        gain = delta.where(delta > 0, 0).rolling(14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
+        rs = gain / loss.replace(0, 1e-10)
+        df["rsi"] = 100 - (100 / (1 + rs))
+        
+        # MACD
+        ema12 = df["close"].ewm(span=12).mean()
+        ema26 = df["close"].ewm(span=26).mean()
+        df["macd"] = ema12 - ema26
+        df["macd_signal"] = df["macd"].ewm(span=9).mean()
+        
+        # 生成信号
+        df["buy_signal"] = (
+            (df["ma5"] > df["ma20"]) & 
+            (df["ma5"].shift(1) <= df["ma20"].shift(1))
         )
-        params_state = pill("策略参数已加载", "good")
+        df["sell_signal"] = (
+            (df["ma5"] < df["ma20"]) & 
+            (df["ma5"].shift(1) >= df["ma20"].shift(1))
+        )
+    
+    return df
+
+
+def load_stock_data_cached(code: str, lookback_days: int = 100) -> Optional[pd.DataFrame]:
+    """加载股票数据（带缓存）"""
+    cache_file = CACHE_DIR / f"{code}_chart.csv"
+    
+    if cache_file.exists():
+        mtime = datetime.fromtimestamp(cache_file.stat().st_mtime)
+        if datetime.now() - mtime < timedelta(hours=1):
+            df = pd.read_csv(cache_file)
+            df["date"] = pd.to_datetime(df["date"])
+            return df
+    
+    data_path = Path(CONF.history_data.data_dir) / f"{code}.csv"
+    if not data_path.exists():
+        return None
+    
+    df = pd.read_csv(data_path)
+    if df.empty or "date" not in df.columns:
+        return None
+    
+    df["date"] = pd.to_datetime(df["date"])
+    df = df.sort_values("date")
+    
+    cutoff = datetime.now() - timedelta(days=lookback_days)
+    df = df[df["date"] >= cutoff]
+    
+    df.to_csv(cache_file, index=False)
+    
+    return df
+
+
+# =========================
+# 核心功能
+# =========================
+
+def scan_today_stocks(date: str = None, min_ai_prob: float = 0.50, max_results: int = 20) -> tuple:
+    """扫描今日推荐股票"""
+    if date is None:
+        date = TODAY_STR
+    
+    try:
+        import subprocess
+        
+        logger.info(f"开始扫描日期: {date}")
+        
+        result = subprocess.run(
+            [sys.executable, "main.py", "scan-date", "--date", date],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).parent
+        )
+        
+        if result.returncode != 0:
+            logger.error(f"扫描失败: {result.stderr}")
+        
+        hist_file = Path("data") / f"historical_scan_{date.replace('-', '')}.csv"
+        
+        if not hist_file.exists():
+            return pd.DataFrame(), f"未找到 {date} 的扫描结果\n请先运行: python main.py scan-date --date {date}"
+        
+        result_df = pd.read_csv(hist_file)
+        
+        if result_df is None or result_df.empty:
+            return pd.DataFrame(), f"扫描日期 {date} 未发现符合条件的股票"
+        
+        if "ai_prob" in result_df.columns:
+            result_df = result_df[result_df["ai_prob"] >= min_ai_prob]
+        
+        result_df = result_df.head(max_results)
+        
+        display_cols = ["code", "date", "close", "ai_prob", "signal_type", "expected_value_pct"]
+        available_cols = [c for c in display_cols if c in result_df.columns]
+        display_df = result_df[available_cols].copy()
+        display_df.columns = ["代码", "信号日期", "收盘价", "AI胜率", "信号类型", "期望收益(%)"][:len(available_cols)]
+        
+        if "AI胜率" in display_df.columns:
+            display_df["AI胜率"] = (pd.to_numeric(display_df["AI胜率"], errors="coerce") * 100).round(1).astype(str) + "%"
+        if "期望收益(%)" in display_df.columns:
+            display_df["期望收益(%)"] = pd.to_numeric(display_df["期望收益(%)"], errors="coerce").round(2).astype(str) + "%"
+        
+        summary = f"""扫描结果
+-------------------------
+扫描日期: {date}
+发现信号: {len(display_df)} 只
+AI胜率阈值: {min_ai_prob*100:.0f}%
+
+Top 3 推荐
+"""
+        
+        if len(display_df) >= 3:
+            top3 = display_df.head(3)
+            for i, (_, row) in enumerate(top3.iterrows()):
+                ai_prob_str = row.get('AI胜率', 'N/A')
+                summary += f"\n{i+1}. {row['代码']} | AI胜率 {ai_prob_str}"
+        
+        return display_df, summary
+        
     except Exception as e:
-        params_state = pill("策略参数加载失败", "bad")
-        params_meta = str(e)
-
-    return f"""
-    <div class="fadein" style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
-      <div style="padding:14px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card2);">
-        <div style="font-size:12px; color: var(--faint); margin-bottom:8px;">股票池</div>
-        <div style="font-size:14px; font-weight:700; margin-bottom:6px;">{stock_list_state}</div>
-        <div style="font-size:12px; color: var(--muted);">{stock_list_meta}</div>
-      </div>
-      <div style="padding:14px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card2);">
-        <div style="font-size:12px; color: var(--faint); margin-bottom:8px;">数据覆盖</div>
-        <div style="font-size:14px; font-weight:700; margin-bottom:6px;">{idx_state}</div>
-        <div style="font-size:12px; color: var(--muted);">{idx_meta}</div>
-      </div>
-      <div style="padding:14px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card2);">
-        <div style="font-size:12px; color: var(--faint); margin-bottom:8px;">模型状态</div>
-        <div style="font-size:14px; font-weight:700; margin-bottom:6px;">{model_state}</div>
-        <div style="font-size:12px; color: var(--muted);">{model_meta}</div>
-      </div>
-      <div style="padding:14px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--card2);">
-        <div style="font-size:12px; color: var(--faint); margin-bottom:8px;">策略口径</div>
-        <div style="font-size:14px; font-weight:700; margin-bottom:6px;">{params_state}</div>
-        <div style="font-size:12px; color: var(--muted); font-family: var(--mono);">{params_meta}</div>
-      </div>
-    </div>
-    """
+        import traceback
+        return pd.DataFrame(), f"扫描失败: {str(e)}"
 
 
-# =========================
-# Actions (Setup)
-# =========================
+def analyze_stock(code: str, lookback_days: int = 100) -> tuple:
+    """分析个股 - 量价走势 + 买卖信号"""
+    if not code:
+        return "请输入股票代码", None
+    
+    df = load_stock_data_cached(code, lookback_days)
+    if df is None or df.empty:
+        return f"未找到股票 {code} 的数据\n请先更新股票数据", None
+    
+    df = _calculate_signals(df)
+    fig = create_stock_chart(df, code)
+    
+    latest = df.iloc[-1]
+    prev = df.iloc[-2] if len(df) > 1 else latest
+    
+    latest_date = latest.get('date', 'N/A')
+    if hasattr(latest_date, 'strftime'):
+        latest_date = latest_date.strftime('%Y-%m-%d')
+    
+    price_change = ((latest.get('close', 0) / prev.get('close', 1)) - 1) * 100
+    
+    report = f"""{code} 个股分析报告
+-------------------------
+
+最新数据: {latest_date}
+
+价格信息
+  收盘价: {latest.get('close', 0):.2f}
+  涨跌幅: {price_change:.2f}%
+
+技术指标
+  MA5:  {latest.get('ma5', 0):.2f}
+  MA20: {latest.get('ma20', 0):.2f}
+  MA60: {latest.get('ma60', 0):.2f}
+  RSI:  {latest.get('rsi', 0):.1f}
+
+信号状态
+"""
+    
+    if latest.get("buy_signal", False):
+        report += "  [买入] MA金叉形成\n"
+    else:
+        report += "  [无] 买入信号未触发\n"
+    
+    if latest.get("sell_signal", False):
+        report += "  [卖出] MA死叉形成\n"
+    else:
+        report += "  [无] 卖出信号未触发\n"
+    
+    rsi = latest.get("rsi", 50)
+    if rsi < 30:
+        report += f"  RSI超卖: {rsi:.1f} (可能反弹)\n"
+    elif rsi > 70:
+        report += f"  RSI超买: {rsi:.1f} (注意回调)\n"
+    else:
+        report += f"  RSI中性: {rsi:.1f}\n"
+    
+    return report, fig
 
 
-def ui_refresh_status() -> str:
-    return _status_html()
+def create_stock_chart(df: pd.DataFrame, code: str) -> go.Figure:
+    """创建股票图表 - K线 + 均线 + 信号"""
+    if df is None or df.empty:
+        return go.Figure()
+    
+    fig = make_subplots(
+        rows=3, cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.03,
+        row_heights=[0.6, 0.2, 0.2],
+        subplot_titles=("价格走势", "成交量", "RSI")
+    )
+    
+    dates = df["date"].tolist()
+    opens = df["open"].tolist() if "open" in df.columns else df["close"].tolist()
+    highs = df["high"].tolist() if "high" in df.columns else df["close"].tolist()
+    lows = df["low"].tolist() if "low" in df.columns else df["close"].tolist()
+    closes = df["close"].tolist()
+    volumes = df["volume"].tolist() if "volume" in df.columns else [0] * len(df)
+    
+    # K线
+    fig.add_trace(
+        go.Candlestick(
+            x=dates, open=opens, high=highs, low=lows, close=closes,
+            name="K线",
+            increasing_line_color="#26a69a",
+            decreasing_line_color="#ef5350"
+        ),
+        row=1, col=1
+    )
+    
+    # 均线
+    if "ma5" in df.columns:
+        fig.add_trace(go.Scatter(x=dates, y=df["ma5"].tolist(), name="MA5", line=dict(color="#FF6B6B", width=1)), row=1, col=1)
+    if "ma20" in df.columns:
+        fig.add_trace(go.Scatter(x=dates, y=df["ma20"].tolist(), name="MA20", line=dict(color="#4ECDC4", width=1.5)), row=1, col=1)
+    if "ma60" in df.columns:
+        fig.add_trace(go.Scatter(x=dates, y=df["ma60"].tolist(), name="MA60", line=dict(color="#45B7D1", width=1.5)), row=1, col=1)
+    
+    # 买入信号
+    if "buy_signal" in df.columns:
+        buy_signals = df[df["buy_signal"] == True]
+        if not buy_signals.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=buy_signals["date"].tolist(),
+                    y=buy_signals["close"].tolist(),
+                    mode="markers",
+                    marker=dict(symbol="triangle-up", size=15, color="#26a69a"),
+                    name="买入信号"
+                ),
+                row=1, col=1
+            )
+    
+    # 卖出信号
+    if "sell_signal" in df.columns:
+        sell_signals = df[df["sell_signal"] == True]
+        if not sell_signals.empty:
+            fig.add_trace(
+                go.Scatter(
+                    x=sell_signals["date"].tolist(),
+                    y=sell_signals["close"].tolist(),
+                    mode="markers",
+                    marker=dict(symbol="triangle-down", size=15, color="#ef5350"),
+                    name="卖出信号"
+                ),
+                row=1, col=1
+            )
+    
+    # 成交量
+    colors = ["#26a69a" if close >= open_ else "#ef5350" for close, open_ in zip(closes, opens)]
+    fig.add_trace(
+        go.Bar(x=dates, y=volumes, name="成交量", marker_color=colors, opacity=0.7),
+        row=2, col=1
+    )
+    
+    # RSI
+    if "rsi" in df.columns:
+        fig.add_trace(
+            go.Scatter(x=dates, y=df["rsi"].tolist(), name="RSI", line=dict(color="#9C27B0", width=1.5)),
+            row=3, col=1
+        )
+        fig.add_hline(y=70, line_dash="dash", line_color="red", opacity=0.5, row=3, col=1)
+        fig.add_hline(y=30, line_dash="dash", line_color="green", opacity=0.5, row=3, col=1)
+    
+    fig.update_layout(
+        title=f"{code} 量价走势与信号",
+        template="plotly_dark",
+        height=700,
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        xaxis_rangeslider_visible=False
+    )
+    
+    return fig
 
 
-def ui_update_stock_pool():
-    yield "正在更新股票池 (生成 data/stock-list.csv)...", _status_html()
+def update_all_data() -> str:
+    """一键更新所有数据"""
     try:
         update_stock_list()
-    except Exception as e:
-        yield f"更新失败: {e}", _status_html()
-        return
-    yield "股票池更新完成。", _status_html()
-
-
-def ui_update_kline_data():
-    yield "正在增量更新历史 K 线数据 (写入 data/*.csv)...", _status_html()
-    try:
         update_history_data()
+        for f in CACHE_DIR.glob("*.csv"):
+            f.unlink()
+        return "数据更新完成！股票列表和历史数据已全部更新。"
     except Exception as e:
-        yield f"更新失败: {e}", _status_html()
-        return
-    yield "历史数据更新完成。", _status_html()
+        return f"更新失败: {str(e)}"
 
 
-# =========================
-# Actions (Scan)
-# =========================
-
-
-def ui_run_scan(
-    universe_source: str,
-    custom_codes_text: str,
-    target_date: str,
-    max_codes: int,
-    workers: int,
-    min_buy_score: float,
-    min_expected_value_pct: float,
-    min_ai_prob: float,
-    market_state_allowlist: list[str],
-    max_atr_pct: float,
-):
-    # Prime UI
-    yield "准备扫描...", pd.DataFrame(), None, pd.DataFrame()
-
-    # Resolve universe
-    name_map: dict[str, str] = {}
-    if universe_source == "stock-list.csv":
-        codes, name_map = _read_stock_list()
-        if not codes:
-            yield "未找到可用股票池，请先在 Setup 中更新股票池。", pd.DataFrame(), None, pd.DataFrame()
-            return
-        universe_note = "stock-list.csv"
-    else:
-        codes = _parse_codes_text(custom_codes_text)
-        universe_note = "custom codes"
-
-    if max_codes is not None and int(max_codes) > 0:
-        codes = codes[: int(max_codes)]
-
-    if not codes:
-        yield "股票列表为空。", pd.DataFrame(), None, pd.DataFrame()
-        return
-
-    date_s = str(target_date or "").strip()[:10]
-    date_arg = date_s if date_s else None
-
-    # Params snapshot
-    try:
-        from quant.core.strategy_params import StrategyParams
-
-        p = StrategyParams.from_app_config(CONF)
-    except Exception as e:
-        yield f"策略参数加载失败: {e}", pd.DataFrame(), None, pd.DataFrame()
-        return
-
-    total = len(codes)
-    results: list[dict[str, Any]] = []
-    errors = 0
-
-    progress_every = max(20, total // 50)
-    workers_i = max(1, int(workers or 1))
-
-    def scan_one(code: str) -> dict[str, Any] | None:
-        try:
-            sig = scan_today_signal(code, params=p, target_date=date_arg)
-        except Exception:
-            return None
-        if not sig:
-            return None
-        if name_map:
-            sig = dict(sig)
-            sig["name"] = name_map.get(code, "")
-        return sig
-
-    started = datetime.now()
-    yield (
-        f"开始扫描 ({universe_note}) | 代码数={total} | target_date={date_arg or 'latest'} | workers={workers_i} ...",
-        pd.DataFrame(),
-        None,
-        pd.DataFrame(),
-    )
-
-    if workers_i <= 1:
-        for i, code in enumerate(codes, start=1):
-            sig = scan_one(code)
-            if sig is not None:
-                results.append(sig)
-
-            if i % progress_every == 0 or i == total:
-                df_internal = pd.DataFrame(results)
-                df_internal = _apply_scan_filters(
-                    df_internal,
-                    min_buy_score=min_buy_score,
-                    min_expected_value_pct=min_expected_value_pct,
-                    min_ai_prob=min_ai_prob,
-                    market_state_allowlist=market_state_allowlist,
-                    max_atr_pct=max_atr_pct,
-                )
-                msg = f"进度: {i}/{total} | 命中(过滤后): {len(df_internal)}"
-                yield msg, _format_scan_results_df(df_internal), None, df_internal
-    else:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=workers_i) as ex:
-            futs = [ex.submit(scan_one, c) for c in codes]
-            done = 0
-            for fut in concurrent.futures.as_completed(futs):
-                done += 1
-                try:
-                    sig = fut.result()
-                except Exception:
-                    errors += 1
-                    sig = None
-                if sig is not None:
-                    results.append(sig)
-
-                if done % progress_every == 0 or done == total:
-                    df_internal = pd.DataFrame(results)
-                    df_internal = _apply_scan_filters(
-                        df_internal,
-                        min_buy_score=min_buy_score,
-                        min_expected_value_pct=min_expected_value_pct,
-                        min_ai_prob=min_ai_prob,
-                        market_state_allowlist=market_state_allowlist,
-                        max_atr_pct=max_atr_pct,
-                    )
-                    msg = f"进度: {done}/{total} | 命中(过滤后): {len(df_internal)} | errors: {errors}"
-                    yield msg, _format_scan_results_df(df_internal), None, df_internal
-
-    df_internal = pd.DataFrame(results)
-    df_filtered = _apply_scan_filters(
-        df_internal,
-        min_buy_score=min_buy_score,
-        min_expected_value_pct=min_expected_value_pct,
-        min_ai_prob=min_ai_prob,
-        market_state_allowlist=market_state_allowlist,
-        max_atr_pct=max_atr_pct,
-    )
-
-    tag = f"{universe_source}_{date_arg or 'latest'}".replace(" ", "_").replace("/", "_")
-    export_path = _export_scan_csv(df_filtered, tag=tag)
-
-    elapsed = (datetime.now() - started).total_seconds()
-    summary = _summarize_scan_results(df_filtered, total_universe=total)
-    msg = (
-        f"扫描完成: {elapsed:.1f}s | errors: {errors}\n\n"
-        f"{summary}\n\n"
-        f"导出文件: {export_path or 'N/A'}"
-    )
-
-    yield msg, _format_scan_results_df(df_filtered), export_path, df_filtered
-
-
-def ui_export_selected(df_state: pd.DataFrame) -> str | None:
-    if df_state is None or df_state.empty:
-        return None
-    return _export_scan_csv(df_state, tag="manual_export")
-
-
-def ui_on_scan_select(df_state: pd.DataFrame, capital: float, evt: gr.SelectData):
-    if df_state is None or df_state.empty:
-        return "", "", "未选择任何行。", None
-
-    row = None
-    try:
-        if isinstance(evt.index, (tuple, list)) and len(evt.index) >= 1:
-            row = int(evt.index[0])
-        else:
-            row = int(evt.index)
-    except Exception:
-        row = None
-
-    if row is None or row < 0 or row >= len(df_state):
-        return "", "", "选择行无效。", None
-
-    code = str(df_state.iloc[row].get("code", "")).strip()
-    date_s = str(df_state.iloc[row].get("date", "")).strip()[:10]
-    plan_md, sig = ui_trade_plan(code=code, target_date=date_s, capital=capital)
-    return code, date_s, plan_md, sig
-
-
-# =========================
-# Actions (Plan + Backtest)
-# =========================
-
-
-def ui_trade_plan(code: str, target_date: str | None, capital: float) -> tuple[str, dict[str, Any] | None]:
-    code = str(code or "").strip()
+def backtest_stock(code: str, start_date: str = None, end_date: str = None) -> tuple:
+    """回测单只股票"""
     if not code:
-        return "请输入股票代码，例如 `sh.600000`。", None
-
-    date_s = str(target_date or "").strip()[:10]
-    date_arg = date_s if date_s else None
-
+        return "请输入股票代码", None
+    
     try:
-        from quant.core.adaptive_strategy import get_dynamic_params
-        from quant.core.strategy_params import StrategyParams
-        from quant.app.backtester import get_tiered_confidence_factor
+        result = run_backtest(code, start_date=start_date, end_date=end_date)
+        
+        if result is None or result.empty:
+            return f"{code} 回测完成，但无交易记录", None
+        
+        display = result[["date", "close", "signal", "pnl", "pnl_pct"]].copy()
+        display.columns = ["日期", "收盘价", "信号", "盈亏", "盈亏率(%)"]
+        display["盈亏率(%)"] = (display["盈亏率(%)"] * 100).round(2).astype(str) + "%"
+        
+        total_trades = len(display)
+        wins = len(display[display["盈亏"] > 0])
+        losses = len(display[display["盈亏"] <= 0])
+        win_rate = wins / total_trades * 100 if total_trades > 0 else 0
+        
+        stats = f"""{code} 回测统计
+-------------------------
+交易次数: {total_trades}
+盈利次数: {wins}
+亏损次数: {losses}
+胜率: {win_rate:.1f}%
+
+盈亏统计:
+  总盈亏: {display['盈亏'].sum():.2f}
+  最大单笔盈利: {display['盈亏'].max():.2f}
+  最大单笔亏损: {display['盈亏'].min():.2f}
+"""
+        
+        return stats, display
+        
     except Exception as e:
-        return f"依赖加载失败: {e}", None
-
-    p = StrategyParams.from_app_config(CONF)
-    sig = scan_today_signal(code, params=p, target_date=date_arg)
-    if not sig:
-        return "未触发买点信号 (或数据不足/指标无法计算)。", None
-
-    close = _safe_float(sig.get("close"))
-    atr = _safe_float(sig.get("atr"))
-    if not close or not atr or close <= 0 or atr <= 0:
-        return "信号数据不完整 (缺少 close/atr)。", sig
-
-    stop_px = close - float(p.ai_stop_loss_atr_mult) * atr
-    target_px = close + float(p.ai_target_atr_mult) * atr
-    stop_pct = (stop_px / close - 1.0) * 100.0
-    target_pct = (target_px / close - 1.0) * 100.0
-
-    market_state = str(sig.get("market_state", "") or "")
-    try:
-        dyn_p = get_dynamic_params(p, market_state) if market_state else p
-    except Exception:
-        dyn_p = p
-
-    ai_prob = float(sig.get("ai_prob", 0.5))
-    ai_thresh = sig.get("ai_threshold", None)
-    tier = str(sig.get("ai_tier", "") or "")
-    disagreement = sig.get("ensemble_disagreement", None)
-    use_ensemble = str(sig.get("ai_model_type", "")).lower() == "ensemble"
-
-    dis_v = _safe_float(disagreement)
-    try:
-        confidence_factor, _ = get_tiered_confidence_factor(
-            ai_confidence=ai_prob,
-            ensemble_disagreement=dis_v,
-            use_ensemble=use_ensemble,
-        )
-    except Exception:
-        confidence_factor = 1.0
-
-    suggested_pos = float(getattr(dyn_p, "position_size", 0.1)) * float(confidence_factor)
-
-    try:
-        cap = float(capital) if capital else 100000.0
-    except Exception:
-        cap = 100000.0
-
-    risk_budget = cap * float(getattr(dyn_p, "atr_risk_per_trade", 0.02))
-    risk_per_share = max(1e-8, close - stop_px)
-    shares = int((risk_budget / risk_per_share) // 100) * 100
-    risk_based_pos = (shares * close / cap) if shares > 0 else None
-
-    final_pos = suggested_pos
-    if risk_based_pos is not None and risk_based_pos > 0:
-        final_pos = min(final_pos, float(risk_based_pos))
-
-    hold_days = min(int(getattr(p, "max_hold_days", 5)), int(getattr(p, "ai_forward_days", 5)))
-
-    ev_pct = sig.get("expected_value_pct", None)
-    buy_score = sig.get("buy_score", None)
-    total_score = sig.get("total_score", None)
-    sig_type = str(sig.get("signal_type", "") or "")
-    trend_score = sig.get("trend_score", None)
-    reversion_score = sig.get("reversion_score", None)
-    volume_score = sig.get("volume_score", None)
-    pattern_score = sig.get("pattern_score", None)
-    tf_align = sig.get("timeframe_alignment", None)
-    vol_slope = sig.get("vol_slope", None)
-
-    ai_thresh_s = f"{float(ai_thresh):.2f}" if ai_thresh is not None else "N/A"
-    ev_s = f"{float(ev_pct):+.2f}%" if ev_pct is not None else "N/A"
-    buy_score_s = f"{float(buy_score):.3f}" if buy_score is not None else "N/A"
-    rules_s = f"{float(total_score):.3f}" if total_score is not None else "N/A"
-    multi_s = (
-        f"趋势 `{float(trend_score):.2f}`  回撤 `{float(reversion_score):.2f}`  "
-        f"量能 `{float(volume_score):.2f}`  形态 `{float(pattern_score):.2f}`  "
-        f"多周期 `{float(tf_align):.2f}`  量能斜率 `{float(vol_slope):+.3f}`"
-        if all(v is not None for v in (trend_score, reversion_score, volume_score, pattern_score, tf_align, vol_slope))
-        else None
-    )
-
-    lines = [
-        "### 交易计划 (Buy Plan)",
-        f"- 标的: `{code}`  日期: `{sig.get('date','') or (date_s or 'latest')}`",
-        f"- 信号: {sig_type}  市场状态: `{market_state or 'N/A'}`",
-        f"- 买点得分: `{buy_score_s}`  规则得分: `{rules_s}`  EV: `{ev_s}`",
-        *( [f"- 多维评分: {multi_s}"] if multi_s else [] ),
-        "",
-        "#### 价格区间 (以收盘价为参考)",
-        f"- 参考买入价: `{close:.2f}`",
-        f"- 止损价(ATR): `{stop_px:.2f}` ({stop_pct:.2f}%)",
-        f"- 止盈价(ATR): `{target_px:.2f}` (+{target_pct:.2f}%)",
-        f"- 建议观察/持有窗口: `{hold_days}` 天 (与 AI 标签周期对齐)",
-        "",
-        "#### AI 门控",
-        f"- AI胜率: `{ai_prob:.2%}`  阈值: `{ai_thresh_s}`  档位: `{tier or 'N/A'}`  分歧: `{disagreement if disagreement is not None else 'N/A'}`",
-        "",
-        "#### 仓位建议 (参考)",
-        f"- 策略仓位(含置信度因子): `{suggested_pos:.2%}`",
-    ]
-
-    if risk_based_pos is not None and risk_based_pos > 0:
-        lines.append(f"- 风险预算仓位(按 atr_risk_per_trade): `{risk_based_pos:.2%}`  (约 `{shares}` 股)")
-        lines.append(f"- 建议执行仓位: `{final_pos:.2%}`  (约 `{cap*final_pos:,.0f}` 元)")
-    else:
-        lines.append(f"- 建议执行仓位: `{final_pos:.2%}`  (约 `{cap*final_pos:,.0f}` 元)")
-
-    # Lightweight risk hints
-    hints: list[str] = []
-    atr_pct = _safe_float(sig.get("atr_pct"))
-    if atr_pct is not None and atr_pct > 8:
-        hints.append(f"- 波动提示: ATR%={atr_pct:.2f} 偏高，注意止损滑点与仓位。")
-    if market_state in ("strong_bear", "bear_panic"):
-        hints.append("- 市场提示: 当前市场状态偏熊，建议降低仓位或提高筛选门槛。")
-    if hints:
-        lines.extend(["", "#### 风险提示"] + hints)
-
-    return "\n".join(lines), sig
+        return f"回测失败: {str(e)}", None
 
 
-def ui_backtest(code: str):
-    code = str(code or "").strip()
-    if not code:
-        return "请输入股票代码，例如 sh.600000", None, None
+# =========================
+# Gradio 界面
+# =========================
 
-    file_path = Path(CONF.history_data.data_dir) / f"{code}.csv"
-    if not file_path.exists():
-        return f"本地未找到 {code} 的数据，请先更新历史数据。", None, None
-
-    try:
-        result = run_backtest(code)
-    except Exception as e:
-        return f"回测失败: {e}", None, None
-
-    if not result:
-        return "回测失败，可能是数据量过少或无法计算指标。", None, None
-
-    bt, stats = result
-    stats_text = (
-        f"**回测标的**: {code}\n\n"
-        f"**起止时间**: {stats['Start'].strftime('%Y-%m-%d')} -> {stats['End'].strftime('%Y-%m-%d')}\n\n"
-        f"**初始资金**: ￥100,000.00\n\n"
-        f"**最终资金**: ￥{stats['Equity Final [$]']:,.2f}\n\n"
-        f"**收益率 (Return)**: {stats['Return [%]']:.2f}%\n\n"
-        f"**最大回撤 (Max Drawdown)**: {stats['Max. Drawdown [%]']:.2f}%\n\n"
-        f"**夏普比率 (Sharpe Ratio)**: {stats.get('Sharpe Ratio', 0):.2f}\n\n"
-        f"**交易次数**: {stats['# Trades']}\n\n"
-        f"**胜率 (Win Rate)**: {stats['Win Rate [%]']:.2f}%\n\n"
-    )
-
-    iframe_html = None
-    try:
-        df = bt._data
-        df.reset_index(inplace=True)
-        dates = df["Date"].dt.strftime("%Y-%m-%d").tolist()
-        kline_data = df[["Open", "Close", "Low", "High"]].values.tolist()
-
-        kline = (
-            Kline()
-            .add_xaxis(dates)
-            .add_yaxis(
-                "K线",
-                kline_data,
-                itemstyle_opts=opts.ItemStyleOpts(color="#ef4444", color0="#22c55e"),
-            )
-            .set_global_opts(
-                xaxis_opts=opts.AxisOpts(is_scale=True),
-                yaxis_opts=opts.AxisOpts(is_scale=True),
-                title_opts=opts.TitleOpts(title=f"{code} 策略回测"),
-                datazoom_opts=[
-                    opts.DataZoomOpts(is_show=False, type_="inside", xaxis_index=[0, 1], range_start=80, range_end=100),
-                    opts.DataZoomOpts(is_show=True, xaxis_index=[0, 1], type_="slider", pos_top="95%", range_start=80, range_end=100),
-                ],
-                legend_opts=opts.LegendOpts(pos_top="5%", pos_left="center"),
-            )
-        )
-
-        ma_s_col = f"SMA_{CONF.analyzer.ma_short}"
-        ma_l_col = f"SMA_{CONF.analyzer.ma_long}"
-        line = Line().add_xaxis(dates)
-        if ma_s_col in df.columns:
-            line.add_yaxis(
-                f"MA{CONF.analyzer.ma_short}",
-                df[ma_s_col].tolist(),
-                is_symbol_show=False,
-                color="#f59e0b",
-                label_opts=opts.LabelOpts(is_show=False),
-            )
-        if ma_l_col in df.columns:
-            line.add_yaxis(
-                f"MA{CONF.analyzer.ma_long}",
-                df[ma_l_col].tolist(),
-                is_symbol_show=False,
-                color="#06b6d4",
-                label_opts=opts.LabelOpts(is_show=False),
-            )
-        kline.overlap(line)
-
-        trades_df = stats.get("_trades", pd.DataFrame())
-        if trades_df is not None and not trades_df.empty:
-            buy_y = [None] * len(dates)
-            sell_y = [None] * len(dates)
-            for _, row in trades_df.iterrows():
-                entry_t = row["EntryTime"]
-                exit_t = row["ExitTime"]
-                entry_idx = df[df["Date"] == entry_t].index[0] if isinstance(entry_t, pd.Timestamp) else int(entry_t)
-                exit_idx = df[df["Date"] == exit_t].index[0] if isinstance(exit_t, pd.Timestamp) else int(exit_t)
-                buy_y[entry_idx] = row["EntryPrice"]
-                sell_y[exit_idx] = row["ExitPrice"]
-
-            if any(y is not None for y in buy_y):
-                buy_scatter = (
-                    Scatter()
-                    .add_xaxis(dates)
-                    .add_yaxis(
-                        "买入",
-                        buy_y,
-                        symbol="triangle",
-                        symbol_size=14,
-                        itemstyle_opts=opts.ItemStyleOpts(color="#ef4444"),
-                        label_opts=opts.LabelOpts(is_show=False),
-                    )
+def create_demo():
+    """创建Gradio界面"""
+    
+    with gr.Blocks(title="量化选股系统") as demo:
+        gr.Markdown("# 量化选股系统\n### 智能选股 · 量价分析 · 风险控制")
+        
+        gr.Markdown(f"* 系统就绪 | 数据日期: {TODAY_STR} | 模型已加载")
+        
+        gr.Markdown("---")
+        
+        with gr.Tabs():
+            # Tab 1: 今日推荐
+            with gr.TabItem("今日推荐"):
+                gr.Markdown("### 一键扫描今日推荐股票")
+                
+                with gr.Row():
+                    scan_date = gr.Textbox(label="扫描日期", value=TODAY_STR, placeholder="YYYY-MM-DD")
+                    min_ai_prob = gr.Slider(label="AI胜率阈值", minimum=0.30, maximum=0.80, value=0.50, step=0.05)
+                    max_results = gr.Slider(label="最大结果数", minimum=5, maximum=50, value=20, step=5)
+                    scan_btn = gr.Button("开始扫描", variant="primary")
+                
+                scan_result = gr.DataFrame(label="扫描结果")
+                scan_summary = gr.Textbox(label="扫描摘要", lines=8)
+                
+                scan_btn.click(
+                    fn=scan_today_stocks,
+                    inputs=[scan_date, min_ai_prob, max_results],
+                    outputs=[scan_result, scan_summary]
                 )
-                kline.overlap(buy_scatter)
-
-            if any(y is not None for y in sell_y):
-                sell_scatter = (
-                    Scatter()
-                    .add_xaxis(dates)
-                    .add_yaxis(
-                        "卖出",
-                        sell_y,
-                        symbol="triangle-down",
-                        symbol_size=14,
-                        itemstyle_opts=opts.ItemStyleOpts(color="#22c55e"),
-                        label_opts=opts.LabelOpts(is_show=False),
-                    )
+            
+            # Tab 2: 个股分析
+            with gr.TabItem("个股分析"):
+                gr.Markdown("### 输入股票代码，分析量价走势与买卖信号")
+                
+                with gr.Row():
+                    stock_code = gr.Textbox(label="股票代码", placeholder="sh.600000 或 sz.000001", scale=3)
+                    lookback = gr.Number(label="查看天数", value=100, minimum=30, maximum=500, step=10, scale=1)
+                    analyze_btn = gr.Button("分析", variant="primary", scale=1)
+                
+                with gr.Row():
+                    analyze_report = gr.Textbox(label="分析报告", lines=12, scale=1)
+                    chart = gr.Plot(scale=2)
+                
+                analyze_btn.click(
+                    fn=analyze_stock,
+                    inputs=[stock_code, lookback],
+                    outputs=[analyze_report, chart]
                 )
-                kline.overlap(sell_scatter)
-
-        volumes = df["Volume"].tolist() if "Volume" in df.columns else []
-        bar = (
-            Bar()
-            .add_xaxis(dates)
-            .add_yaxis("成交量", volumes, label_opts=opts.LabelOpts(is_show=False))
-            .set_global_opts(
-                xaxis_opts=opts.AxisOpts(type_="category", grid_index=1, axislabel_opts=opts.LabelOpts(is_show=False)),
-                yaxis_opts=opts.AxisOpts(is_scale=True, grid_index=1, axislabel_opts=opts.LabelOpts(is_show=False)),
-                legend_opts=opts.LegendOpts(is_show=False),
-            )
-        )
-
-        grid = (
-            Grid(init_opts=opts.InitOpts(width="100%", height="800px"))
-            .add(kline, grid_opts=opts.GridOpts(pos_left="5%", pos_right="5%", height="65%"))
-            .add(bar, grid_opts=opts.GridOpts(pos_left="5%", pos_right="5%", pos_top="80%", height="15%"))
-        )
-
-        html_file = "temp_backtest_chart.html"
-        grid.render(html_file)
-        raw_html = Path(html_file).read_text(encoding="utf-8")
-        b64_html = base64.b64encode(raw_html.encode("utf-8")).decode("utf-8")
-        iframe_html = f'<iframe src="data:text/html;base64,{b64_html}" width="100%" height="850px" frameborder="0"></iframe>'
-    except Exception as e:
-        logger.debug(f"Render chart failed: {e}")
-
-    return stats_text, iframe_html, stats.get("_trades", pd.DataFrame())
-
-
-# =========================
-# Actions (Verify)
-# =========================
-
-
-def _parse_date_lines(text: str) -> list[str]:
-    dates: list[str] = []
-    for raw in str(text or "").splitlines():
-        s = raw.strip()
-        if not s:
-            continue
-        dates.append(s[:10])
-
-    seen: set[str] = set()
-    out: list[str] = []
-    for d in dates:
-        if d in seen:
-            continue
-        seen.add(d)
-        out.append(d)
-    return sorted(out)
-
-
-def ui_generate_validation_dates(start_date: str, end_date: str, n_dates: int):
-    start = str(start_date or "").strip()[:10]
-    end = str(end_date or "").strip()[:10]
-    if not start or not end:
-        return "请先选择开始/结束日期。", ""
-
-    from quant.app.backtester import get_market_index
-
-    idx_df = get_market_index()
-    if idx_df is None or idx_df.empty:
-        return "无法读取大盘指数数据 (sh.000001.csv)，请先同步数据。", ""
-
-    dates = idx_df.index
-    valid = dates[(dates >= start) & (dates <= end)]
-    if len(valid) == 0:
-        return f"在区间 {start} ~ {end} 没有可用交易日。", ""
-
-    n = int(n_dates) if n_dates else 20
-    n = max(1, min(n, len(valid)))
-    indices = np.linspace(0, len(valid) - 1, n, dtype=int)
-    sample_dates = [valid[i].strftime("%Y-%m-%d") for i in indices]
-    return f"已生成 {len(sample_dates)} 个验证日期。", "\n".join(sample_dates)
+                
+                gr.Examples(
+                    examples=[["sh.600000", 100], ["sz.000001", 100], ["sh.603311", 100], ["sz.300661", 100]],
+                    inputs=[stock_code, lookback]
+                )
+            
+            # Tab 3: 回测
+            with gr.TabItem("回测"):
+                gr.Markdown("### 回测指定股票的交易策略表现")
+                
+                with gr.Row():
+                    bt_code = gr.Textbox(label="股票代码", placeholder="sh.600000", scale=2)
+                    bt_start = gr.Textbox(label="开始日期", placeholder="YYYY-MM-DD", value="2024-01-01", scale=2)
+                    bt_end = gr.Textbox(label="结束日期", placeholder="YYYY-MM-DD", value=TODAY_STR, scale=2)
+                    bt_btn = gr.Button("回测", variant="primary", scale=1)
+                
+                bt_stats = gr.Textbox(label="回测统计", lines=10)
+                bt_result = gr.DataFrame(label="交易记录")
+                
+                bt_btn.click(
+                    fn=backtest_stock,
+                    inputs=[bt_code, bt_start, bt_end],
+                    outputs=[bt_stats, bt_result]
+                )
+            
+            # Tab 4: 数据更新
+            with gr.TabItem("数据更新"):
+                gr.Markdown("### 一键更新股票列表和历史数据")
+                gr.Markdown("**注意**: 更新数据可能需要几分钟时间")
+                
+                update_btn = gr.Button("开始更新", variant="primary", size="lg")
+                update_status = gr.Textbox(label="更新状态", lines=5)
+                
+                update_btn.click(fn=update_all_data, inputs=[], outputs=[update_status])
+            
+            # Tab 5: 关于
+            with gr.TabItem("关于"):
+                gr.Markdown("""
+                ### 量化选股系统
+                
+                **功能**:
+                - 今日推荐 - 基于AI模型的智能选股
+                - 量价分析 - K线、均线、技术指标
+                - 策略回测 - 验证策略有效性
+                
+                **使用说明**:
+                1. 进入「今日推荐」页面，点击扫描获取推荐股票
+                2. 进入「个股分析」页面，输入股票代码查看详细分析
+                3. 定期点击「数据更新」保持数据最新
+                
+                **免责声明**: 本系统仅供参考学习，不构成投资建议。股市有风险，投资需谨慎！
+                """)
+        
+        gr.Markdown("---")
+        gr.Markdown("*© 2026 量化选股系统 | 仅供学习交流*")
+    
+    return demo
 
 
-def ui_run_validation(date_list_text: str, sample_size: int, max_trades_per_day: int, max_hold_days: int):
-    dates = _parse_date_lines(date_list_text)
-    if not dates:
-        return "请先生成或输入验证日期列表 (每行一个 YYYY-MM-DD)。", pd.DataFrame()
-
-    from quant.app.validation_pipeline import ValidationPipeline
-    from quant.core.strategy_params import StrategyParams
-
-    p = StrategyParams.from_app_config(CONF)
-    try:
-        if max_hold_days is not None:
-            p.max_hold_days = int(max_hold_days)
-    except Exception:
-        pass
-
-    pipe = ValidationPipeline(
-        validation_dates=dates,
-        sample_size=int(sample_size),
-        max_trades_per_day=int(max_trades_per_day),
-    )
-    res = pipe.run_full_evaluation(p)
-    detail_df = pd.DataFrame(res.get("detail", []))
-
-    summary = (
-        f"策略体检完成\n\n"
-        f"日期数: {len(dates)} | sample_size: {int(sample_size)} | topN: {int(max_trades_per_day)} | max_hold_days: {p.max_hold_days}\n\n"
-        f"复合得分: {res.get('composite_score', -999.0):.4f}\n"
-        f"平均胜率: {res.get('avg_win_rate', 0.0):.2f}%\n"
-        f"平均PnL: {res.get('avg_pnl', 0.0):.2f}%\n"
-        f"平均回撤: {res.get('avg_dd', 0.0):.2f}%\n"
-    )
-    return summary, detail_df
-
-
-def ui_optimize_validation(date_list_text: str, sample_size: int, max_trades_per_day: int, max_hold_days: int, n_trials: int):
-    yield "开始闭环寻优 (基于买点信号的样本外体检得分)...", pd.DataFrame()
-
-    dates = _parse_date_lines(date_list_text)
-    if not dates:
-        yield "请先生成或输入验证日期列表 (每行一个 YYYY-MM-DD)。", pd.DataFrame()
-        return
-
-    from quant.app.validation_pipeline import ValidationPipeline
-
-    fixed: dict[str, Any] = {}
-    try:
-        if max_hold_days is not None:
-            fixed["max_hold_days"] = int(max_hold_days)
-    except Exception:
-        fixed = {}
-
-    pipe = ValidationPipeline(
-        validation_dates=dates,
-        sample_size=int(sample_size),
-        max_trades_per_day=int(max_trades_per_day),
-    )
-
-    try:
-        opt_res = pipe.optimize_for_real_trading(n_trials=int(n_trials), fixed_params=fixed or None)
-    except Exception as e:
-        yield f"闭环寻优失败: {e}", pd.DataFrame()
-        return
-
-    best_score = float(opt_res.get("best_composite_score", -999.0))
-    best_params = opt_res.get("best_params", {}) or {}
-    best_df = pd.DataFrame([{"param": k, "value": v} for k, v in sorted(best_params.items())])
-
-    msg = (
-        f"闭环寻优完成\n\n"
-        f"Best composite_score: {best_score:.4f}\n"
-        f"Trials: {int(n_trials)} | fixed_params: {fixed if fixed else 'None'}\n\n"
-        f"提示: 建议用更大样本的体检验证确认后，再更新 config.yaml。"
-    )
-    yield msg, best_df
+# 创建demo实例供 main.py 调用
+demo = create_demo()
 
 
 # =========================
-# App Layout
+# 直接启动
 # =========================
-
-
-with gr.Blocks(
-    title="买点选股平台 (规则 + AI + EV + 验证闭环)",
-) as demo:
-    gr.Markdown(
-        """
-        # 买点选股平台
-
-        用 **规则 + AI 门控 + 期望值 EV + 风险约束** 精准筛选处于买点的股票，并通过 **体检验证** 提升稳健性。
-        """
-    )
-
-    with gr.Row():
-        status_html = gr.HTML(_status_html())
-        btn_refresh_status = gr.Button("刷新状态", variant="secondary")
-
-    btn_refresh_status.click(fn=ui_refresh_status, inputs=[], outputs=[status_html])
-
-    with gr.Tabs():
-        with gr.Tab("1) Setup"):
-            gr.Markdown("## 数据与股票池")
-            setup_msg = gr.Markdown()
-            with gr.Row():
-                btn_update_pool = gr.Button("更新股票池 (stock-list.csv)", variant="primary")
-                btn_update_data = gr.Button("增量更新历史数据", variant="primary")
-
-            btn_update_pool.click(fn=ui_update_stock_pool, inputs=[], outputs=[setup_msg, status_html])
-            btn_update_data.click(fn=ui_update_kline_data, inputs=[], outputs=[setup_msg, status_html])
-
-            gr.Markdown(
-                """
-                提示:
-                - 首次使用请先执行: 更新股票池 -> 更新历史数据
-                - 选股默认使用 `data/stock-list.csv` 作为扫描范围
-                """
-            )
-
-        with gr.Tab("2) Scan"):
-            gr.Markdown("## 买点扫描与筛选")
-
-            scan_state = gr.State(pd.DataFrame())
-            scan_msg = gr.Markdown()
-
-            with gr.Row():
-                with gr.Column(scale=1):
-                    universe_source = gr.Radio(
-                        ["stock-list.csv", "custom"],
-                        value="stock-list.csv",
-                        label="扫描范围",
-                    )
-                    custom_codes = gr.Textbox(
-                        label="自定义代码 (每行一个, 仅在 custom 生效)",
-                        placeholder="sh.600000\nsz.000001",
-                        lines=6,
-                    )
-                    target_date = gr.Textbox(
-                        label="历史扫描日期 (YYYY-MM-DD，可空表示 latest)",
-                        placeholder="2024-05-10",
-                    )
-                    max_codes = gr.Number(label="最多扫描代码数 (0=全部)", value=0, precision=0)
-                    workers = gr.Slider(1, 32, value=8, step=1, label="并发 workers")
-
-                with gr.Column(scale=1):
-                    gr.Markdown("### 过滤器 (MVP 刚需)")
-                    min_buy_score = gr.Number(label="min_buy_score", value=0.0)
-                    min_expected_value_pct = gr.Number(label="min_expected_value_pct (EV%)", value=0.0)
-                    min_ai_prob = gr.Slider(0, 1, value=0.5, step=0.01, label="min_ai_prob")
-                    market_state_allowlist = gr.CheckboxGroup(
-                        choices=MARKET_STATES,
-                        value=[],
-                        label="允许的 market_state (空=不过滤)",
-                    )
-                    max_atr_pct = gr.Number(label="max_atr_pct (0=不过滤)", value=0.0)
-
-                    with gr.Row():
-                        btn_scan = gr.Button("开始扫描", variant="primary")
-                        btn_export = gr.Button("导出当前表格", variant="secondary")
-
-            scan_table = gr.Dataframe(
-                label="买点候选列表 (点击行将自动生成交易计划)",
-                value=pd.DataFrame(),
-                interactive=False,
-                wrap=True,
-                max_height=520,
-            )
-            export_file = gr.File(label="导出文件", visible=True)
-
-            btn_scan.click(
-                fn=ui_run_scan,
-                inputs=[
-                    universe_source,
-                    custom_codes,
-                    target_date,
-                    max_codes,
-                    workers,
-                    min_buy_score,
-                    min_expected_value_pct,
-                    min_ai_prob,
-                    market_state_allowlist,
-                    max_atr_pct,
-                ],
-                outputs=[scan_msg, scan_table, export_file, scan_state],
-            )
-            btn_export.click(fn=ui_export_selected, inputs=[scan_state], outputs=[export_file])
-
-        with gr.Tab("3) Plan"):
-            gr.Markdown("## 标的详情与交易计划")
-
-            with gr.Row():
-                plan_code = gr.Textbox(label="code", placeholder="sh.600000")
-                plan_date = gr.Textbox(label="date (可空)", placeholder="2024-05-10")
-                plan_capital = gr.Number(label="capital", value=100000.0)
-
-            with gr.Row():
-                btn_plan = gr.Button("生成交易计划", variant="primary")
-                btn_bt = gr.Button("回测该标的", variant="secondary")
-
-            plan_md = gr.Markdown()
-            plan_sig = gr.JSON(label="信号原始输出 (scan_today_signal)")
-
-            bt_md = gr.Markdown()
-            bt_chart = gr.HTML(label="回测图表")
-            bt_trades = gr.Dataframe(label="交易明细", value=pd.DataFrame(), interactive=False)
-
-            btn_plan.click(fn=ui_trade_plan, inputs=[plan_code, plan_date, plan_capital], outputs=[plan_md, plan_sig])
-            btn_bt.click(fn=ui_backtest, inputs=[plan_code], outputs=[bt_md, bt_chart, bt_trades])
-
-        with gr.Tab("4) Verify"):
-            gr.Markdown("## 策略体检与闭环寻优")
-
-            with gr.Row():
-                v_start = gr.Textbox(label="start_date", placeholder="2022-01-01")
-                v_end = gr.Textbox(label="end_date", placeholder="2024-01-01")
-                v_n = gr.Number(label="n_dates", value=20, precision=0)
-            with gr.Row():
-                btn_gen_dates = gr.Button("生成验证日期", variant="secondary")
-                gen_msg = gr.Markdown()
-            v_dates = gr.Textbox(label="验证日期列表 (每行一个 YYYY-MM-DD)", lines=8)
-
-            btn_gen_dates.click(fn=ui_generate_validation_dates, inputs=[v_start, v_end, v_n], outputs=[gen_msg, v_dates])
-
-            with gr.Row():
-                v_sample = gr.Number(label="sample_size", value=200, precision=0)
-                v_topn = gr.Number(label="max_trades_per_day (topN)", value=10, precision=0)
-                v_hold = gr.Number(label="max_hold_days", value=5, precision=0)
-            with gr.Row():
-                btn_validate = gr.Button("运行策略体检", variant="primary")
-                btn_opt = gr.Button("闭环寻优 (Optuna)", variant="secondary")
-                v_trials = gr.Number(label="n_trials", value=30, precision=0)
-
-            v_summary = gr.Markdown()
-            v_detail = gr.Dataframe(label="体检明细", value=pd.DataFrame(), interactive=False)
-            opt_best = gr.Dataframe(label="最优参数", value=pd.DataFrame(), interactive=False)
-
-            btn_validate.click(fn=ui_run_validation, inputs=[v_dates, v_sample, v_topn, v_hold], outputs=[v_summary, v_detail])
-            btn_opt.click(fn=ui_optimize_validation, inputs=[v_dates, v_sample, v_topn, v_hold, v_trials], outputs=[v_summary, opt_best])
-
-    # Cross-tab linkage: select a scan row -> fill Plan + generate plan
-    scan_table.select(
-        fn=ui_on_scan_select,
-        inputs=[scan_state, plan_capital],
-        outputs=[plan_code, plan_date, plan_md, plan_sig],
-    )
-
 
 if __name__ == "__main__":
+    print("=" * 50)
+    print("量化选股系统启动中...")
+    print("=" * 50)
+    
     demo.launch(
         server_name="127.0.0.1",
-        server_port=7860,
-        inbrowser=True,
-        theme=gr.themes.Soft(),
-        css=CUSTOM_CSS,
+        server_port=5000,
+        show_error=True
     )
